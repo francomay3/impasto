@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import type { ProjectState, Color, ColorGroup, FilterSettings } from '../types';
-import { DEFAULT_PROJECT_STATE, DEFAULT_FILTERS } from '../types';
+import type { ProjectState, Color, ColorGroup, FilterInstance, FilterType } from '../types';
+import { DEFAULT_PROJECT_STATE, DEFAULT_FILTER_PARAMS } from '../types';
 import { storageService } from '../services/StorageService';
 
 function createProject(): ProjectState {
@@ -12,10 +12,20 @@ function createProject(): ProjectState {
   };
 }
 
+function migrateState(raw: unknown): ProjectState | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const s = raw as Record<string, unknown>;
+  if (s.filters && !Array.isArray(s.filters)) {
+    const old = s.filters as Record<string, unknown>;
+    return { ...s, filters: [], preIndexingBlur: (old.blur as number) ?? 0 } as ProjectState;
+  }
+  return s as ProjectState;
+}
+
 export function useProjectState() {
   const [state, setState] = useState<ProjectState>(() => {
     const saved = storageService.load();
-    return saved ?? createProject();
+    return migrateState(saved) ?? createProject();
   });
 
   const updateState = useCallback((partial: Partial<ProjectState>) => {
@@ -28,12 +38,10 @@ export function useProjectState() {
 
   const setImage = useCallback((dataUrl: string) => {
     const initialColor: Color = { id: crypto.randomUUID(), hex: '#000000', locked: false, ratio: 0, mixRecipe: '' };
-    updateState({ imageDataUrl: dataUrl, palette: [initialColor], groups: [], filters: DEFAULT_FILTERS });
+    updateState({ imageDataUrl: dataUrl, palette: [initialColor], groups: [], filters: [], preIndexingBlur: 0 });
   }, [updateState]);
 
-  const setPalette = useCallback((palette: Color[]) => {
-    updateState({ palette });
-  }, [updateState]);
+  const setPalette = useCallback((palette: Color[]) => updateState({ palette }), [updateState]);
 
   const updateColor = useCallback((id: string, changes: Partial<Color>) => {
     setState(prev => {
@@ -44,19 +52,40 @@ export function useProjectState() {
     });
   }, []);
 
-  const setFilters = useCallback((filters: FilterSettings) => {
-    updateState({ filters });
-  }, [updateState]);
+  const addFilter = useCallback((type: FilterType) => {
+    const instance: FilterInstance = { id: crypto.randomUUID(), type, params: { ...DEFAULT_FILTER_PARAMS[type] } };
+    setState(prev => {
+      const next = { ...prev, filters: [...prev.filters, instance], updatedAt: new Date().toISOString() };
+      storageService.save(next);
+      return next;
+    });
+  }, []);
 
-  const setPaletteSize = useCallback((paletteSize: number) => {
-    updateState({ paletteSize });
-  }, [updateState]);
+  const removeFilter = useCallback((id: string) => {
+    setState(prev => {
+      const next = { ...prev, filters: prev.filters.filter(f => f.id !== id), updatedAt: new Date().toISOString() };
+      storageService.save(next);
+      return next;
+    });
+  }, []);
+
+  const updateFilter = useCallback((id: string, params: Record<string, number>) => {
+    setState(prev => {
+      const filters = prev.filters.map(f => f.id === id ? { ...f, params: { ...f.params, ...params } } : f);
+      const next = { ...prev, filters, updatedAt: new Date().toISOString() };
+      storageService.save(next);
+      return next;
+    });
+  }, []);
+
+  const reorderFilters = useCallback((filters: FilterInstance[]) => updateState({ filters }), [updateState]);
+  const setPreIndexingBlur = useCallback((preIndexingBlur: number) => updateState({ preIndexingBlur }), [updateState]);
+  const setPaletteSize = useCallback((paletteSize: number) => updateState({ paletteSize }), [updateState]);
 
   const addColor = useCallback((id: string) => {
     setState(prev => {
       const newColor: Color = { id, hex: '#000000', locked: false, ratio: 0, mixRecipe: '' };
-      const palette = [...prev.palette, newColor];
-      const next = { ...prev, palette, updatedAt: new Date().toISOString() };
+      const next = { ...prev, palette: [...prev.palette, newColor], updatedAt: new Date().toISOString() };
       storageService.save(next);
       return next;
     });
@@ -64,8 +93,7 @@ export function useProjectState() {
 
   const removeColor = useCallback((id: string) => {
     setState(prev => {
-      const palette = prev.palette.filter(c => c.id !== id);
-      const next = { ...prev, palette, updatedAt: new Date().toISOString() };
+      const next = { ...prev, palette: prev.palette.filter(c => c.id !== id), updatedAt: new Date().toISOString() };
       storageService.save(next);
       return next;
     });
@@ -108,9 +136,7 @@ export function useProjectState() {
     });
   }, []);
 
-  const reorderGroups = useCallback((groups: ColorGroup[]) => {
-    updateState({ groups });
-  }, [updateState]);
+  const reorderGroups = useCallback((groups: ColorGroup[]) => updateState({ groups }), [updateState]);
 
   const newProject = useCallback(() => {
     const fresh = createProject();
@@ -119,19 +145,9 @@ export function useProjectState() {
   }, []);
 
   return {
-    state,
-    setImage,
-    setPalette,
-    updateColor,
-    setFilters,
-    setPaletteSize,
-    addColor,
-    removeColor,
-    addGroup,
-    removeGroup,
-    renameGroup,
-    setColorGroup,
-    reorderGroups,
-    newProject,
+    state, setImage, setPalette, updateColor,
+    addFilter, removeFilter, updateFilter, reorderFilters, setPreIndexingBlur,
+    setPaletteSize, addColor, removeColor,
+    addGroup, removeGroup, renameGroup, setColorGroup, reorderGroups, newProject,
   };
 }

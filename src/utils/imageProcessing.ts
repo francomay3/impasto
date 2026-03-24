@@ -1,52 +1,67 @@
-import type { FilterSettings } from '../types';
+import type { FilterInstance, BrightnessContrastParams, HueSaturationParams, LevelsParams, BlurParams } from '../types';
 
-export function applyFilters(imageData: ImageData, filters: FilterSettings): ImageData {
+function applyBrightnessContrast(imageData: ImageData, p: BrightnessContrastParams): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
-  const { brightness, contrast, saturation, temperature, tint, blackPoint, whitePoint } = filters;
-
-  const contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-  const levelsRange = Math.max(1, whitePoint - blackPoint);
-
+  const cf = (259 * (p.contrast + 255)) / (255 * (259 - p.contrast));
   for (let i = 0; i < data.length; i += 4) {
-    let r = data[i];
-    let g = data[i + 1];
-    let b = data[i + 2];
-
-    // Brightness
-    r += brightness;
-    g += brightness;
-    b += brightness;
-
-    // Contrast
-    r = contrastFactor * (r - 128) + 128;
-    g = contrastFactor * (g - 128) + 128;
-    b = contrastFactor * (b - 128) + 128;
-
-    // Temperature (red/blue shift)
-    r += temperature;
-    b -= temperature;
-
-    // Tint (green/magenta)
-    g += tint;
-
-    // Saturation
-    const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-    const sat = (saturation + 100) / 100;
-    r = gray + sat * (r - gray);
-    g = gray + sat * (g - gray);
-    b = gray + sat * (b - gray);
-
-    // Levels
-    r = (r - blackPoint) / levelsRange * 255;
-    g = (g - blackPoint) / levelsRange * 255;
-    b = (b - blackPoint) / levelsRange * 255;
-
-    data[i] = Math.max(0, Math.min(255, r));
-    data[i + 1] = Math.max(0, Math.min(255, g));
-    data[i + 2] = Math.max(0, Math.min(255, b));
+    for (let c = 0; c < 3; c++) {
+      data[i + c] = Math.max(0, Math.min(255, cf * (data[i + c] + p.brightness - 128) + 128));
+    }
   }
-
   return new ImageData(data, imageData.width, imageData.height);
+}
+
+function applyHueSaturation(imageData: ImageData, p: HueSaturationParams): ImageData {
+  const data = new Uint8ClampedArray(imageData.data);
+  const sat = (p.saturation + 100) / 100;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i] + p.temperature;
+    const g = data[i + 1] + p.tint;
+    const b = data[i + 2] - p.temperature;
+    const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+    data[i] = Math.max(0, Math.min(255, gray + sat * (r - gray)));
+    data[i + 1] = Math.max(0, Math.min(255, gray + sat * (g - gray)));
+    data[i + 2] = Math.max(0, Math.min(255, gray + sat * (b - gray)));
+  }
+  return new ImageData(data, imageData.width, imageData.height);
+}
+
+function applyLevels(imageData: ImageData, p: LevelsParams): ImageData {
+  const data = new Uint8ClampedArray(imageData.data);
+  const range = Math.max(1, p.whitePoint - p.blackPoint);
+  for (let i = 0; i < data.length; i += 4) {
+    for (let c = 0; c < 3; c++) {
+      data[i + c] = Math.max(0, Math.min(255, (data[i + c] - p.blackPoint) / range * 255));
+    }
+  }
+  return new ImageData(data, imageData.width, imageData.height);
+}
+
+function applyBlurFilter(imageData: ImageData, p: BlurParams): ImageData {
+  if (p.blur === 0) return imageData;
+  const { width, height } = imageData;
+  const src = document.createElement('canvas');
+  src.width = width; src.height = height;
+  src.getContext('2d')!.putImageData(imageData, 0, 0);
+  const dst = document.createElement('canvas');
+  dst.width = width; dst.height = height;
+  const dCtx = dst.getContext('2d', { willReadFrequently: true })!;
+  dCtx.filter = `blur(${p.blur}px)`;
+  dCtx.drawImage(src, 0, 0);
+  dCtx.filter = 'none';
+  return dCtx.getImageData(0, 0, width, height);
+}
+
+export function applyFilters(imageData: ImageData, filters: FilterInstance[]): ImageData {
+  return filters.reduce((data, filter) => {
+    switch (filter.type) {
+      case 'brightness-contrast': return applyBrightnessContrast(data, filter.params as BrightnessContrastParams);
+      case 'hue-saturation': return applyHueSaturation(data, filter.params as HueSaturationParams);
+      case 'levels': return applyLevels(data, filter.params as LevelsParams);
+      case 'blur': return applyBlurFilter(data, filter.params as BlurParams);
+      default: return data;
+    }
+  }, imageData);
 }
 
 export function sampleCircleAverage(
@@ -58,7 +73,6 @@ export function sampleCircleAverage(
   const { width, height, data } = imageData;
   let r = 0, g = 0, b = 0, a = 0, count = 0;
   const r2 = radius * radius;
-
   for (let y = cy - radius; y <= cy + radius; y++) {
     for (let x = cx - radius; x <= cx + radius; x++) {
       const dx = x - cx, dy = y - cy;
