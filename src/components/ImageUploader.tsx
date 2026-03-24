@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Box, Text, Stack, Button, useMantineTheme } from '@mantine/core';
+import { Box, Text, Stack, Button } from '@mantine/core';
 import { Upload } from 'lucide-react';
 
 interface Props {
@@ -7,7 +7,6 @@ interface Props {
 }
 
 export function ImageUploader({ onFileSelected }: Props) {
-  const theme = useMantineTheme();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
@@ -45,7 +44,7 @@ export function ImageUploader({ onFileSelected }: Props) {
       <Stack align="center" gap="xs">
         <Upload size={40} color="var(--mantine-color-dark-1)" />
         <Text size="lg" c="dimmed">Drop an image here or click to upload</Text>
-        <Button variant="light" size="sm" color={theme.other.tertiaryColor as string}>Choose File</Button>
+        <Button variant="light" size="sm" color="tertiary">Choose File</Button>
       </Stack>
     </Box>
   );

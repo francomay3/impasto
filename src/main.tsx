@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MantineProvider, createTheme, type MantineColorsTuple } from '@mantine/core';
+import { MantineProvider, createTheme, DEFAULT_THEME, type MantineColorsTuple } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
@@ -23,12 +23,13 @@ const darkColors: MantineColorsTuple = [
 ];
 
 const theme = createTheme({
-  primaryColor: 'teal',
+  primaryColor: 'primary',
   fontFamily: 'Inter, system-ui, sans-serif',
-  colors: { dark: darkColors },
-  other: {
-    secondaryColor: 'indigo',
-    tertiaryColor: 'orange',
+  colors: {
+    dark: darkColors,
+    primary: DEFAULT_THEME.colors.teal,
+    secondary: DEFAULT_THEME.colors.indigo,
+    tertiary: DEFAULT_THEME.colors.orange,
   },
 });
 

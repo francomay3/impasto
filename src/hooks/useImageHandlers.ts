@@ -27,6 +27,7 @@ export function useImageHandlers({
   samplingColorId, setSamplingColorId, samplingLevels, setSamplingLevels,
 }: Options) {
   const lastImageDataRef = useRef<ImageData | null>(null);
+  const pendingNewColorId = useRef<string | null>(null);
   const [debouncedFilters] = useDebouncedValue(state.filters, 300);
 
   const renderPalette = useCallback((imageData?: ImageData, palette?: typeof state.palette) => {
@@ -64,6 +65,7 @@ export function useImageHandlers({
 
   const handleAddColor = useCallback(() => {
     const id = crypto.randomUUID();
+    pendingNewColorId.current = id;
     addColor(id);
     renderPalette(undefined, [...state.palette, { id, hex: '#000000', locked: false, ratio: 0, mixRecipe: '' }]);
     setSamplingColorId(id);
@@ -81,12 +83,22 @@ export function useImageHandlers({
     renderPalette(undefined, state.palette.map(c => c.id === id ? { ...c, highlighted } : c));
   }, [updateColor, renderPalette, state.palette]);
 
+  const handleCancelSample = useCallback(() => {
+    if (samplingColorId && samplingColorId === pendingNewColorId.current) {
+      removeColor(samplingColorId);
+      renderPalette(undefined, state.palette.filter(c => c.id !== samplingColorId));
+    }
+    pendingNewColorId.current = null;
+    setSamplingColorId(null);
+  }, [samplingColorId, removeColor, renderPalette, state.palette, setSamplingColorId]);
+
   const handleSample = useCallback((hex: string) => {
     if (!samplingColorId) return;
+    pendingNewColorId.current = null;
     updateColor(samplingColorId, { hex });
     setSamplingColorId(null);
     renderPalette(undefined, state.palette.map(c => c.id === samplingColorId ? { ...c, hex } : c));
-    notifications.show({ message: `Color sampled: ${hex}`, color: 'teal' });
+    notifications.show({ message: `Color sampled: ${hex}`, color: 'primary' });
   }, [samplingColorId, updateColor, renderPalette, state.palette, setSamplingColorId]);
 
   const handleSampleLevels = useCallback((hex: string) => {
@@ -111,5 +123,5 @@ export function useImageHandlers({
     setSamplingLevels(null);
   }, [samplingLevels, state.filters, updateFilter, setSamplingLevels]);
 
-  return { handleImageLoad, handleColorChange, handleAddColor, handleDeleteColor, handleToggleHighlight, handleSample, handleSampleLevels };
+  return { handleImageLoad, handleColorChange, handleAddColor, handleDeleteColor, handleToggleHighlight, handleSample, handleCancelSample, handleSampleLevels };
 }

@@ -17,7 +17,7 @@ export function UpgradeModal({ opened, onClose }: Props) {
       styles={{ content: { background: 'var(--mantine-color-dark-7)' } }}
     >
       <Stack align="center" gap="md" py="md">
-        <ThemeIcon size={56} radius="xl" color="teal" variant="light">
+        <ThemeIcon size={56} radius="xl" color="primary" variant="light">
           <Zap size={28} />
         </ThemeIcon>
 
@@ -31,7 +31,7 @@ export function UpgradeModal({ opened, onClose }: Props) {
 
         <Button
           fullWidth
-          color="teal"
+          color="primary"
           size="md"
           disabled
           title="Coming soon"

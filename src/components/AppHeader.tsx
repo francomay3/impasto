@@ -1,27 +1,13 @@
 import { AppShell, Group, Menu, Skeleton, Stack, Text, UnstyledButton } from '@mantine/core';
-import { SlidersHorizontal, Palette, Layers, Droplets, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EditableTitle } from './EditableTitle';
 import { UserMenu } from './UserMenu';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
-import type { FilterType } from '../types';
-import { FILTER_LABELS } from '../types';
+import { FilterMenuItems } from './FilterPanel/AddFilterMenu';
 import { useEditorContext } from '../context/EditorContext';
 import { useFilterContext } from '../context/FilterContext';
 import { usePaletteContext } from '../context/PaletteContext';
-
-const FILTER_ICONS: Record<FilterType, React.ReactNode> = {
-  'brightness-contrast': <SlidersHorizontal size={14} />,
-  'hue-saturation': <Palette size={14} />,
-  'levels': <Layers size={14} />,
-  'blur': <Droplets size={14} />,
-};
-
-const FILTER_GROUPS: { label: string; filters: FilterType[] }[] = [
-  { label: 'Light & Tone', filters: ['brightness-contrast', 'levels'] },
-  { label: 'Color', filters: ['hue-saturation'] },
-  { label: 'Effects', filters: ['blur'] },
-];
 
 function MenuButton({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -86,17 +72,7 @@ export function AppHeader() {
                     </Menu.Sub.Item>
                   </Menu.Sub.Target>
                   <Menu.Sub.Dropdown>
-                    {FILTER_GROUPS.map((group, i) => (
-                      <div key={group.label}>
-                        {i > 0 && <Menu.Divider />}
-                        <Menu.Label>{group.label}</Menu.Label>
-                        {group.filters.map(type => (
-                          <Menu.Item key={type} leftSection={FILTER_ICONS[type]} onClick={() => onAddFilter(type)}>
-                            <Text size="sm">{FILTER_LABELS[type]}</Text>
-                          </Menu.Item>
-                        ))}
-                      </div>
-                    ))}
+                    <FilterMenuItems onAdd={onAddFilter} />
                   </Menu.Sub.Dropdown>
                 </Menu.Sub>
                 <Menu.Item leftSection={<Plus size={14} />} onClick={onAddColor}>

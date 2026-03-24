@@ -35,7 +35,7 @@ export function DashboardPage() {
       <Container size="xl" py="xl">
         {projects.length > 0 && (
           <Group justify="flex-end" mb="xl">
-            <Button onClick={handleCreate} leftSection={<Plus size={16} />} color="teal">
+            <Button onClick={handleCreate} leftSection={<Plus size={16} />} color="primary">
               New project
             </Button>
           </Group>
@@ -43,7 +43,7 @@ export function DashboardPage() {
 
         {loading ? (
           <Center h="50vh">
-            <Loader color="teal" />
+            <Loader color="primary" />
           </Center>
         ) : (
           <ProjectGrid projects={filtered} onDelete={remove} onCreate={handleCreate} />

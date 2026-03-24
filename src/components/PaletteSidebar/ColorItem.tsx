@@ -25,7 +25,10 @@ export function ColorItem({ color, dragHandleProps, showDragHandle, colorInputRe
 
   const handleNameSubmit = () => {
     const trimmed = editNameValue.trim();
-    onRenameColor(color.id, trimmed === color.hex.toUpperCase() ? '' : trimmed);
+    const newName = trimmed === color.hex.toUpperCase() ? '' : trimmed;
+    if (newName !== (color.name ?? '')) {
+      onRenameColor(color.id, newName);
+    }
     setEditingName(false);
   };
 

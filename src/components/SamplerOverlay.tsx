@@ -4,6 +4,7 @@ import { useHotkeys } from '@mantine/hooks';
 import { sampleCircleAverage } from '../utils/imageProcessing';
 import { rgbToHex } from '../utils/colorUtils';
 import { useCanvasContext } from '../context/CanvasContext';
+import { HOTKEYS } from '../hotkeys';
 
 interface Props {
   onSample: (hex: string) => void;
@@ -18,7 +19,7 @@ export function SamplerOverlay({ onSample, onCancel }: Props) {
   // Store raw client coords so we can recompute overlay-relative position after zoom resizes the overlay.
   const [mouseClient, setMouseClient] = useState({ x: -9999, y: -9999 });
 
-  useHotkeys([['Escape', onCancel]]);
+  useHotkeys([[HOTKEYS.CANCEL, onCancel]]);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {

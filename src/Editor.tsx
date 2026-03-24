@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppShell, Box, Center, Group, Loader } from '@mantine/core';
-import { useHotkeys } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
 
 import { useProjectState } from './hooks/useProjectState';
 import { useHistory } from './hooks/useHistory';
@@ -9,6 +7,7 @@ import { useSaveStatus } from './hooks/useSaveStatus';
 import { useCanvasPipeline } from './hooks/useCanvasPipeline';
 import { useViewportTransform } from './hooks/useViewportTransform';
 import { useImageHandlers } from './hooks/useImageHandlers';
+import { useEditorHotkeys } from './hooks/useEditorHotkeys';
 import { FilterPanel } from './components/FilterPanel';
 import { PaletteSidebar } from './components/PaletteSidebar';
 import { ImageUploader } from './components/ImageUploader';
@@ -16,6 +15,7 @@ import { CanvasViewport } from './components/CanvasViewport';
 import { SamplerOverlay } from './components/SamplerOverlay';
 import { AppHeader } from './components/AppHeader';
 import { ExportModal } from './components/ExportModal';
+import { FilterContextMenu } from './components/FilterContextMenu';
 import { PaletteContext } from './context/PaletteContext';
 import { FilterContext } from './context/FilterContext';
 import { EditorContext } from './context/EditorContext';
@@ -48,7 +48,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
 
   const { handleImageLoad, handleColorChange, handleAddColor, handleDeleteColor,
-    handleToggleHighlight, handleSample, handleSampleLevels } = useImageHandlers({
+    handleToggleHighlight, handleSample, handleCancelSample, handleSampleLevels } = useImageHandlers({
     state, pipeline, setImage, updateColor, addColor, removeColor, updateFilter,
     samplingColorId, setSamplingColorId, samplingLevels, setSamplingLevels,
   });
@@ -74,12 +74,9 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
     if (state.imageDataUrl) viewport.resetTransform();
   }, [state.imageDataUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useHotkeys([
-    ['mod+S', () => notifications.show({ message: 'Project saved', color: 'blue' })],
-    ['mod+Z', handleUndo],
-    ['mod+shift+Z', handleRedo],
-    ['mod+Y', handleRedo],
-  ]);
+  const { filterMenuOpen, filterMenuPos, onFilterMenuClose, openFilterMenu } = useEditorHotkeys({
+    onUndo: handleUndo, onRedo: handleRedo, onAddFilter: addFilter, onAddColor: handleAddColor,
+  });
 
   const paletteValue = {
     palette: state.palette, groups: state.groups ?? [], blur: state.preIndexingBlur, samplingColorId,
@@ -97,6 +94,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
     onAddFilter: addFilter, onRemoveFilter: removeFilter,
     onUpdateFilter: updateFilter, onPreviewFilter: updateFilterPreview, onReorderFilters: reorderFilters,
     onStartSamplingLevels: (filterId, point) => { setSamplingColorId(null); setSamplingLevels({ filterId, point }); },
+    onOpenFilterMenu: openFilterMenu,
   };
 
   const canvasValue = {
@@ -135,13 +133,13 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
 
         <AppShell.Main style={{ background: 'var(--mantine-color-dark-9)' }}>
           {isLoading ? (
-            <Center h="calc(100vh - var(--app-shell-header-height))"><Loader color="teal" /></Center>
+            <Center h="calc(100vh - var(--app-shell-header-height))"><Loader color="primary" /></Center>
           ) : !state.imageDataUrl ? (
             <Box p="xl"><ImageUploader onFileSelected={handleFileSelected} /></Box>
           ) : (
             <Group align="flex-start" style={{ height: 'calc(100vh - var(--app-shell-header-height))', gap: 0, overflow: 'hidden' }}>
               <CanvasViewport ref={filteredCanvasRef} label="Filtered Original">
-                {samplingColorId && <SamplerOverlay onSample={handleSample} onCancel={() => setSamplingColorId(null)} />}
+                {samplingColorId && <SamplerOverlay onSample={handleSample} onCancel={handleCancelSample} />}
                 {samplingLevels && <SamplerOverlay onSample={handleSampleLevels} onCancel={() => setSamplingLevels(null)} />}
               </CanvasViewport>
               <CanvasViewport ref={indexedCanvasRef} label="Indexed Result" />
@@ -154,6 +152,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
         </AppShell.Aside>
 
         <ExportModal opened={exportModalOpen} state={state} onClose={() => setExportModalOpen(false)} />
+        <FilterContextMenu opened={filterMenuOpen} position={filterMenuPos} onClose={onFilterMenuClose} onAdd={addFilter} />
       </AppShell>
     </FilterContext.Provider>
     </PaletteContext.Provider>

@@ -9,7 +9,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <Center h="100vh" style={{ background: 'var(--mantine-color-dark-9)' }}>
-        <Loader color="teal" />
+        <Loader color="primary" />
       </Center>
     );
   }

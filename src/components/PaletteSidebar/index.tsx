@@ -48,7 +48,7 @@ export function PaletteSidebar() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <Stack gap="xs" p="md">
+      <Stack gap="xs" p="xs">
         <Text fw={600} size="sm">Pre-Indexing</Text>
         <Stack gap={2}>
           <Text size="xs" c="dimmed">Simplification blur</Text>
@@ -64,6 +64,8 @@ export function PaletteSidebar() {
             </ActionIcon>
           </Tooltip>
         </Box>
+
+        <AddItemButton label="Add Color" hint="C" onClick={onAddColor} />
 
         <SortableContext items={groups.map(g => g.id)} strategy={verticalListSortingStrategy}>
           <Stack gap={6}>
@@ -99,7 +101,6 @@ export function PaletteSidebar() {
           </>
         )}
 
-        <AddItemButton label="Add Color" onClick={onAddColor} />
       </Stack>
     </DndContext>
   );

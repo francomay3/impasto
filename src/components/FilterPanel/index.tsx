@@ -1,10 +1,11 @@
+import { useRef } from 'react';
 import { Stack, ActionIcon, Tooltip, Group, Text, Box } from '@mantine/core';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { FilterItem } from './FilterItem';
-import { AddFilterMenu } from './AddFilterMenu';
+import { AddItemButton } from '../AddItemButton';
 import { useFilterContext } from '../../context/FilterContext';
 
 interface Props {
@@ -13,7 +14,8 @@ interface Props {
 }
 
 export function FilterPanel({ collapsed, onToggleCollapse }: Props) {
-  const { filters, onAddFilter, onReorderFilters } = useFilterContext();
+  const { filters, onReorderFilters, onOpenFilterMenu } = useFilterContext();
+  const addButtonRef = useRef<HTMLButtonElement>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   function handleDragEnd(event: DragEndEvent) {
@@ -47,7 +49,15 @@ export function FilterPanel({ collapsed, onToggleCollapse }: Props) {
         </Tooltip>
       </Group>
       <Stack gap="xs" p="xs" style={{ flex: 1, overflowY: 'auto' }}>
-        <AddFilterMenu onAdd={onAddFilter} />
+        <AddItemButton
+          ref={addButtonRef}
+          label="Add Filter"
+          hint="⌘F"
+          onClick={() => {
+            const rect = addButtonRef.current?.getBoundingClientRect();
+            if (rect) onOpenFilterMenu({ x: rect.left, y: rect.bottom });
+          }}
+        />
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={filters.map(f => f.id)} strategy={verticalListSortingStrategy}>
             {filters.map(filter => <FilterItem key={filter.id} filter={filter} />)}
