@@ -2,9 +2,10 @@ import type { FilterSettings } from '../types';
 
 export function applyFilters(imageData: ImageData, filters: FilterSettings): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
-  const { brightness, contrast, saturation, temperature, tint } = filters;
+  const { brightness, contrast, saturation, temperature, tint, blackPoint, whitePoint } = filters;
 
   const contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  const levelsRange = Math.max(1, whitePoint - blackPoint);
 
   for (let i = 0; i < data.length; i += 4) {
     let r = data[i];
@@ -34,6 +35,11 @@ export function applyFilters(imageData: ImageData, filters: FilterSettings): Ima
     r = gray + sat * (r - gray);
     g = gray + sat * (g - gray);
     b = gray + sat * (b - gray);
+
+    // Levels
+    r = (r - blackPoint) / levelsRange * 255;
+    g = (g - blackPoint) / levelsRange * 255;
+    b = (b - blackPoint) / levelsRange * 255;
 
     data[i] = Math.max(0, Math.min(255, r));
     data[i + 1] = Math.max(0, Math.min(255, g));

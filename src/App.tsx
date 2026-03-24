@@ -18,9 +18,12 @@ import { DEFAULT_MIX_GRANULARITY, DEFAULT_DELTA_THRESHOLD, PIGMENTS } from './se
 export default function App() {
   const theme = useMantineTheme();
   const { state, setImage, setPalette, updateColor, setFilters, addColor, removeColor, addGroup, removeGroup, renameGroup, setColorGroup, reorderGroups } = useProjectState();
-  const pipeline = useCanvasPipeline();
+  const filteredCanvasRef = useRef<HTMLCanvasElement>(null);
+  const indexedCanvasRef = useRef<HTMLCanvasElement>(null);
+  const pipeline = useCanvasPipeline(filteredCanvasRef, indexedCanvasRef);
   const viewport = useViewportTransform();
   const [samplingColorId, setSamplingColorId] = useState<string | null>(null);
+  const [samplingLevels, setSamplingLevels] = useState<'black' | 'white' | null>(null);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
   const [exportTitle, setExportTitle] = useState('');
@@ -35,7 +38,7 @@ export default function App() {
     if (!data) return;
     const forIndexing = pipeline.blurImageData(data, state.filters.blur);
     pipeline.renderIndexed(palette ?? state.palette, forIndexing);
-  }, [pipeline, state.filters.blur, state.palette]);
+  }, [pipeline, state]);
 
   // Reset zoom/pan on new image
   useEffect(() => {
@@ -111,13 +114,31 @@ export default function App() {
     notifications.show({ message: `Color sampled: ${hex}`, color: 'teal' });
   }, [samplingColorId, updateColor, renderPalette, state.palette]);
 
+  const handleSampleLevels = useCallback((hex: string) => {
+    if (!samplingLevels) return;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const luminance = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+    if (samplingLevels === 'black') {
+      const newBlack = Math.min(luminance, state.filters.whitePoint - 1);
+      setFilters({ ...state.filters, blackPoint: newBlack });
+      notifications.show({ message: `Black point set to ${newBlack}`, color: 'dark' });
+    } else {
+      const newWhite = Math.max(luminance, state.filters.blackPoint + 1);
+      setFilters({ ...state.filters, whitePoint: newWhite });
+      notifications.show({ message: `White point set to ${newWhite}`, color: 'gray' });
+    }
+    setSamplingLevels(null);
+  }, [samplingLevels, state.filters, setFilters]);
+
   const handleExportPdf = useCallback(() => {
-    if (!pipeline.filteredCanvasRef.current || !pipeline.indexedCanvasRef.current) return;
+    if (!filteredCanvasRef.current || !indexedCanvasRef.current) return;
     const pigments = PIGMENTS.filter(p => exportPigments.has(p.name));
-    exportPdf(state, pipeline.filteredCanvasRef.current, pipeline.indexedCanvasRef.current, exportGranularity, exportDelta, pigments, exportTitle || state.name);
+    exportPdf(state, filteredCanvasRef.current, indexedCanvasRef.current, exportGranularity, exportDelta, pigments, exportTitle || state.name);
     setExportModalOpen(false);
     notifications.show({ message: 'Export complete', color: 'green' });
-  }, [pipeline, state, exportGranularity, exportDelta, exportPigments]);
+  }, [filteredCanvasRef, indexedCanvasRef, state, exportGranularity, exportDelta, exportPigments, exportTitle]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -161,6 +182,8 @@ export default function App() {
           onChange={setFilters}
           collapsed={navbarCollapsed}
           onToggleCollapse={() => setNavbarCollapsed(v => !v)}
+          samplingLevels={samplingLevels}
+          onStartSamplingLevels={(point) => { setSamplingColorId(null); setSamplingLevels(point); }}
         />
       </AppShell.Navbar>
 
@@ -172,32 +195,39 @@ export default function App() {
         ) : (
           <Group align="flex-start" style={{ height: 'calc(100vh - var(--app-shell-header-height))', gap: 0, overflow: 'hidden' }}>
             <CanvasViewport
-              ref={pipeline.filteredCanvasRef}
+              ref={filteredCanvasRef}
               label="Filtered Original"
               viewportTransform={viewport.transform}
               onWheel={viewport.handleWheel}
               onMouseDown={viewport.handleMouseDown}
               onDoubleClick={viewport.resetTransform}
               isDragging={viewport.isDragging}
-              isSampling={!!samplingColorId}
+              isSampling={!!samplingColorId || !!samplingLevels}
             >
               {samplingColorId && (
                 <SamplerOverlay
-                  filteredCanvasRef={pipeline.filteredCanvasRef}
+                  filteredCanvasRef={filteredCanvasRef}
                   onSample={handleSample}
                   onCancel={() => setSamplingColorId(null)}
                 />
               )}
+              {samplingLevels && (
+                <SamplerOverlay
+                  filteredCanvasRef={filteredCanvasRef}
+                  onSample={handleSampleLevels}
+                  onCancel={() => setSamplingLevels(null)}
+                />
+              )}
             </CanvasViewport>
             <CanvasViewport
-              ref={pipeline.indexedCanvasRef}
+              ref={indexedCanvasRef}
               label="Indexed Result"
               viewportTransform={viewport.transform}
               onWheel={viewport.handleWheel}
               onMouseDown={viewport.handleMouseDown}
               onDoubleClick={viewport.resetTransform}
               isDragging={viewport.isDragging}
-              isSampling={!!samplingColorId}
+              isSampling={!!samplingColorId || !!samplingLevels}
             />
           </Group>
         )}
@@ -210,7 +240,7 @@ export default function App() {
           blur={state.filters.blur}
           samplingColorId={samplingColorId}
           onBlurChange={(v) => setFilters({ ...state.filters, blur: v })}
-          onStartSampling={(id) => setSamplingColorId(id)}
+          onStartSampling={(id) => { setSamplingLevels(null); setSamplingColorId(id); }}
           onColorChange={handleColorChange}
           onRenameColor={(id, name) => updateColor(id, { name })}
           onAddColor={handleAddColor}

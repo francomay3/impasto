@@ -5,10 +5,11 @@ import { quantizeImage } from '../utils/kMeansWrapper';
 import { findMixRecipe } from '../services/ColorMixer';
 import IndexedRendererWorker from '../workers/indexedRenderer.worker?worker';
 
-export function useCanvasPipeline() {
+export function useCanvasPipeline(
+  filteredCanvasRef: React.RefObject<HTMLCanvasElement | null>,
+  indexedCanvasRef: React.RefObject<HTMLCanvasElement | null>,
+) {
   const sourceCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
-  const filteredCanvasRef = useRef<HTMLCanvasElement>(null);
-  const indexedCanvasRef = useRef<HTMLCanvasElement>(null);
   const workerRef = useRef<Worker | null>(null);
   const renderGenerationRef = useRef(0);
 
@@ -26,7 +27,7 @@ export function useCanvasPipeline() {
     };
 
     return () => worker.terminate();
-  }, []);
+  }, [indexedCanvasRef]);
 
   const loadImage = useCallback((dataUrl: string): Promise<void> => {
     return new Promise((resolve) => {
@@ -54,7 +55,7 @@ export function useCanvasPipeline() {
     const imageData = applyFilters(srcCtx.getImageData(0, 0, src.width, src.height), filters);
     filteredCtx.putImageData(imageData, 0, 0);
     return imageData;
-  }, []);
+  }, [filteredCanvasRef]);
 
   const blurImageData = useCallback((imageData: ImageData, blur: number): ImageData => {
     if (blur === 0) return imageData;
@@ -100,12 +101,10 @@ export function useCanvasPipeline() {
       { data: new Uint8ClampedArray(bufferCopy), width: imageData.width, height: imageData.height, palette, generation },
       [bufferCopy]
     );
-  }, []);
+  }, [filteredCanvasRef, indexedCanvasRef]);
 
   return {
     sourceCanvasRef,
-    filteredCanvasRef,
-    indexedCanvasRef,
     loadImage,
     applyFilterPipeline,
     blurImageData,

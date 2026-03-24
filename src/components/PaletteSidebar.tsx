@@ -277,7 +277,7 @@ function SortableGroup({ group, children, collapsed, isDraggingColor, autoEdit, 
           {!editing && (
             <>
               <Tooltip label="Delete group">
-                <ActionIcon size="xs" variant="subtle" color="red" onClick={(e) => { e.stopPropagation(); colorCount > 0 ? confirmDelete() : onDelete(); }}>
+                <ActionIcon size="xs" variant="subtle" color="red" onClick={(e) => { e.stopPropagation(); void (colorCount > 0 ? confirmDelete() : onDelete()); }}>
                   <X size={11} />
                 </ActionIcon>
               </Tooltip>

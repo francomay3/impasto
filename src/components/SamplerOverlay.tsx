@@ -35,11 +35,11 @@ export function SamplerOverlay({ filteredCanvasRef, onSample, onCancel }: Props)
   }, []);
 
   useEffect(() => {
-    const canvas = filteredCanvasRef.current;
     const overlay = overlayRef.current;
-    if (!canvas || !overlay) return;
-    overlay.width = canvas.width;
-    overlay.height = canvas.height;
+    if (!overlay) return;
+    const rect = overlay.getBoundingClientRect();
+    overlay.width = rect.width;
+    overlay.height = rect.height;
     const ctx = overlay.getContext('2d')!;
     ctx.clearRect(0, 0, overlay.width, overlay.height);
     ctx.strokeStyle = '#4fc3f7';
@@ -47,13 +47,11 @@ export function SamplerOverlay({ filteredCanvasRef, onSample, onCancel }: Props)
     ctx.beginPath();
     ctx.arc(mousePos.x, mousePos.y, radius, 0, Math.PI * 2);
     ctx.stroke();
-  }, [mousePos, radius, filteredCanvasRef]);
+  }, [mousePos, radius]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
-    const scaleX = (e.target as HTMLCanvasElement).width / rect.width;
-    const scaleY = (e.target as HTMLCanvasElement).height / rect.height;
-    setMousePos({ x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY });
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   }, []);
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {

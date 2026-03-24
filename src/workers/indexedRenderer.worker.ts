@@ -27,5 +27,5 @@ self.onmessage = (e: MessageEvent<{ data: Uint8ClampedArray; width: number; heig
     out[i + 3] = data[i + 3];
   }
 
-  self.postMessage({ buffer: out.buffer, width, height, generation }, [out.buffer]);
+  (self as unknown as Worker).postMessage({ buffer: out.buffer, width, height, generation }, [out.buffer]);
 };

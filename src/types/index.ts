@@ -26,6 +26,8 @@ export type FilterSettings = {
   temperature: number;
   tint: number;
   blur: number;
+  blackPoint: number;
+  whitePoint: number;
 };
 
 export type ProjectState = {
@@ -47,6 +49,8 @@ export const DEFAULT_FILTERS: FilterSettings = {
   temperature: 0,
   tint: 0,
   blur: 0,
+  blackPoint: 0,
+  whitePoint: 255,
 };
 
 export const DEFAULT_PROJECT_STATE: ProjectState = {
