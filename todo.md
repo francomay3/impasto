@@ -1,0 +1,6 @@
+[ ] draggin a filter widget to the right causes the container to grow and a scrollbar appear in the bottom. overflow should be hidden on the container
+[ ] all changes that cause the indexed image to regenerate, cause the canvas to appear black while it regenerates. canw e fix that? show the stale image while the new image is being regenerated
+[ ] when we cmd z too much and reach the end of the hsitory, we could get some notificaton about it
+[ ] help=>keyboard shortcuts should show the complete available shortcuts in a modal view
+[ ] if adding many filters, i cannot scroll down to see them all. they shrink and the sliders become inccessible
+[ ] we could have 2 different views, kind of like blender has edit mode and object mode, we could have a mode for the filtering and another for the color pallete building. that way we dont need to show both navbars at the same time. they could both be on the right side, but one in filter mode, and the other in pallete mode. also, on filter mode, we show the orginal in the left and the filtered on the right, and in pallete mode we show the filtered on the left and the indexed on the right
