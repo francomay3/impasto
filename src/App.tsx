@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppShell, Box, Button, Checkbox, Group, Modal, NumberInput, SimpleGrid, Stack, Text, TextInput, Title, useMantineTheme } from '@mantine/core';
+import { AppShell, Box, Button, Checkbox, Group, Modal, NumberInput, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useDebouncedValue } from '@mantine/hooks';
-import { FileImage, Download, Brush } from 'lucide-react';
+import { FileImage, Download } from 'lucide-react';
 
 import { useProjectState } from './hooks/useProjectState';
 import { useCanvasPipeline } from './hooks/useCanvasPipeline';
@@ -19,7 +19,6 @@ import type { LevelsParams } from './types';
 type SamplingLevels = { filterId: string; point: 'black' | 'white' } | null;
 
 export default function App() {
-  const theme = useMantineTheme();
   const {
     state, setImage, setPalette, updateColor,
     addFilter, removeFilter, updateFilter, reorderFilters, setPreIndexingBlur,
@@ -157,8 +156,8 @@ export default function App() {
       <AppShell.Header style={{ background: '#111', borderBottom: '1px solid #222' }}>
         <Group h="100%" px="md" justify="space-between">
           <Group gap="xs" align="center">
-            <Brush size={18} color={theme.colors[theme.primaryColor][5]} />
-            <Title order={5}>Artist Toolbox</Title>
+            <img src="/brush.svg" width={26} height={26} />
+            <Title order={5}>Impasto</Title>
           </Group>
           <Group gap="xs">
             {state.imageDataUrl && (

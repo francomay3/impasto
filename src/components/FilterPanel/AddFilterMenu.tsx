@@ -1,7 +1,8 @@
-import { Menu, Button, Text } from '@mantine/core';
-import { Plus, SlidersHorizontal, Palette, Layers, Droplets } from 'lucide-react';
+import { Menu, Text } from '@mantine/core';
+import { SlidersHorizontal, Palette, Layers, Droplets } from 'lucide-react';
 import type { FilterType } from '../../types';
 import { FILTER_LABELS } from '../../types';
+import { AddItemButton } from '../AddItemButton';
 
 const FILTER_ICONS: Record<FilterType, React.ReactNode> = {
   'brightness-contrast': <SlidersHorizontal size={14} />,
@@ -20,17 +21,7 @@ export function AddFilterMenu({ onAdd }: Props) {
   return (
     <Menu shadow="md" width={210} position="bottom-start">
       <Menu.Target>
-        <Button
-          variant="subtle"
-          color="gray"
-          size="xs"
-          leftSection={<Plus size={14} />}
-          fullWidth
-          justify="flex-start"
-          style={{ border: '1px dashed #333' }}
-        >
-          Add Filter
-        </Button>
+        <AddItemButton label="Add Filter" />
       </Menu.Target>
       <Menu.Dropdown style={{ background: '#1a1a1a', border: '1px solid #333' }}>
         {FILTER_ORDER.map(type => (

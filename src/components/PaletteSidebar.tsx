@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
-import { Stack, Box, Text, Badge, ActionIcon, Tooltip, NumberInput, Divider, TextInput, Menu, useMantineTheme } from '@mantine/core';
-import { Crosshair, X, Plus, GripVertical, ChevronDown, ChevronRight, FolderPlus, Folder } from 'lucide-react';
+import { Stack, Box, Text, Badge, ActionIcon, Tooltip, NumberInput, Divider, TextInput, Menu } from '@mantine/core';
+import { Crosshair, X, GripVertical, ChevronDown, ChevronRight, FolderPlus, Folder } from 'lucide-react';
+import { AddItemButton } from './AddItemButton';
 import useConfirmDialog from './useConfirmDialog';
 import {
   DndContext,
@@ -327,8 +328,6 @@ export function PaletteSidebar({
   onBlurChange, onStartSampling, onColorChange, onRenameColor, onAddColor, onDeleteColor,
   onToggleHighlight, onAddGroup, onRemoveGroup, onRenameGroup, onSetColorGroup, onReorderPalette, onReorderGroups,
 }: Props) {
-  const theme = useMantineTheme();
-  const tertiaryColor = theme.other.tertiaryColor as string;
   const colorInputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [draggingType, setDraggingType] = useState<'group' | 'color' | null>(null);
@@ -511,9 +510,7 @@ export function PaletteSidebar({
           </>
         )}
 
-        <ActionIcon variant="filled" color={tertiaryColor} size="md" onClick={onAddColor} style={{ alignSelf: 'center' }}>
-          <Plus size={16} />
-        </ActionIcon>
+        <AddItemButton label="Add Color" onClick={onAddColor} />
       </Stack>
     </DndContext>
   );

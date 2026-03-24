@@ -7,7 +7,7 @@ export interface IStorageService {
   exportJSON(): string;
 }
 
-const STORAGE_KEY = 'artist-toolbox-project';
+const STORAGE_KEY = 'impasto-project';
 
 export class JSONLocalStorage implements IStorageService {
   save(state: ProjectState): void {
