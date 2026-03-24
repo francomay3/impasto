@@ -36,8 +36,12 @@ export function ColorItem({
     setEditingName(false);
   };
 
+  const handleAuxClick = (e: React.MouseEvent) => {
+    if (e.button === 1) { e.preventDefault(); onDeleteColor(color.id); }
+  };
+
   return (
-    <Box style={{ border: samplingColorId === color.id ? '2px solid var(--mantine-color-blue-4)' : '1px solid var(--mantine-color-dark-4)', borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)' }}>
+    <Box onMouseDown={handleAuxClick} style={{ border: samplingColorId === color.id ? '2px solid var(--mantine-color-blue-4)' : '1px solid var(--mantine-color-dark-4)', borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)' }}>
       <Stack gap={4}>
         <Box style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {showDragHandle && (

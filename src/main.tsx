@@ -4,7 +4,8 @@ import { MantineProvider, createTheme, type MantineColorsTuple } from '@mantine/
 import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
-import App from './App.tsx';
+import { AuthProvider } from './context/AuthContext';
+import { AppRouter } from './routes/AppRouter';
 
 // Custom dark palette matching the app's design tokens.
 // Use var(--mantine-color-dark-N) in components instead of hardcoded hex values.
@@ -35,7 +36,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider theme={theme} defaultColorScheme="dark">
       <Notifications />
-      <App />
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
     </MantineProvider>
   </StrictMode>,
 );

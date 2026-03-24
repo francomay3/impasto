@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppShell, Box, Group } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
 import { useProjectState } from './hooks/useProjectState';
+import { useHistory } from './hooks/useHistory';
+import { useSaveStatus } from './hooks/useSaveStatus';
 import { useCanvasPipeline } from './hooks/useCanvasPipeline';
 import { useViewportTransform } from './hooks/useViewportTransform';
 import { useImageHandlers } from './hooks/useImageHandlers';
@@ -13,14 +15,24 @@ import { CanvasViewport } from './components/CanvasViewport';
 import { SamplerOverlay } from './components/SamplerOverlay';
 import { AppHeader } from './components/AppHeader';
 import { ExportModal } from './components/ExportModal';
+import type { ProjectState } from './types';
 
 type SamplingLevels = { filterId: string; point: 'black' | 'white' } | null;
 
-export default function App() {
-  const project = useProjectState();
-  const { state, addFilter, removeFilter, updateFilter, reorderFilters, setPreIndexingBlur,
+interface AppProps {
+  initialState: ProjectState;
+  onSave: (state: ProjectState) => void | Promise<void>;
+  onNewImageFile?: (file: File) => void;
+}
+
+export default function Editor({ initialState, onSave, onNewImageFile }: AppProps) {
+  const { push: historyPush, undo: historyUndo, redo: historyRedo, canUndo, canRedo } = useHistory(initialState);
+  const { status: saveStatus, save } = useSaveStatus(onSave);
+  const handleStateChange = useCallback((s: ProjectState) => { historyPush(s); save(s); }, [historyPush, save]);
+  const project = useProjectState({ initialState, onSave: handleStateChange });
+  const { state, restoreState, addFilter, removeFilter, updateFilter, updateFilterPreview, reorderFilters, setPreIndexingBlur,
     addColor, removeColor, addGroup, removeGroup, renameGroup, setColorGroup, reorderGroups,
-    setPalette, setImage, updateColor } = project;
+    setPalette, setImage, updateColor, renameName } = project;
   const filteredCanvasRef = useRef<HTMLCanvasElement>(null);
   const indexedCanvasRef = useRef<HTMLCanvasElement>(null);
   const pipeline = useCanvasPipeline(filteredCanvasRef, indexedCanvasRef);
@@ -31,10 +43,27 @@ export default function App() {
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
 
   const { handleImageLoad, handleColorChange, handleAddColor, handleDeleteColor,
-    handleToggleHighlight, handleSample, handleSampleLevels, handleFileInput } = useImageHandlers({
+    handleToggleHighlight, handleSample, handleSampleLevels } = useImageHandlers({
     state, pipeline, setImage, updateColor, addColor, removeColor, updateFilter,
     samplingColorId, setSamplingColorId, samplingLevels, setSamplingLevels,
   });
+
+  const handleUndo = useCallback(() => {
+    const prev = historyUndo();
+    if (prev) { restoreState(prev); save(prev); }
+  }, [historyUndo, restoreState, save]);
+
+  const handleRedo = useCallback(() => {
+    const next = historyRedo();
+    if (next) { restoreState(next); save(next); }
+  }, [historyRedo, restoreState, save]);
+
+  const handleFileSelected = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => handleImageLoad(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    if (onNewImageFile) onNewImageFile(file);
+  }, [handleImageLoad, onNewImageFile]);
 
   useEffect(() => {
     if (state.imageDataUrl) viewport.resetTransform();
@@ -42,28 +71,40 @@ export default function App() {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        notifications.show({ message: 'Project saved', color: 'blue' });
-      }
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key === 's') { e.preventDefault(); notifications.show({ message: 'Project saved', color: 'blue' }); }
+      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+      if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { e.preventDefault(); handleRedo(); }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, []);
+  }, [handleUndo, handleRedo]);
 
   return (
     <AppShell
-      header={{ height: 52 }}
+      header={{ height: 68 }}
       navbar={{ width: navbarCollapsed ? 52 : 260, breakpoint: 'sm' }}
       aside={{ width: 260, breakpoint: 'md', collapsed: { mobile: true } }}
       padding={0}
     >
-      <AppHeader hasImage={!!state.imageDataUrl} onExportClick={() => setExportModalOpen(true)} onFileChange={handleFileInput} />
+      <AppHeader
+        projectName={state.name}
+        hasImage={!!state.imageDataUrl}
+        onExportClick={() => setExportModalOpen(true)}
+        onRename={renameName}
+        onAddFilter={addFilter}
+        onAddColor={handleAddColor}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        saveStatus={saveStatus}
+      />
 
       <AppShell.Navbar style={{ background: 'var(--mantine-color-dark-8)', borderRight: '1px solid var(--mantine-color-dark-6)', overflowY: 'auto' }}>
         <FilterPanel
           filters={state.filters} onAddFilter={addFilter} onRemoveFilter={removeFilter}
-          onUpdateFilter={updateFilter} onReorderFilters={reorderFilters}
+          onUpdateFilter={updateFilter} onPreviewFilter={updateFilterPreview} onReorderFilters={reorderFilters}
           collapsed={navbarCollapsed} onToggleCollapse={() => setNavbarCollapsed(v => !v)}
           samplingLevels={samplingLevels}
           onStartSamplingLevels={(filterId, point) => { setSamplingColorId(null); setSamplingLevels({ filterId, point }); }}
@@ -72,7 +113,7 @@ export default function App() {
 
       <AppShell.Main style={{ background: 'var(--mantine-color-dark-9)' }}>
         {!state.imageDataUrl ? (
-          <Box p="xl"><ImageUploader onImageLoad={handleImageLoad} /></Box>
+          <Box p="xl"><ImageUploader onFileSelected={handleFileSelected} /></Box>
         ) : (
           <Group align="flex-start" style={{ height: 'calc(100vh - var(--app-shell-header-height))', gap: 0, overflow: 'hidden' }}>
             <CanvasViewport ref={filteredCanvasRef} label="Filtered Original" viewportTransform={viewport.transform}

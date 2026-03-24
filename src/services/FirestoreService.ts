@@ -1,0 +1,85 @@
+import {
+  collection, doc, addDoc, updateDoc, deleteDoc,
+  getDocs, getDoc, query, orderBy, serverTimestamp, type Timestamp,
+} from 'firebase/firestore';
+import { db } from '../firebase';
+import type { ProjectState } from '../types';
+
+type StoredProject = Omit<ProjectState, 'imageDataUrl' | 'createdAt' | 'updatedAt'> & {
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  imageStorageUrl?: string;
+};
+
+function projectsCol(userId: string) {
+  return collection(db, 'users', userId, 'projects');
+}
+
+function toProjectState(id: string, data: StoredProject): ProjectState {
+  return {
+    ...data,
+    id,
+    imageDataUrl: null,
+    createdAt: data.createdAt.toDate().toISOString(),
+    updatedAt: data.updatedAt.toDate().toISOString(),
+  };
+}
+
+function toPayload(state: ProjectState) {
+  return {
+    name: state.name,
+    palette: state.palette,
+    groups: state.groups,
+    paletteSize: state.paletteSize,
+    filters: state.filters,
+    preIndexingBlur: state.preIndexingBlur,
+    ...(state.imageStorageUrl ? { imageStorageUrl: state.imageStorageUrl } : {}),
+  };
+}
+
+export async function createFirestoreProject(userId: string, state: ProjectState): Promise<string> {
+  const ref = await addDoc(projectsCol(userId), {
+    ...toPayload(state),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+export async function saveFirestoreProject(
+  userId: string,
+  projectId: string,
+  state: ProjectState,
+): Promise<void> {
+  await updateDoc(doc(projectsCol(userId), projectId), {
+    ...toPayload(state),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function listFirestoreProjects(userId: string): Promise<ProjectState[]> {
+  const q = query(projectsCol(userId), orderBy('updatedAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => toProjectState(d.id, d.data() as StoredProject));
+}
+
+export async function getFirestoreProject(
+  userId: string,
+  projectId: string,
+): Promise<ProjectState | null> {
+  const snap = await getDoc(doc(projectsCol(userId), projectId));
+  if (!snap.exists()) return null;
+  return toProjectState(snap.id, snap.data() as StoredProject);
+}
+
+export async function saveFirestoreImageUrl(
+  userId: string,
+  projectId: string,
+  imageStorageUrl: string,
+): Promise<void> {
+  await updateDoc(doc(projectsCol(userId), projectId), { imageStorageUrl });
+}
+
+export async function deleteFirestoreProject(userId: string, projectId: string): Promise<void> {
+  await deleteDoc(doc(projectsCol(userId), projectId));
+}

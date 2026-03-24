@@ -17,6 +17,7 @@ interface Props {
   onAddFilter: (type: FilterType) => void;
   onRemoveFilter: (id: string) => void;
   onUpdateFilter: (id: string, params: Record<string, number>) => void;
+  onPreviewFilter: (id: string, params: Record<string, number>) => void;
   onReorderFilters: (filters: FilterInstance[]) => void;
   samplingLevels: SamplingLevels | null;
   onStartSamplingLevels: (filterId: string, point: 'black' | 'white') => void;
@@ -25,7 +26,7 @@ interface Props {
 }
 
 export function FilterPanel({
-  filters, onAddFilter, onRemoveFilter, onUpdateFilter, onReorderFilters,
+  filters, onAddFilter, onRemoveFilter, onUpdateFilter, onPreviewFilter, onReorderFilters,
   samplingLevels, onStartSamplingLevels, collapsed, onToggleCollapse,
 }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -70,6 +71,7 @@ export function FilterPanel({
                 filter={filter}
                 onRemove={() => onRemoveFilter(filter.id)}
                 onUpdate={(params) => onUpdateFilter(filter.id, params)}
+                onPreview={(params) => onPreviewFilter(filter.id, params)}
                 samplingLevels={samplingLevels?.filterId === filter.id ? samplingLevels.point : null}
                 onStartSamplingLevels={(point) => onStartSamplingLevels(filter.id, point)}
               />

@@ -67,7 +67,8 @@ export function useImageHandlers({
   const handleDeleteColor = useCallback((id: string) => {
     removeColor(id);
     renderPalette(undefined, state.palette.filter(c => c.id !== id));
-  }, [removeColor, renderPalette, state.palette]);
+    if (samplingColorId === id) setSamplingColorId(null);
+  }, [removeColor, renderPalette, state.palette, samplingColorId, setSamplingColorId]);
 
   const handleToggleHighlight = useCallback((id: string) => {
     const highlighted = !state.palette.find(c => c.id === id)?.highlighted;
@@ -105,13 +106,5 @@ export function useImageHandlers({
     setSamplingLevels(null);
   }, [samplingLevels, state.filters, updateFilter, setSamplingLevels]);
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => handleImageLoad(ev.target?.result as string);
-    reader.readAsDataURL(file);
-  };
-
-  return { handleImageLoad, handleColorChange, handleAddColor, handleDeleteColor, handleToggleHighlight, handleSample, handleSampleLevels, handleFileInput };
+  return { handleImageLoad, handleColorChange, handleAddColor, handleDeleteColor, handleToggleHighlight, handleSample, handleSampleLevels };
 }

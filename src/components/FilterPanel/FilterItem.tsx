@@ -14,27 +14,33 @@ interface Props {
   filter: FilterInstance;
   onRemove: () => void;
   onUpdate: (params: Record<string, number>) => void;
+  onPreview: (params: Record<string, number>) => void;
   samplingLevels: 'black' | 'white' | null;
   onStartSamplingLevels: (point: 'black' | 'white') => void;
 }
 
-function FilterWidget({ filter, onUpdate, samplingLevels, onStartSamplingLevels }: Omit<Props, 'onRemove'>) {
+function FilterWidget({ filter, onUpdate, onPreview, samplingLevels, onStartSamplingLevels }: Omit<Props, 'onRemove'>) {
   switch (filter.type) {
-    case 'brightness-contrast': return <BrightnessContrast params={filter.params as BrightnessContrastParams} onUpdate={onUpdate} />;
-    case 'hue-saturation': return <HueSaturation params={filter.params as HueSaturationParams} onUpdate={onUpdate} />;
+    case 'brightness-contrast': return <BrightnessContrast params={filter.params as BrightnessContrastParams} onUpdate={onUpdate} onPreview={onPreview} />;
+    case 'hue-saturation': return <HueSaturation params={filter.params as HueSaturationParams} onUpdate={onUpdate} onPreview={onPreview} />;
     case 'levels': return <Levels params={filter.params as LevelsParams} onUpdate={onUpdate} samplingLevels={samplingLevels} onStartSamplingLevels={onStartSamplingLevels} />;
-    case 'blur': return <Blur params={filter.params as BlurParams} onUpdate={onUpdate} />;
+    case 'blur': return <Blur params={filter.params as BlurParams} onUpdate={onUpdate} onPreview={onPreview} />;
     default: return null;
   }
 }
 
-export function FilterItem({ filter, onRemove, onUpdate, samplingLevels, onStartSamplingLevels }: Props) {
+export function FilterItem({ filter, onRemove, onUpdate, onPreview, samplingLevels, onStartSamplingLevels }: Props) {
   const [expanded, setExpanded] = useState(true);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: filter.id });
+
+  const handleAuxClick = (e: React.MouseEvent) => {
+    if (e.button === 1) { e.preventDefault(); onRemove(); }
+  };
 
   return (
     <Box
       ref={setNodeRef}
+      onMouseDown={handleAuxClick}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, border: '1px solid var(--mantine-color-dark-5)', borderRadius: 6, overflow: 'hidden', background: 'var(--mantine-color-dark-7)' }}
     >
       <Group px="xs" py={6} gap={4} style={{ background: 'var(--mantine-color-dark-6)' }} {...attributes}>
@@ -53,7 +59,7 @@ export function FilterItem({ filter, onRemove, onUpdate, samplingLevels, onStart
       </Group>
       <Collapse in={expanded}>
         <Box p="xs">
-          <FilterWidget filter={filter} onUpdate={onUpdate} samplingLevels={samplingLevels} onStartSamplingLevels={onStartSamplingLevels} />
+          <FilterWidget filter={filter} onUpdate={onUpdate} onPreview={onPreview} samplingLevels={samplingLevels} onStartSamplingLevels={onStartSamplingLevels} />
         </Box>
       </Collapse>
     </Box>

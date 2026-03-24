@@ -51,6 +51,7 @@ export type ProjectState = {
   id: string;
   name: string;
   imageDataUrl: string | null;
+  imageStorageUrl?: string;
   palette: Color[];
   groups: ColorGroup[];
   paletteSize: number;
@@ -68,7 +69,7 @@ export const DEFAULT_PROJECT_STATE: ProjectState = {
   groups: [],
   paletteSize: 8,
   filters: [],
-  preIndexingBlur: 0,
+  preIndexingBlur: 3,
   createdAt: '',
   updatedAt: '',
 };

@@ -3,18 +3,16 @@ import { Box, Text, Stack, Button, useMantineTheme } from '@mantine/core';
 import { Upload } from 'lucide-react';
 
 interface Props {
-  onImageLoad: (dataUrl: string) => void;
+  onFileSelected: (file: File) => void;
 }
 
-export function ImageUploader({ onImageLoad }: Props) {
+export function ImageUploader({ onFileSelected }: Props) {
   const theme = useMantineTheme();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = (e) => onImageLoad(e.target?.result as string);
-    reader.readAsDataURL(file);
+    onFileSelected(file);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -42,7 +40,7 @@ export function ImageUploader({ onImageLoad }: Props) {
         type="file"
         accept="image/*"
         style={{ display: 'none' }}
-        onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
       />
       <Stack align="center" gap="xs">
         <Upload size={40} color="var(--mantine-color-dark-1)" />

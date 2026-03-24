@@ -1,153 +1,120 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { ProjectState, Color, ColorGroup, FilterInstance, FilterType } from '../types';
-import { DEFAULT_PROJECT_STATE, DEFAULT_FILTER_PARAMS } from '../types';
-import { storageService } from '../services/StorageService';
+import { DEFAULT_FILTER_PARAMS } from '../types';
 
-function createProject(): ProjectState {
-  return {
-    ...DEFAULT_PROJECT_STATE,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+interface ProjectStateOptions {
+  initialState: ProjectState;
+  onSave: (state: ProjectState) => void;
 }
 
-function migrateState(raw: unknown): ProjectState | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const s = raw as Record<string, unknown>;
-  if (s.filters && !Array.isArray(s.filters)) {
-    const old = s.filters as Record<string, unknown>;
-    return { ...s, filters: [], preIndexingBlur: (old.blur as number) ?? 0 } as unknown as ProjectState;
-  }
-  return s as ProjectState;
-}
+const ts = () => new Date().toISOString();
 
-export function useProjectState() {
-  const [state, setState] = useState<ProjectState>(() => {
-    const saved = storageService.load();
-    return migrateState(saved) ?? createProject();
-  });
+export function useProjectState({ initialState, onSave }: ProjectStateOptions) {
+  const [state, setStateRaw] = useState<ProjectState>(initialState);
+  const stateRef = useRef<ProjectState>(initialState);
 
-  const updateState = useCallback((partial: Partial<ProjectState>) => {
-    setState(prev => {
-      const next = { ...prev, ...partial, updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
+  const set = useCallback((next: ProjectState) => {
+    stateRef.current = next;
+    setStateRaw(next);
   }, []);
+
+  const saveAndSet = useCallback((next: ProjectState) => {
+    set(next);
+    onSave(next);
+  }, [set, onSave]);
 
   const setImage = useCallback((dataUrl: string) => {
     const initialColor: Color = { id: crypto.randomUUID(), hex: '#000000', locked: false, ratio: 0, mixRecipe: '' };
-    updateState({ imageDataUrl: dataUrl, palette: [initialColor], groups: [], filters: [], preIndexingBlur: 0 });
-  }, [updateState]);
+    saveAndSet({ ...stateRef.current, imageDataUrl: dataUrl, palette: [initialColor], groups: [], filters: [], preIndexingBlur: 3, updatedAt: ts() });
+  }, [saveAndSet]);
 
-  const setPalette = useCallback((palette: Color[]) => updateState({ palette }), [updateState]);
+  const setPalette = useCallback((palette: Color[]) => {
+    saveAndSet({ ...stateRef.current, palette, updatedAt: ts() });
+  }, [saveAndSet]);
 
   const updateColor = useCallback((id: string, changes: Partial<Color>) => {
-    setState(prev => {
-      const palette = prev.palette.map(c => c.id === id ? { ...c, ...changes } : c);
-      const next = { ...prev, palette, updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    const palette = stateRef.current.palette.map(c => c.id === id ? { ...c, ...changes } : c);
+    saveAndSet({ ...stateRef.current, palette, updatedAt: ts() });
+  }, [saveAndSet]);
 
   const addFilter = useCallback((type: FilterType) => {
     const instance: FilterInstance = { id: crypto.randomUUID(), type, params: { ...DEFAULT_FILTER_PARAMS[type] } };
-    setState(prev => {
-      const next = { ...prev, filters: [...prev.filters, instance], updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    saveAndSet({ ...stateRef.current, filters: [...stateRef.current.filters, instance], updatedAt: ts() });
+  }, [saveAndSet]);
 
   const removeFilter = useCallback((id: string) => {
-    setState(prev => {
-      const next = { ...prev, filters: prev.filters.filter(f => f.id !== id), updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    saveAndSet({ ...stateRef.current, filters: stateRef.current.filters.filter(f => f.id !== id), updatedAt: ts() });
+  }, [saveAndSet]);
 
   const updateFilter = useCallback((id: string, params: Record<string, number>) => {
-    setState(prev => {
-      const filters = prev.filters.map(f => f.id === id ? { ...f, params: { ...f.params, ...params } } : f);
-      const next = { ...prev, filters, updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    const filters = stateRef.current.filters.map(f => f.id === id ? { ...f, params: { ...f.params, ...params } } : f);
+    saveAndSet({ ...stateRef.current, filters, updatedAt: ts() });
+  }, [saveAndSet]);
 
-  const reorderFilters = useCallback((filters: FilterInstance[]) => updateState({ filters }), [updateState]);
-  const setPreIndexingBlur = useCallback((preIndexingBlur: number) => updateState({ preIndexingBlur }), [updateState]);
-  const setPaletteSize = useCallback((paletteSize: number) => updateState({ paletteSize }), [updateState]);
+  const updateFilterPreview = useCallback((id: string, params: Record<string, number>) => {
+    const filters = stateRef.current.filters.map(f => f.id === id ? { ...f, params: { ...f.params, ...params } } : f);
+    set({ ...stateRef.current, filters });
+  }, [set]);
+
+  const reorderFilters = useCallback((filters: FilterInstance[]) => {
+    saveAndSet({ ...stateRef.current, filters, updatedAt: ts() });
+  }, [saveAndSet]);
+
+  const setPreIndexingBlur = useCallback((preIndexingBlur: number) => {
+    saveAndSet({ ...stateRef.current, preIndexingBlur, updatedAt: ts() });
+  }, [saveAndSet]);
+
+  const setPaletteSize = useCallback((paletteSize: number) => {
+    saveAndSet({ ...stateRef.current, paletteSize, updatedAt: ts() });
+  }, [saveAndSet]);
 
   const addColor = useCallback((id: string) => {
-    setState(prev => {
-      const newColor: Color = { id, hex: '#000000', locked: false, ratio: 0, mixRecipe: '' };
-      const next = { ...prev, palette: [...prev.palette, newColor], updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    const newColor: Color = { id, hex: '#000000', locked: false, ratio: 0, mixRecipe: '' };
+    saveAndSet({ ...stateRef.current, palette: [...stateRef.current.palette, newColor], updatedAt: ts() });
+  }, [saveAndSet]);
 
   const removeColor = useCallback((id: string) => {
-    setState(prev => {
-      const next = { ...prev, palette: prev.palette.filter(c => c.id !== id), updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    saveAndSet({ ...stateRef.current, palette: stateRef.current.palette.filter(c => c.id !== id), updatedAt: ts() });
+  }, [saveAndSet]);
 
   const addGroup = useCallback((id: string, name: string) => {
-    setState(prev => {
-      const groups = [...(prev.groups ?? []), { id, name }];
-      const next = { ...prev, groups, updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    const groups = [...(stateRef.current.groups ?? []), { id, name }];
+    saveAndSet({ ...stateRef.current, groups, updatedAt: ts() });
+  }, [saveAndSet]);
 
   const removeGroup = useCallback((id: string) => {
-    setState(prev => {
-      const groups = (prev.groups ?? []).filter(g => g.id !== id);
-      const palette = prev.palette.map(c => c.groupId === id ? { ...c, groupId: undefined } : c);
-      const next = { ...prev, groups, palette, updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    const groups = (stateRef.current.groups ?? []).filter(g => g.id !== id);
+    const palette = stateRef.current.palette.map(c => c.groupId === id ? { ...c, groupId: undefined } : c);
+    saveAndSet({ ...stateRef.current, groups, palette, updatedAt: ts() });
+  }, [saveAndSet]);
 
   const renameGroup = useCallback((id: string, name: string) => {
-    setState(prev => {
-      const groups = (prev.groups ?? []).map(g => g.id === id ? { ...g, name } : g);
-      const next = { ...prev, groups, updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    const groups = (stateRef.current.groups ?? []).map(g => g.id === id ? { ...g, name } : g);
+    saveAndSet({ ...stateRef.current, groups, updatedAt: ts() });
+  }, [saveAndSet]);
 
   const setColorGroup = useCallback((colorId: string, groupId: string | undefined) => {
-    setState(prev => {
-      const palette = prev.palette.map(c => c.id === colorId ? { ...c, groupId } : c);
-      const next = { ...prev, palette, updatedAt: new Date().toISOString() };
-      storageService.save(next);
-      return next;
-    });
-  }, []);
+    const palette = stateRef.current.palette.map(c => c.id === colorId ? { ...c, groupId } : c);
+    saveAndSet({ ...stateRef.current, palette, updatedAt: ts() });
+  }, [saveAndSet]);
 
-  const reorderGroups = useCallback((groups: ColorGroup[]) => updateState({ groups }), [updateState]);
+  const reorderGroups = useCallback((groups: ColorGroup[]) => {
+    saveAndSet({ ...stateRef.current, groups, updatedAt: ts() });
+  }, [saveAndSet]);
 
-  const newProject = useCallback(() => {
-    const fresh = createProject();
-    storageService.save(fresh);
-    setState(fresh);
-  }, []);
+  const renameName = useCallback((name: string) => {
+    saveAndSet({ ...stateRef.current, name, updatedAt: ts() });
+  }, [saveAndSet]);
+
+  const restoreState = useCallback((s: ProjectState) => {
+    set({ ...s, updatedAt: ts() });
+  }, [set]);
 
   return {
     state, setImage, setPalette, updateColor,
-    addFilter, removeFilter, updateFilter, reorderFilters, setPreIndexingBlur,
+    addFilter, removeFilter, updateFilter, updateFilterPreview, reorderFilters, setPreIndexingBlur,
     setPaletteSize, addColor, removeColor,
-    addGroup, removeGroup, renameGroup, setColorGroup, reorderGroups, newProject,
+    addGroup, removeGroup, renameGroup, setColorGroup, reorderGroups, renameName,
+    restoreState,
   };
 }
