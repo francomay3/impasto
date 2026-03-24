@@ -30,7 +30,7 @@ export function useViewportTransform() {
   }, [applyTransform]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 && e.button !== 1) return;
     e.preventDefault();
     const prev = transformRef.current;
     dragRef.current = { startX: e.clientX, startY: e.clientY, startPanX: prev.panX, startPanY: prev.panY };

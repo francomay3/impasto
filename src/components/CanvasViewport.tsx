@@ -22,8 +22,11 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
 
     useEffect(() => {
       const el = containerRef.current;
-      if (!el || !onWheel || isSampling) return;
-      const handler = (e: WheelEvent) => onWheel(e, el.getBoundingClientRect());
+      if (!el || !onWheel) return;
+      const handler = (e: WheelEvent) => {
+        if (isSampling && e.altKey) return; // Alt+Scroll reserved for brush size during sampling
+        onWheel(e, el.getBoundingClientRect());
+      };
       el.addEventListener('wheel', handler, { passive: false });
       return () => el.removeEventListener('wheel', handler);
     }, [onWheel, isSampling]);
@@ -46,7 +49,9 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
         <div
           ref={containerRef}
           style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', cursor }}
-          onMouseDown={isSampling ? undefined : onMouseDown}
+          onMouseDown={onMouseDown && isSampling
+            ? (e) => { if (e.button === 1) onMouseDown(e); } // during sampling, only middle-click pans
+            : onMouseDown}
           onDoubleClick={isSampling ? undefined : onDoubleClick}
         >
           <div
