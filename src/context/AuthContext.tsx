@@ -14,8 +14,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    return onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        await u.reload();
+        setUser(auth.currentUser);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
   }, []);

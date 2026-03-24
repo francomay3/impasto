@@ -1,28 +1,20 @@
 import { forwardRef, useRef, useEffect } from 'react';
 import { Text, Box } from '@mantine/core';
-import type { ViewportTransform } from '../hooks/useViewportTransform';
+import { useCanvasContext } from '../context/CanvasContext';
 
 interface Props {
   label: string;
   children?: React.ReactNode;
-  viewportTransform?: ViewportTransform;
-  onWheel?: (e: WheelEvent, rect: DOMRect) => void;
-  onMouseDown?: (e: React.MouseEvent) => void;
-  onDoubleClick?: () => void;
-  isDragging?: boolean;
-  isSampling?: boolean;
 }
 
 export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
-  function CanvasViewport(
-    { label, children, viewportTransform, onWheel, onMouseDown, onDoubleClick, isDragging, isSampling },
-    ref
-  ) {
+  function CanvasViewport({ label, children }, ref) {
+    const { viewportTransform: t, onWheel, onMouseDown, onResetTransform, isDragging, isSampling } = useCanvasContext();
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
       const el = containerRef.current;
-      if (!el || !onWheel) return;
+      if (!el) return;
       const handler = (e: WheelEvent) => {
         if (isSampling && e.altKey) return; // Alt+Scroll reserved for brush size during sampling
         onWheel(e, el.getBoundingClientRect());
@@ -31,45 +23,19 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
       return () => el.removeEventListener('wheel', handler);
     }, [onWheel, isSampling]);
 
-    const t = viewportTransform;
-    const transformCss = t
-      ? `translate(${t.panX}px, ${t.panY}px) scale(${t.scale})`
-      : undefined;
-
-    const cursor = isSampling
-      ? 'crosshair'
-      : isDragging
-      ? 'grabbing'
-      : onMouseDown
-      ? 'grab'
-      : 'default';
+    const cursor = isSampling ? 'crosshair' : isDragging ? 'grabbing' : 'grab';
+    const transformCss = `translate(${t.panX}px, ${t.panY}px) scale(${t.scale})`;
 
     return (
       <Box style={{ background: 'var(--mantine-color-dark-9)', flex: 1, minWidth: 0, position: 'relative', height: '100%' }}>
         <Box
           ref={containerRef}
           style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', cursor }}
-          onMouseDown={onMouseDown && isSampling
-            ? (e) => { if (e.button === 1) onMouseDown(e); } // during sampling, only middle-click pans
-            : onMouseDown}
-          onDoubleClick={isSampling ? undefined : onDoubleClick}
+          onMouseDown={isSampling ? (e) => { if (e.button === 1) onMouseDown(e); } : onMouseDown}
+          onDoubleClick={isSampling ? undefined : onResetTransform}
         >
-          <Box
-            style={{
-              transformOrigin: '0 0',
-              transform: transformCss,
-              willChange: 'transform',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <canvas
-              ref={ref}
-              style={{ width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '100%', display: 'block' }}
-            />
+          <Box style={{ transformOrigin: '0 0', transform: transformCss, willChange: 'transform', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <canvas ref={ref} style={{ width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '100%', display: 'block' }} />
             {children}
           </Box>
         </Box>

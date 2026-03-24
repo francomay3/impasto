@@ -1,5 +1,5 @@
 import { Menu, Avatar, Text, Group } from '@mantine/core';
-import { LogOut, Settings, CreditCard, Bell } from 'lucide-react';
+import { LogOut, Settings, CreditCard, Bell, FlaskConical } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +28,8 @@ export function UserMenu() {
         <Menu.Item leftSection={<Settings size={14} />} disabled>Settings</Menu.Item>
         <Menu.Item leftSection={<CreditCard size={14} />} disabled>Billing</Menu.Item>
         <Menu.Item leftSection={<Bell size={14} />} disabled>Notifications</Menu.Item>
+        <Menu.Divider />
+        <Menu.Item leftSection={<FlaskConical size={14} />} disabled>My Pigments</Menu.Item>
         <Menu.Divider />
         <Menu.Item leftSection={<LogOut size={14} />} color="red" onClick={() => signOut(auth)}>
           Sign out

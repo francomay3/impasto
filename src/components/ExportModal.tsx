@@ -5,18 +5,17 @@ import { notifications } from '@mantine/notifications';
 import { exportPdf } from '../services/PdfExport';
 import { DEFAULT_MIX_GRANULARITY, DEFAULT_DELTA_THRESHOLD, PIGMENTS } from '../services/ColorMixer';
 import type { ProjectState } from '../types';
+import { useCanvasContext } from '../context/CanvasContext';
 
 interface Props {
   opened: boolean;
-  defaultTitle: string;
   state: ProjectState;
-  filteredCanvasRef: React.RefObject<HTMLCanvasElement | null>;
-  indexedCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   onClose: () => void;
 }
 
-export function ExportModal({ opened, defaultTitle, state, filteredCanvasRef, indexedCanvasRef, onClose }: Props) {
-  const [title, setTitle] = useState(defaultTitle);
+export function ExportModal({ opened, state, onClose }: Props) {
+  const { filteredCanvasRef, indexedCanvasRef } = useCanvasContext();
+  const [title, setTitle] = useState(state.name);
   const [granularity, setGranularity] = useState(DEFAULT_MIX_GRANULARITY);
   const [delta, setDelta] = useState(DEFAULT_DELTA_THRESHOLD);
   const [pigments, setPigments] = useState<Set<string>>(() => new Set(PIGMENTS.map(p => p.name)));

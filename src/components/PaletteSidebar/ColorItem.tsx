@@ -3,25 +3,18 @@ import { Stack, Box, Text, Badge, ActionIcon, Tooltip, TextInput, Menu } from '@
 import { Crosshair, X, GripVertical, Folder, Plus } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { Color, ColorGroup } from '../../types';
+import type { Color } from '../../types';
+import { usePaletteContext } from '../../context/PaletteContext';
 
-export interface ColorItemSharedProps {
-  groups: ColorGroup[];
-  samplingColorId: string | null;
-  onStartSampling: (id: string) => void;
-  onColorChange: (id: string, hex: string) => void;
-  onRenameColor: (id: string, name: string) => void;
-  onDeleteColor: (id: string) => void;
-  onSetGroup: (colorId: string, groupId: string | undefined) => void;
-  onAddGroup: (id: string, name: string) => void;
-  onToggleHighlight: (id: string) => void;
+interface ColorItemProps {
+  color: Color;
+  dragHandleProps?: React.HTMLAttributes<HTMLElement>;
+  showDragHandle?: boolean;
   colorInputRef: (el: HTMLInputElement | null) => void;
 }
 
-export function ColorItem({
-  color, groups, samplingColorId, dragHandleProps, showDragHandle,
-  onStartSampling, onColorChange, onRenameColor, onDeleteColor, onSetGroup, onAddGroup, onToggleHighlight, colorInputRef,
-}: { color: Color; dragHandleProps?: React.HTMLAttributes<HTMLElement>; showDragHandle?: boolean } & ColorItemSharedProps) {
+export function ColorItem({ color, dragHandleProps, showDragHandle, colorInputRef }: ColorItemProps) {
+  const { groups, samplingColorId, onStartSampling, onColorChange, onRenameColor, onDeleteColor, onSetColorGroup, onAddGroup, onToggleHighlight } = usePaletteContext();
   const [editingName, setEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
 
@@ -80,12 +73,12 @@ export function ColorItem({
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Label>Assign group</Menu.Label>
-                <Menu.Item leftSection={<X size={12} />} onClick={() => onSetGroup(color.id, undefined)} style={{ fontWeight: !color.groupId ? 600 : 400 }}>No group</Menu.Item>
+                <Menu.Item leftSection={<X size={12} />} onClick={() => onSetColorGroup(color.id, undefined)} style={{ fontWeight: !color.groupId ? 600 : 400 }}>No group</Menu.Item>
                 {groups.map(g => (
-                  <Menu.Item key={g.id} leftSection={<Folder size={12} />} onClick={() => onSetGroup(color.id, g.id)} style={{ fontWeight: color.groupId === g.id ? 600 : 400 }}>{g.name}</Menu.Item>
+                  <Menu.Item key={g.id} leftSection={<Folder size={12} />} onClick={() => onSetColorGroup(color.id, g.id)} style={{ fontWeight: color.groupId === g.id ? 600 : 400 }}>{g.name}</Menu.Item>
                 ))}
                 <Menu.Divider />
-                <Menu.Item leftSection={<Plus size={12} />} onClick={() => { const id = crypto.randomUUID(); onAddGroup(id, `Group ${groups.length + 1}`); onSetGroup(color.id, id); }}>New group</Menu.Item>
+                <Menu.Item leftSection={<Plus size={12} />} onClick={() => { const id = crypto.randomUUID(); onAddGroup(id, `Group ${groups.length + 1}`); onSetColorGroup(color.id, id); }}>New group</Menu.Item>
               </Menu.Dropdown>
             </Menu>
             <Tooltip label={color.highlighted ? 'Remove highlight' : 'Highlight in indexed view'}>
@@ -108,11 +101,17 @@ export function ColorItem({
   );
 }
 
-export function SortableColorItem({ color, showDragHandle, ...rest }: { color: Color; showDragHandle?: boolean } & ColorItemSharedProps) {
+interface SortableColorItemProps {
+  color: Color;
+  showDragHandle?: boolean;
+  colorInputRef: (el: HTMLInputElement | null) => void;
+}
+
+export function SortableColorItem({ color, showDragHandle, colorInputRef }: SortableColorItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: color.id, data: { type: 'color' } });
   return (
     <Box ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}>
-      <ColorItem color={color} dragHandleProps={{ ...attributes, ...listeners }} showDragHandle={showDragHandle} {...rest} />
+      <ColorItem color={color} dragHandleProps={{ ...attributes, ...listeners }} showDragHandle={showDragHandle} colorInputRef={colorInputRef} />
     </Box>
   );
 }

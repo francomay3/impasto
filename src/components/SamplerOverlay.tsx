@@ -1,26 +1,24 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { Box, Slider, Text, Stack, Button } from '@mantine/core';
+import { useHotkeys } from '@mantine/hooks';
 import { sampleCircleAverage } from '../utils/imageProcessing';
 import { rgbToHex } from '../utils/colorUtils';
+import { useCanvasContext } from '../context/CanvasContext';
 
 interface Props {
-  filteredCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   onSample: (hex: string) => void;
   onCancel: () => void;
-  viewportScale?: number;
 }
 
-export function SamplerOverlay({ filteredCanvasRef, onSample, onCancel, viewportScale }: Props) {
+export function SamplerOverlay({ onSample, onCancel }: Props) {
+  const { filteredCanvasRef, viewportTransform } = useCanvasContext();
+  const viewportScale = viewportTransform.scale;
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const [radius, setRadius] = useState(30);
   // Store raw client coords so we can recompute overlay-relative position after zoom resizes the overlay.
   const [mouseClient, setMouseClient] = useState({ x: -9999, y: -9999 });
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [onCancel]);
+  useHotkeys([['Escape', onCancel]]);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {

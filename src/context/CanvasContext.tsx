@@ -1,0 +1,24 @@
+import { createContext, useContext, type RefObject } from 'react';
+import type { ViewportTransform } from '../hooks/useViewportTransform';
+
+export interface CanvasContextValue {
+  filteredCanvasRef: RefObject<HTMLCanvasElement | null>;
+  indexedCanvasRef: RefObject<HTMLCanvasElement | null>;
+  viewportTransform: ViewportTransform;
+  isDragging: boolean;
+  isSampling: boolean;
+  onWheel: (e: WheelEvent, rect: DOMRect) => void;
+  onMouseDown: (e: React.MouseEvent) => void;
+  onResetTransform: () => void;
+}
+
+const CanvasContext = createContext<CanvasContextValue | null>(null);
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useCanvasContext(): CanvasContextValue {
+  const ctx = useContext(CanvasContext);
+  if (!ctx) throw new Error('useCanvasContext must be used within CanvasContext.Provider');
+  return ctx;
+}
+
+export { CanvasContext };

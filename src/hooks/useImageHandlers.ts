@@ -50,6 +50,11 @@ export function useImageHandlers({
     if (imageData) { lastImageDataRef.current = imageData; renderPalette(imageData); }
   }, [debouncedFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!state.imageDataUrl) return;
+    renderPalette();
+  }, [state.preIndexingBlur]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleImageLoad = useCallback((dataUrl: string) => { setImage(dataUrl); }, [setImage]);
 
   const handleColorChange = useCallback((id: string, hex: string) => {

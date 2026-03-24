@@ -3,32 +3,17 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-import type { FilterInstance, FilterType } from '../../types';
 import { FilterItem } from './FilterItem';
 import { AddFilterMenu } from './AddFilterMenu';
-
-interface SamplingLevels {
-  filterId: string;
-  point: 'black' | 'white';
-}
+import { useFilterContext } from '../../context/FilterContext';
 
 interface Props {
-  filters: FilterInstance[];
-  onAddFilter: (type: FilterType) => void;
-  onRemoveFilter: (id: string) => void;
-  onUpdateFilter: (id: string, params: Record<string, number>) => void;
-  onPreviewFilter: (id: string, params: Record<string, number>) => void;
-  onReorderFilters: (filters: FilterInstance[]) => void;
-  samplingLevels: SamplingLevels | null;
-  onStartSamplingLevels: (filterId: string, point: 'black' | 'white') => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }
 
-export function FilterPanel({
-  filters, onAddFilter, onRemoveFilter, onUpdateFilter, onPreviewFilter, onReorderFilters,
-  samplingLevels, onStartSamplingLevels, collapsed, onToggleCollapse,
-}: Props) {
+export function FilterPanel({ collapsed, onToggleCollapse }: Props) {
+  const { filters, onAddFilter, onReorderFilters } = useFilterContext();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   function handleDragEnd(event: DragEndEvent) {
@@ -65,17 +50,7 @@ export function FilterPanel({
         <AddFilterMenu onAdd={onAddFilter} />
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={filters.map(f => f.id)} strategy={verticalListSortingStrategy}>
-            {filters.map(filter => (
-              <FilterItem
-                key={filter.id}
-                filter={filter}
-                onRemove={() => onRemoveFilter(filter.id)}
-                onUpdate={(params) => onUpdateFilter(filter.id, params)}
-                onPreview={(params) => onPreviewFilter(filter.id, params)}
-                samplingLevels={samplingLevels?.filterId === filter.id ? samplingLevels.point : null}
-                onStartSamplingLevels={(point) => onStartSamplingLevels(filter.id, point)}
-              />
-            ))}
+            {filters.map(filter => <FilterItem key={filter.id} filter={filter} />)}
           </SortableContext>
         </DndContext>
         {filters.length === 0 && (

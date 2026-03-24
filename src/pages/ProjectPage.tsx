@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { Center, Loader } from '@mantine/core';
 import { useAuth } from '../context/AuthContext';
 import { getFirestoreProject, saveFirestoreProject, saveFirestoreImageUrl } from '../services/FirestoreService';
 import { uploadProjectImage } from '../services/ImageStorageService';
 import Editor from '../Editor';
+import { DEFAULT_PROJECT_STATE } from '../types';
 import type { ProjectState } from '../types';
 
 type LoadState = ProjectState | 'loading' | 'not-found';
@@ -51,15 +51,16 @@ export function ProjectPage() {
     await saveFirestoreImageUrl(user.uid, id, url);
   }, [user, id]);
 
-  if (loadState === 'loading') {
-    return (
-      <Center h="100vh" style={{ background: 'var(--mantine-color-dark-9)' }}>
-        <Loader color="teal" />
-      </Center>
-    );
-  }
-
   if (loadState === 'not-found') return <Navigate to="/" replace />;
 
-  return <Editor initialState={loadState} onSave={onSave} onNewImageFile={onNewImageFile} />;
+  const isLoading = loadState === 'loading';
+  return (
+    <Editor
+      key={isLoading ? 'loading' : 'loaded'}
+      initialState={isLoading ? DEFAULT_PROJECT_STATE : loadState}
+      isLoading={isLoading}
+      onSave={onSave}
+      onNewImageFile={onNewImageFile}
+    />
+  );
 }

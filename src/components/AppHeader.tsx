@@ -1,12 +1,14 @@
-import { AppShell, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
-import { SlidersHorizontal, Palette, Layers, Droplets } from 'lucide-react';
+import { AppShell, Group, Menu, Skeleton, Stack, Text, UnstyledButton } from '@mantine/core';
+import { SlidersHorizontal, Palette, Layers, Droplets, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EditableTitle } from './EditableTitle';
 import { UserMenu } from './UserMenu';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
 import type { FilterType } from '../types';
 import { FILTER_LABELS } from '../types';
-import type { SaveStatus } from '../hooks/useSaveStatus';
+import { useEditorContext } from '../context/EditorContext';
+import { useFilterContext } from '../context/FilterContext';
+import { usePaletteContext } from '../context/PaletteContext';
 
 const FILTER_ICONS: Record<FilterType, React.ReactNode> = {
   'brightness-contrast': <SlidersHorizontal size={14} />,
@@ -20,20 +22,6 @@ const FILTER_GROUPS: { label: string; filters: FilterType[] }[] = [
   { label: 'Color', filters: ['hue-saturation'] },
   { label: 'Effects', filters: ['blur'] },
 ];
-
-interface Props {
-  projectName: string;
-  hasImage: boolean;
-  onExportClick: () => void;
-  onRename: (name: string) => void;
-  onAddFilter?: (type: FilterType) => void;
-  onAddColor?: () => void;
-  onUndo: () => void;
-  onRedo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  saveStatus: SaveStatus;
-}
 
 function MenuButton({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -57,8 +45,11 @@ function MenuButton({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-export function AppHeader({ projectName, hasImage, onExportClick, onRename, onAddFilter, onAddColor, onUndo, onRedo, canUndo, canRedo, saveStatus }: Props) {
+export function AppHeader() {
   const navigate = useNavigate();
+  const { projectName, hasImage, onExportClick, onRename, onUndo, onRedo, canUndo, canRedo, saveStatus, isLoading } = useEditorContext();
+  const { onAddFilter } = useFilterContext();
+  const { onAddColor } = usePaletteContext();
   return (
     <AppShell.Header style={{ background: 'var(--mantine-color-dark-9)', borderBottom: '1px solid var(--mantine-color-dark-6)' }}>
       <style>{`.header-menu-btn:hover { background: var(--mantine-color-dark-6); }`}</style>
@@ -66,7 +57,7 @@ export function AppHeader({ projectName, hasImage, onExportClick, onRename, onAd
         <Group gap="sm" align="center">
           <img src="/brush.svg" width={36} height={36} style={{ flexShrink: 0, cursor: 'pointer' }} onClick={() => navigate('/')} />
           <Stack gap={0} justify="center">
-            <EditableTitle name={projectName} onRename={onRename} />
+            {isLoading ? <Skeleton height={20} width={140} mb={4} /> : <EditableTitle name={projectName} onRename={onRename} />}
             <Group gap={0} align="center">
               <MenuButton label="File">
                 <Menu.Item disabled>New Project</Menu.Item>
@@ -90,7 +81,7 @@ export function AppHeader({ projectName, hasImage, onExportClick, onRename, onAd
                 <Menu.Divider />
                 <Menu.Sub>
                   <Menu.Sub.Target>
-                    <Menu.Sub.Item disabled={!onAddFilter}>
+                    <Menu.Sub.Item>
                       Add Filter
                     </Menu.Sub.Item>
                   </Menu.Sub.Target>
@@ -100,7 +91,7 @@ export function AppHeader({ projectName, hasImage, onExportClick, onRename, onAd
                         {i > 0 && <Menu.Divider />}
                         <Menu.Label>{group.label}</Menu.Label>
                         {group.filters.map(type => (
-                          <Menu.Item key={type} leftSection={FILTER_ICONS[type]} onClick={() => onAddFilter?.(type)}>
+                          <Menu.Item key={type} leftSection={FILTER_ICONS[type]} onClick={() => onAddFilter(type)}>
                             <Text size="sm">{FILTER_LABELS[type]}</Text>
                           </Menu.Item>
                         ))}
@@ -108,7 +99,7 @@ export function AppHeader({ projectName, hasImage, onExportClick, onRename, onAd
                     ))}
                   </Menu.Sub.Dropdown>
                 </Menu.Sub>
-                <Menu.Item disabled={!onAddColor} onClick={onAddColor}>
+                <Menu.Item leftSection={<Plus size={14} />} onClick={onAddColor}>
                   Add Color to Palette
                 </Menu.Item>
               </MenuButton>
