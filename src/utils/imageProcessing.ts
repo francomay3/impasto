@@ -37,8 +37,8 @@ function applyLevels(imageData: ImageData, p: LevelsParams): ImageData {
   return new ImageData(data, imageData.width, imageData.height);
 }
 
-function applyBlurFilter(imageData: ImageData, p: BlurParams): ImageData {
-  if (p.blur === 0) return imageData;
+export function blurImageData(imageData: ImageData, blur: number): ImageData {
+  if (blur === 0) return imageData;
   const { width, height } = imageData;
   const src = document.createElement('canvas');
   src.width = width; src.height = height;
@@ -46,10 +46,14 @@ function applyBlurFilter(imageData: ImageData, p: BlurParams): ImageData {
   const dst = document.createElement('canvas');
   dst.width = width; dst.height = height;
   const dCtx = dst.getContext('2d', { willReadFrequently: true })!;
-  dCtx.filter = `blur(${p.blur}px)`;
+  dCtx.filter = `blur(${blur}px)`;
   dCtx.drawImage(src, 0, 0);
   dCtx.filter = 'none';
   return dCtx.getImageData(0, 0, width, height);
+}
+
+function applyBlurFilter(imageData: ImageData, p: BlurParams): ImageData {
+  return blurImageData(imageData, p.blur);
 }
 
 export function applyFilters(imageData: ImageData, filters: FilterInstance[]): ImageData {

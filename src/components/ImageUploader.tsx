@@ -28,12 +28,12 @@ export function ImageUploader({ onImageLoad }: Props) {
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
       style={{
-        border: '2px dashed #444',
+        border: '2px dashed var(--mantine-color-dark-3)',
         borderRadius: 8,
         padding: 48,
         textAlign: 'center',
         cursor: 'pointer',
-        background: '#1a1a1a',
+        background: 'var(--mantine-color-dark-7)',
       }}
       onClick={() => inputRef.current?.click()}
     >
@@ -45,7 +45,7 @@ export function ImageUploader({ onImageLoad }: Props) {
         onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
       />
       <Stack align="center" gap="xs">
-        <Upload size={40} color="#888" />
+        <Upload size={40} color="var(--mantine-color-dark-1)" />
         <Text size="lg" c="dimmed">Drop an image here or click to upload</Text>
         <Button variant="light" size="sm" color={theme.other.tertiaryColor as string}>Choose File</Button>
       </Stack>

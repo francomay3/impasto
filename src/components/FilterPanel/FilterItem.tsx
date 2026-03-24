@@ -35,9 +35,9 @@ export function FilterItem({ filter, onRemove, onUpdate, samplingLevels, onStart
   return (
     <Box
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, border: '1px solid #2a2a2a', borderRadius: 6, overflow: 'hidden', background: '#1c1c1c' }}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, border: '1px solid var(--mantine-color-dark-5)', borderRadius: 6, overflow: 'hidden', background: 'var(--mantine-color-dark-7)' }}
     >
-      <Group px="xs" py={6} gap={4} style={{ background: '#222' }} {...attributes}>
+      <Group px="xs" py={6} gap={4} style={{ background: 'var(--mantine-color-dark-6)' }} {...attributes}>
         <ActionIcon size="xs" variant="transparent" color="gray" style={{ cursor: 'grab' }} {...listeners}>
           <GripVertical size={14} />
         </ActionIcon>

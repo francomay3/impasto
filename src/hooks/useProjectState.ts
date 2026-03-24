@@ -17,7 +17,7 @@ function migrateState(raw: unknown): ProjectState | null {
   const s = raw as Record<string, unknown>;
   if (s.filters && !Array.isArray(s.filters)) {
     const old = s.filters as Record<string, unknown>;
-    return { ...s, filters: [], preIndexingBlur: (old.blur as number) ?? 0 } as ProjectState;
+    return { ...s, filters: [], preIndexingBlur: (old.blur as number) ?? 0 } as unknown as ProjectState;
   }
   return s as ProjectState;
 }

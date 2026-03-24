@@ -15,7 +15,7 @@ function LevelPoint({ label, value, isDefault, isSampling, onSample, onReset }: 
   const shade = Math.round(value);
   return (
     <Group gap={6} wrap="nowrap" align="center">
-      <Box style={{ width: 16, height: 16, borderRadius: 3, background: `rgb(${shade},${shade},${shade})`, border: '1px solid #444', flexShrink: 0 }} />
+      <Box style={{ width: 16, height: 16, borderRadius: 3, background: `rgb(${shade},${shade},${shade})`, border: '1px solid var(--mantine-color-dark-3)', flexShrink: 0 }} />
       <Text size="xs" c="dimmed" style={{ flex: 1 }}>{label}: {value}</Text>
       <Tooltip label={`Sample ${label} from image`} transitionProps={{ duration: 0 }}>
         <ActionIcon size="xs" variant={isSampling ? 'filled' : 'subtle'} color={isSampling ? 'cyan' : 'gray'} onClick={onSample}>

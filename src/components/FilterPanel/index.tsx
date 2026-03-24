@@ -52,7 +52,7 @@ export function FilterPanel({
 
   return (
     <Stack gap={0} style={{ height: '100%' }}>
-      <Group justify="space-between" px="md" py="sm" style={{ borderBottom: '1px solid #222', flexShrink: 0 }}>
+      <Group justify="space-between" px="md" py="sm" style={{ borderBottom: '1px solid var(--mantine-color-dark-6)', flexShrink: 0 }}>
         <Text fw={600} size="sm">Filters</Text>
         <Tooltip label="Collapse panel" position="right" transitionProps={{ duration: 0 }}>
           <ActionIcon variant="subtle" onClick={onToggleCollapse} color="gray">

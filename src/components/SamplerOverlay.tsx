@@ -1,16 +1,13 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { Box, Slider, Text, Stack, Button } from '@mantine/core';
 import { sampleCircleAverage } from '../utils/imageProcessing';
+import { rgbToHex } from '../utils/colorUtils';
 
 interface Props {
   filteredCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   onSample: (hex: string) => void;
   onCancel: () => void;
   viewportScale?: number;
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 }
 
 export function SamplerOverlay({ filteredCanvasRef, onSample, onCancel, viewportScale }: Props) {

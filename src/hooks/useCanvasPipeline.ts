@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { FilterInstance, Color } from '../types';
-import { applyFilters } from '../utils/imageProcessing';
+import { applyFilters, blurImageData } from '../utils/imageProcessing';
 import { quantizeImage } from '../utils/kMeansWrapper';
 import { findMixRecipe } from '../services/ColorMixer';
 import IndexedRendererWorker from '../workers/indexedRenderer.worker?worker';
@@ -50,21 +50,6 @@ export function useCanvasPipeline(
     filtered.getContext('2d')!.putImageData(imageData, 0, 0);
     return imageData;
   }, [filteredCanvasRef]);
-
-  const blurImageData = useCallback((imageData: ImageData, blur: number): ImageData => {
-    if (blur === 0) return imageData;
-    const { width, height } = imageData;
-    const src = document.createElement('canvas');
-    src.width = width; src.height = height;
-    src.getContext('2d')!.putImageData(imageData, 0, 0);
-    const dst = document.createElement('canvas');
-    dst.width = width; dst.height = height;
-    const dCtx = dst.getContext('2d', { willReadFrequently: true })!;
-    dCtx.filter = `blur(${blur}px)`;
-    dCtx.drawImage(src, 0, 0);
-    dCtx.filter = 'none';
-    return dCtx.getImageData(0, 0, width, height);
-  }, []);
 
   const runQuantization = useCallback((imageData: ImageData, k: number, lockedColors: Color[]): Color[] => {
     return quantizeImage(imageData, k, lockedColors).map(c => ({ ...c, mixRecipe: findMixRecipe(c.hex) }));

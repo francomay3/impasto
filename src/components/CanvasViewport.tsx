@@ -45,8 +45,8 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
       : 'default';
 
     return (
-      <Box style={{ background: '#111', flex: 1, minWidth: 0, position: 'relative', height: '100%' }}>
-        <div
+      <Box style={{ background: 'var(--mantine-color-dark-9)', flex: 1, minWidth: 0, position: 'relative', height: '100%' }}>
+        <Box
           ref={containerRef}
           style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', cursor }}
           onMouseDown={onMouseDown && isSampling
@@ -54,7 +54,7 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
             : onMouseDown}
           onDoubleClick={isSampling ? undefined : onDoubleClick}
         >
-          <div
+          <Box
             style={{
               transformOrigin: '0 0',
               transform: transformCss,
@@ -71,9 +71,9 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
               style={{ width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '100%', display: 'block' }}
             />
             {children}
-          </div>
-        </div>
-        <Text id="tex!" size="xs" c="white" mb={4} pos="absolute" top="2px" left="2px" style={{ textShadow: '0 1px 2px #000, 0 0 8px #000', opacity: 0.7 }}>{label}</Text>
+          </Box>
+        </Box>
+        <Text size="xs" c="white" mb={4} pos="absolute" top="2px" left="2px" style={{ textShadow: '0 1px 2px #000, 0 0 8px #000', opacity: 0.7 }}>{label}</Text>
       </Box>
     );
   }

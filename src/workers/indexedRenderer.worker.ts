@@ -1,9 +1,5 @@
 import type { Color } from '../types';
-
-function hexToRgb(hex: string): [number, number, number] {
-  const n = parseInt(hex.replace('#', ''), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
+import { hexToRgb } from '../utils/colorUtils';
 
 self.onmessage = (e: MessageEvent<{ data: Uint8ClampedArray; width: number; height: number; palette: Color[]; generation: number }>) => {
   const { data, width, height, palette, generation } = e.data;

@@ -23,7 +23,7 @@ export function AddFilterMenu({ onAdd }: Props) {
       <Menu.Target>
         <AddItemButton label="Add Filter" />
       </Menu.Target>
-      <Menu.Dropdown style={{ background: '#1a1a1a', border: '1px solid #333' }}>
+      <Menu.Dropdown style={{ background: 'var(--mantine-color-dark-7)', border: '1px solid var(--mantine-color-dark-4)' }}>
         {FILTER_ORDER.map(type => (
           <Menu.Item key={type} leftSection={FILTER_ICONS[type]} onClick={() => onAdd(type)}>
             <Text size="sm">{FILTER_LABELS[type]}</Text>

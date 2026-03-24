@@ -1,29 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppShell, Box, Button, Checkbox, Group, Modal, NumberInput, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { useEffect, useRef, useState } from 'react';
+import { AppShell, Box, Group } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useDebouncedValue } from '@mantine/hooks';
-import { FileImage, Download } from 'lucide-react';
 
 import { useProjectState } from './hooks/useProjectState';
 import { useCanvasPipeline } from './hooks/useCanvasPipeline';
 import { useViewportTransform } from './hooks/useViewportTransform';
+import { useImageHandlers } from './hooks/useImageHandlers';
 import { FilterPanel } from './components/FilterPanel';
 import { PaletteSidebar } from './components/PaletteSidebar';
 import { ImageUploader } from './components/ImageUploader';
 import { CanvasViewport } from './components/CanvasViewport';
 import { SamplerOverlay } from './components/SamplerOverlay';
-import { exportPdf } from './services/PdfExport';
-import { DEFAULT_MIX_GRANULARITY, DEFAULT_DELTA_THRESHOLD, PIGMENTS } from './services/ColorMixer';
-import type { LevelsParams } from './types';
+import { AppHeader } from './components/AppHeader';
+import { ExportModal } from './components/ExportModal';
 
 type SamplingLevels = { filterId: string; point: 'black' | 'white' } | null;
 
 export default function App() {
-  const {
-    state, setImage, setPalette, updateColor,
-    addFilter, removeFilter, updateFilter, reorderFilters, setPreIndexingBlur,
+  const project = useProjectState();
+  const { state, addFilter, removeFilter, updateFilter, reorderFilters, setPreIndexingBlur,
     addColor, removeColor, addGroup, removeGroup, renameGroup, setColorGroup, reorderGroups,
-  } = useProjectState();
+    setPalette, setImage, updateColor } = project;
   const filteredCanvasRef = useRef<HTMLCanvasElement>(null);
   const indexedCanvasRef = useRef<HTMLCanvasElement>(null);
   const pipeline = useCanvasPipeline(filteredCanvasRef, indexedCanvasRef);
@@ -32,37 +29,16 @@ export default function App() {
   const [samplingLevels, setSamplingLevels] = useState<SamplingLevels>(null);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
-  const [exportTitle, setExportTitle] = useState('');
-  const [exportGranularity, setExportGranularity] = useState(DEFAULT_MIX_GRANULARITY);
-  const [exportDelta, setExportDelta] = useState(DEFAULT_DELTA_THRESHOLD);
-  const [exportPigments, setExportPigments] = useState<Set<string>>(() => new Set(PIGMENTS.map(p => p.name)));
-  const [debouncedFilters] = useDebouncedValue(state.filters, 300);
-  const lastImageDataRef = useRef<ImageData | null>(null);
 
-  const renderPalette = useCallback((imageData?: ImageData, palette?: typeof state.palette) => {
-    const data = imageData ?? lastImageDataRef.current;
-    if (!data) return;
-    const forIndexing = pipeline.blurImageData(data, state.preIndexingBlur);
-    pipeline.renderIndexed(palette ?? state.palette, forIndexing);
-  }, [pipeline, state]);
+  const { handleImageLoad, handleColorChange, handleAddColor, handleDeleteColor,
+    handleToggleHighlight, handleSample, handleSampleLevels, handleFileInput } = useImageHandlers({
+    state, pipeline, setImage, updateColor, addColor, removeColor, updateFilter,
+    samplingColorId, setSamplingColorId, samplingLevels, setSamplingLevels,
+  });
 
   useEffect(() => {
     if (state.imageDataUrl) viewport.resetTransform();
   }, [state.imageDataUrl]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!state.imageDataUrl) return;
-    pipeline.loadImage(state.imageDataUrl).then(() => {
-      const imageData = pipeline.applyFilterPipeline(debouncedFilters);
-      if (imageData) { lastImageDataRef.current = imageData; renderPalette(imageData); }
-    });
-  }, [state.imageDataUrl]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!state.imageDataUrl) return;
-    const imageData = pipeline.applyFilterPipeline(debouncedFilters);
-    if (imageData) { lastImageDataRef.current = imageData; renderPalette(imageData); }
-  }, [debouncedFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -75,77 +51,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
-  const handleImageLoad = useCallback((dataUrl: string) => { setImage(dataUrl); }, [setImage]);
-
-  const handleColorChange = useCallback((id: string, hex: string) => {
-    updateColor(id, { hex });
-    renderPalette(undefined, state.palette.map(c => c.id === id ? { ...c, hex } : c));
-  }, [updateColor, renderPalette, state.palette]);
-
-  const handleAddColor = useCallback(() => {
-    const id = crypto.randomUUID();
-    addColor(id);
-    renderPalette(undefined, [...state.palette, { id, hex: '#000000', locked: false, ratio: 0, mixRecipe: '' }]);
-    setSamplingColorId(id);
-  }, [addColor, renderPalette, state.palette]);
-
-  const handleDeleteColor = useCallback((id: string) => {
-    removeColor(id);
-    renderPalette(undefined, state.palette.filter(c => c.id !== id));
-  }, [removeColor, renderPalette, state.palette]);
-
-  const handleToggleHighlight = useCallback((id: string) => {
-    const highlighted = !state.palette.find(c => c.id === id)?.highlighted;
-    updateColor(id, { highlighted });
-    renderPalette(undefined, state.palette.map(c => c.id === id ? { ...c, highlighted } : c));
-  }, [updateColor, renderPalette, state.palette]);
-
-  const handleSample = useCallback((hex: string) => {
-    if (!samplingColorId) return;
-    updateColor(samplingColorId, { hex });
-    setSamplingColorId(null);
-    renderPalette(undefined, state.palette.map(c => c.id === samplingColorId ? { ...c, hex } : c));
-    notifications.show({ message: `Color sampled: ${hex}`, color: 'teal' });
-  }, [samplingColorId, updateColor, renderPalette, state.palette]);
-
-  const handleSampleLevels = useCallback((hex: string) => {
-    if (!samplingLevels) return;
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    const luminance = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-    const { filterId, point } = samplingLevels;
-    const filter = state.filters.find(f => f.id === filterId);
-    if (!filter) return;
-    const params = filter.params as LevelsParams;
-    if (point === 'black') {
-      const newBlack = Math.min(luminance, params.whitePoint - 1);
-      updateFilter(filterId, { blackPoint: newBlack });
-      notifications.show({ message: `Black point set to ${newBlack}`, color: 'dark' });
-    } else {
-      const newWhite = Math.max(luminance, params.blackPoint + 1);
-      updateFilter(filterId, { whitePoint: newWhite });
-      notifications.show({ message: `White point set to ${newWhite}`, color: 'gray' });
-    }
-    setSamplingLevels(null);
-  }, [samplingLevels, state.filters, updateFilter]);
-
-  const handleExportPdf = useCallback(() => {
-    if (!filteredCanvasRef.current || !indexedCanvasRef.current) return;
-    const pigments = PIGMENTS.filter(p => exportPigments.has(p.name));
-    exportPdf(state, filteredCanvasRef.current, indexedCanvasRef.current, exportGranularity, exportDelta, pigments, exportTitle || state.name);
-    setExportModalOpen(false);
-    notifications.show({ message: 'Export complete', color: 'green' });
-  }, [filteredCanvasRef, indexedCanvasRef, state, exportGranularity, exportDelta, exportPigments, exportTitle]);
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => handleImageLoad(ev.target?.result as string);
-    reader.readAsDataURL(file);
-  };
-
   return (
     <AppShell
       header={{ height: 52 }}
@@ -153,155 +58,50 @@ export default function App() {
       aside={{ width: 260, breakpoint: 'md', collapsed: { mobile: true } }}
       padding={0}
     >
-      <AppShell.Header style={{ background: '#111', borderBottom: '1px solid #222' }}>
-        <Group h="100%" px="md" justify="space-between">
-          <Group gap="xs" align="center">
-            <img src="/brush.svg" width={26} height={26} />
-            <Title order={5}>Impasto</Title>
-          </Group>
-          <Group gap="xs">
-            {state.imageDataUrl && (
-              <Button size="xs" variant="light" leftSection={<Download size={14} />}
-                onClick={() => { setExportTitle(state.name); setExportModalOpen(true); }}>Export PDF</Button>
-            )}
-            <Button size="xs" variant="subtle" leftSection={<FileImage size={14} />}
-              onClick={() => document.getElementById('file-upload-hidden')?.click()}>
-              Load Image
-            </Button>
-            <input id="file-upload-hidden" type="file" accept="image/*"
-              style={{ display: 'none' }} onChange={handleFileInput} />
-          </Group>
-        </Group>
-      </AppShell.Header>
+      <AppHeader hasImage={!!state.imageDataUrl} onExportClick={() => setExportModalOpen(true)} onFileChange={handleFileInput} />
 
-      <AppShell.Navbar style={{ background: '#161616', borderRight: '1px solid #222', overflowY: 'auto' }}>
+      <AppShell.Navbar style={{ background: 'var(--mantine-color-dark-8)', borderRight: '1px solid var(--mantine-color-dark-6)', overflowY: 'auto' }}>
         <FilterPanel
-          filters={state.filters}
-          onAddFilter={addFilter}
-          onRemoveFilter={removeFilter}
-          onUpdateFilter={updateFilter}
-          onReorderFilters={reorderFilters}
-          collapsed={navbarCollapsed}
-          onToggleCollapse={() => setNavbarCollapsed(v => !v)}
+          filters={state.filters} onAddFilter={addFilter} onRemoveFilter={removeFilter}
+          onUpdateFilter={updateFilter} onReorderFilters={reorderFilters}
+          collapsed={navbarCollapsed} onToggleCollapse={() => setNavbarCollapsed(v => !v)}
           samplingLevels={samplingLevels}
           onStartSamplingLevels={(filterId, point) => { setSamplingColorId(null); setSamplingLevels({ filterId, point }); }}
         />
       </AppShell.Navbar>
 
-      <AppShell.Main style={{ background: '#0d0d0d' }}>
+      <AppShell.Main style={{ background: 'var(--mantine-color-dark-9)' }}>
         {!state.imageDataUrl ? (
-          <Box p="xl">
-            <ImageUploader onImageLoad={handleImageLoad} />
-          </Box>
+          <Box p="xl"><ImageUploader onImageLoad={handleImageLoad} /></Box>
         ) : (
           <Group align="flex-start" style={{ height: 'calc(100vh - var(--app-shell-header-height))', gap: 0, overflow: 'hidden' }}>
-            <CanvasViewport
-              ref={filteredCanvasRef}
-              label="Filtered Original"
-              viewportTransform={viewport.transform}
-              onWheel={viewport.handleWheel}
-              onMouseDown={viewport.handleMouseDown}
-              onDoubleClick={viewport.resetTransform}
-              isDragging={viewport.isDragging}
-              isSampling={!!samplingColorId || !!samplingLevels}
-            >
-              {samplingColorId && (
-                <SamplerOverlay filteredCanvasRef={filteredCanvasRef} onSample={handleSample}
-                  onCancel={() => setSamplingColorId(null)} viewportScale={viewport.transform.scale} />
-              )}
-              {samplingLevels && (
-                <SamplerOverlay filteredCanvasRef={filteredCanvasRef} onSample={handleSampleLevels}
-                  onCancel={() => setSamplingLevels(null)} viewportScale={viewport.transform.scale} />
-              )}
+            <CanvasViewport ref={filteredCanvasRef} label="Filtered Original" viewportTransform={viewport.transform}
+              onWheel={viewport.handleWheel} onMouseDown={viewport.handleMouseDown} onDoubleClick={viewport.resetTransform}
+              isDragging={viewport.isDragging} isSampling={!!samplingColorId || !!samplingLevels}>
+              {samplingColorId && <SamplerOverlay filteredCanvasRef={filteredCanvasRef} onSample={handleSample} onCancel={() => setSamplingColorId(null)} viewportScale={viewport.transform.scale} />}
+              {samplingLevels && <SamplerOverlay filteredCanvasRef={filteredCanvasRef} onSample={handleSampleLevels} onCancel={() => setSamplingLevels(null)} viewportScale={viewport.transform.scale} />}
             </CanvasViewport>
-            <CanvasViewport
-              ref={indexedCanvasRef}
-              label="Indexed Result"
-              viewportTransform={viewport.transform}
-              onWheel={viewport.handleWheel}
-              onMouseDown={viewport.handleMouseDown}
-              onDoubleClick={viewport.resetTransform}
-              isDragging={viewport.isDragging}
-              isSampling={!!samplingColorId || !!samplingLevels}
-            />
+            <CanvasViewport ref={indexedCanvasRef} label="Indexed Result" viewportTransform={viewport.transform}
+              onWheel={viewport.handleWheel} onMouseDown={viewport.handleMouseDown} onDoubleClick={viewport.resetTransform}
+              isDragging={viewport.isDragging} isSampling={!!samplingColorId || !!samplingLevels} />
           </Group>
         )}
       </AppShell.Main>
 
-      <AppShell.Aside style={{ background: '#161616', borderLeft: '1px solid #222', overflowY: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
+      <AppShell.Aside style={{ background: 'var(--mantine-color-dark-8)', borderLeft: '1px solid var(--mantine-color-dark-6)', overflowY: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
         <PaletteSidebar
-          palette={state.palette}
-          groups={state.groups ?? []}
-          blur={state.preIndexingBlur}
-          samplingColorId={samplingColorId}
-          onBlurChange={setPreIndexingBlur}
-          onStartSampling={(id) => { setSamplingLevels(null); setSamplingColorId(id); }}
-          onColorChange={handleColorChange}
-          onRenameColor={(id, name) => updateColor(id, { name })}
-          onAddColor={handleAddColor}
-          onDeleteColor={handleDeleteColor}
-          onToggleHighlight={handleToggleHighlight}
-          onAddGroup={addGroup}
-          onRemoveGroup={removeGroup}
-          onRenameGroup={renameGroup}
-          onSetColorGroup={setColorGroup}
-          onReorderPalette={setPalette}
-          onReorderGroups={reorderGroups}
+          palette={state.palette} groups={state.groups ?? []} blur={state.preIndexingBlur} samplingColorId={samplingColorId}
+          onBlurChange={setPreIndexingBlur} onStartSampling={(id) => { setSamplingLevels(null); setSamplingColorId(id); }}
+          onColorChange={handleColorChange} onRenameColor={(id, name) => updateColor(id, { name })}
+          onAddColor={handleAddColor} onDeleteColor={handleDeleteColor} onToggleHighlight={handleToggleHighlight}
+          onAddGroup={addGroup} onRemoveGroup={removeGroup} onRenameGroup={renameGroup}
+          onSetColorGroup={setColorGroup} onReorderPalette={setPalette} onReorderGroups={reorderGroups}
         />
       </AppShell.Aside>
 
-      <Modal opened={exportModalOpen} onClose={() => setExportModalOpen(false)} title="Export PDF" size="lg">
-        <Stack gap="md">
-          <TextInput label="PDF title" value={exportTitle} onChange={(e) => setExportTitle(e.currentTarget.value)} />
-          <Stack gap={4}>
-            <Text size="sm" fw={500}>Mix granularity</Text>
-            <Text size="xs" c="dimmed">
-              How many equal parts the palette is divided into when calculating paint ratios.
-              Higher values give more precise proportions (e.g. 1:3, 1:4) but take longer to compute.
-              12 is a good balance — it covers thirds, quarters, and halves cleanly.
-            </Text>
-            <NumberInput value={exportGranularity} onChange={(v) => setExportGranularity(Number(v))} min={4} max={24} step={1} size="sm" />
-          </Stack>
-          <Stack gap={4}>
-            <Text size="sm" fw={500}>Color accuracy (ΔE)</Text>
-            <Text size="xs" c="dimmed">
-              How close a mixed color needs to be to the target before the search stops.
-              Lower values demand a tighter match and may result in more pigments per recipe.
-              Higher values accept a looser match and keep recipes simpler.
-              A value of 6 is a practical threshold — differences below that are hard to notice in real paint.
-            </Text>
-            <NumberInput value={exportDelta} onChange={(v) => setExportDelta(Number(v))} min={1} max={30} step={1} size="sm" />
-          </Stack>
-          <Stack gap={4}>
-            <Text size="sm" fw={500}>Pigments</Text>
-            <Text size="xs" c="dimmed">
-              Only the checked pigments will be considered when calculating mix recipes.
-              Uncheck pigments you don't have in your studio.
-            </Text>
-            <SimpleGrid cols={2} spacing={6} mt={4}>
-              {PIGMENTS.map(p => (
-                <Checkbox
-                  key={p.name} size="xs" checked={exportPigments.has(p.name)}
-                  onChange={(e) => {
-                    const checked = e.currentTarget.checked;
-                    setExportPigments(prev => { const next = new Set(prev); if (checked) next.add(p.name); else next.delete(p.name); return next; });
-                  }}
-                  label={
-                    <Group gap={6} wrap="nowrap">
-                      <Box style={{ width: 10, height: 10, borderRadius: 2, background: p.hex, border: '1px solid #444', flexShrink: 0 }} />
-                      <Text size="xs">{p.name}</Text>
-                    </Group>
-                  }
-                />
-              ))}
-            </SimpleGrid>
-          </Stack>
-          <Group justify="flex-end" gap="xs">
-            <Button variant="subtle" color="gray" onClick={() => setExportModalOpen(false)}>Cancel</Button>
-            <Button leftSection={<Download size={14} />} onClick={handleExportPdf}>Export</Button>
-          </Group>
-        </Stack>
-      </Modal>
+      <ExportModal opened={exportModalOpen} defaultTitle={state.name} state={state}
+        filteredCanvasRef={filteredCanvasRef} indexedCanvasRef={indexedCanvasRef}
+        onClose={() => setExportModalOpen(false)} />
     </AppShell>
   );
 }
