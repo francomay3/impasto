@@ -1,0 +1,6 @@
+[ ] we could have 2 different views, kind of like blender has edit mode and object mode, we could have a mode for the filtering and another for the color pallete building. that way we dont need to show both navbars at the same time. they could both be on the right side, but one in filter mode, and the other in pallete mode. also, on filter mode, we show the orginal in the left and the filtered on the right, and in pallete mode we show the filtered on the left and the indexed on the right
+[ ] fix problem where the user image is not persisted trough sessions
+[ ] the pins should be draggable. right clicking on them should pop up a menu
+[ ] on right click on a color in the pallete, you should be able to add to a group directly from there. also add a new category right there
+[ ] on right click on a color pin in the viewport, we shoudl get a menu open up too.
+[ ] the "Ungrouped" text should be non interacatable. "No filters added yet too". in fact... lets try making all text in the editor non interactable.
