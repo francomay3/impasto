@@ -25,7 +25,7 @@ interface Props {
 export function SortableGroup({ group, children, collapsed, isDraggingColor, autoEdit, showDragHandle, colorCount, onToggleCollapse, onRename, onDelete }: Props) {
   const [editing, setEditing] = useState(() => autoEdit ?? false);
   const [editName, setEditName] = useState(group.name);
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.id, data: { type: 'group' } });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: group.id, data: { type: 'group' } });
   const { open: openMenu } = useContextMenu();
 
   const { confirm: confirmDelete, confirmDialog } = useConfirmDialog({
@@ -55,23 +55,30 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
       {confirmDialog}
       <Box style={{ border: '1px solid var(--mantine-color-dark-5)', borderRadius: 6, overflow: 'hidden' }}>
         <Box
-          {...(showDragHandle ? { ...attributes, ...listeners } : {})}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px', background: 'var(--mantine-color-dark-6)', ...(showDragHandle ? { cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' } : {}) }}
+          {...(showDragHandle ? attributes : {})}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px', background: 'var(--mantine-color-dark-6)' }}
         >
           {showDragHandle && (
-            <Box style={{ color: 'var(--mantine-color-dark-2)', display: 'flex', flexShrink: 0 }}>
+            <Box ref={setActivatorNodeRef} {...listeners} style={{ color: 'var(--mantine-color-dark-2)', display: 'flex', flexShrink: 0, cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}>
               <GripVertical size={13} />
             </Box>
           )}
-          <Box onClick={colorCount > 0 ? onToggleCollapse : undefined} style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 4, cursor: colorCount > 0 ? 'pointer' : 'default' }}>
-            {colorCount > 0 && (collapsed ? <ChevronRight size={13} color="var(--mantine-color-dark-1)" /> : <ChevronDown size={13} color="var(--mantine-color-dark-1)" />)}
+          <Box style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 4 }}>
+            {colorCount > 0 && (
+              <Box
+                onClick={onToggleCollapse}
+                style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'var(--mantine-color-dark-1)', flexShrink: 0 }}
+              >
+                {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+              </Box>
+            )}
             {editing ? (
               <TextInput value={editName} onChange={(e) => setEditName(e.currentTarget.value)}
                 onBlur={handleRenameSubmit} onKeyDown={(e) => { if (e.key === 'Enter') handleRenameSubmit(); if (e.key === 'Escape') setEditing(false); }}
                 onFocus={(e) => e.currentTarget.select()} size="xs" autoFocus style={{ flex: 1 }} onClick={(e) => e.stopPropagation()} />
             ) : (
               <Box style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-                <Text size="xs" fw={600} c="dimmed" onClick={(e) => { e.stopPropagation(); setEditing(true); setEditName(group.name); }} style={{ cursor: 'text' }}>{group.name}</Text>
+                <Text size="xs" fw={600} c="dimmed" style={{ userSelect: 'none' }}>{group.name}</Text>
                 {colorCount === 0 && <Text size="xs" c="dimmed" style={{ fontStyle: 'italic', opacity: 0.5 }}>empty</Text>}
               </Box>
             )}
@@ -84,13 +91,12 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
             </Tooltip>
           )}
         </Box>
-        {(colorCount === 0 || collapsed) && isDraggingColor && (
+        {colorCount === 0 && (
           <Box px={6} pb={6}><GroupDropZone groupId={group.id} isDraggingColor={isDraggingColor} /></Box>
         )}
         {colorCount > 0 && !collapsed && (
           <Box p={6}>
             {children}
-            <GroupDropZone groupId={group.id} isDraggingColor={isDraggingColor} />
           </Box>
         )}
       </Box>

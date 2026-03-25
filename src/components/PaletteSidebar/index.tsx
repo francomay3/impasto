@@ -4,7 +4,7 @@ import { FolderPlus } from 'lucide-react';
 import { DndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { AddItemButton } from '../AddItemButton';
-import { ColorItem, SortableColorItem } from './ColorItem';
+import { SortableColorItem } from './ColorItem';
 import { GroupDropZone } from './GroupDropZone';
 import { SortableGroup } from './SortableGroup';
 import { usePaletteDnd } from './usePaletteDnd';
@@ -14,7 +14,7 @@ export function PaletteSidebar() {
   const {
     palette, groups, onAddColor,
     onAddGroup: ctxAddGroup, onRemoveGroup, onRenameGroup,
-    onSetColorGroup, onReorderPalette, onReorderGroups,
+    onReorderPalette, onReorderGroups,
   } = usePaletteContext();
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -25,8 +25,8 @@ export function PaletteSidebar() {
     setNewGroupId(id);
   }, [ctxAddGroup]);
 
-  const { sensors, collisionDetection, draggingType, handleDragStart, handleDragEnd } = usePaletteDnd({
-    palette, groups, onReorderGroups, onSetColorGroup, onReorderPalette,
+  const { sensors, collisionDetection, displayPalette, draggingType, handleDragStart, handleDragOver, handleDragEnd, handleDragCancel } = usePaletteDnd({
+    palette, groups, onReorderGroups, onReorderPalette,
   });
 
   const toggleCollapse = (id: string) => {
@@ -37,11 +37,11 @@ export function PaletteSidebar() {
     });
   };
 
-  const ungroupedColors = palette.filter(c => !c.groupId || !groups.find(g => g.id === c.groupId));
+  const ungroupedColors = displayPalette.filter(c => !c.groupId || !groups.find(g => g.id === c.groupId));
   const isDraggingColor = draggingType === 'color';
 
   return (
-    <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <Stack gap="xs" p="xs">
         <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text fw={600} size="sm">Palette</Text>
@@ -57,7 +57,7 @@ export function PaletteSidebar() {
         <SortableContext items={groups.map(g => g.id)} strategy={verticalListSortingStrategy}>
           <Stack gap={6}>
             {groups.map(group => {
-              const groupColors = palette.filter(c => c.groupId === group.id);
+              const groupColors = displayPalette.filter(c => c.groupId === group.id);
               return (
                 <SortableGroup key={group.id} group={group} collapsed={collapsedGroups.has(group.id)}
                   isDraggingColor={isDraggingColor} autoEdit={group.id === newGroupId}
@@ -76,15 +76,18 @@ export function PaletteSidebar() {
           </Stack>
         </SortableContext>
 
-        {ungroupedColors.length > 0 && (
+        {groups.length > 0 && (
           <>
-            {groups.length > 0 && <Text size="xs" c="dimmed" fw={500} style={{ marginTop: 4 }}>Ungrouped</Text>}
-            <SortableContext items={ungroupedColors.map(c => c.id)} strategy={verticalListSortingStrategy}>
-              <Stack gap={4}>
-                {ungroupedColors.map(color => <SortableColorItem key={color.id} color={color} />)}
-              </Stack>
-            </SortableContext>
-            <GroupDropZone groupId={undefined} isDraggingColor={isDraggingColor} />
+            <Text size="xs" c="dimmed" fw={500} style={{ marginTop: 4 }}>Ungrouped</Text>
+            {ungroupedColors.length === 0 ? (
+              <GroupDropZone groupId={undefined} isDraggingColor={isDraggingColor} />
+            ) : (
+              <SortableContext items={ungroupedColors.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                <Stack gap={4}>
+                  {ungroupedColors.map(color => <SortableColorItem key={color.id} color={color} />)}
+                </Stack>
+              </SortableContext>
+            )}
           </>
         )}
 
@@ -92,4 +95,3 @@ export function PaletteSidebar() {
     </DndContext>
   );
 }
-

@@ -11,9 +11,11 @@ import { useContextTrigger } from '../../hooks/useContextTrigger';
 
 interface ColorItemProps {
   color: Color;
+  dragHandleRef?: (el: HTMLElement | null) => void;
+  dragListeners?: Record<string, (...args: unknown[]) => void>;
 }
 
-export function ColorItem({ color }: ColorItemProps) {
+export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
   const { groups, samplingColorId, onStartSampling, onRenameColor, onDeleteColor, onSetColorGroup, onAddGroup, onToggleHighlight } = usePaletteContext();
   const [editingName, setEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
@@ -51,7 +53,7 @@ export function ColorItem({ color }: ColorItemProps) {
     <Box onMouseDown={handleAuxClick} {...contextTrigger} style={{ border: samplingColorId === color.id ? '2px solid var(--mantine-color-blue-4)' : '1px solid var(--mantine-color-dark-4)', borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)' }}>
       <Stack gap={4}>
         <Box style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Box style={{ color: 'var(--mantine-color-dark-3)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <Box ref={dragHandleRef} {...dragListeners} style={{ color: 'var(--mantine-color-dark-3)', display: 'flex', alignItems: 'center', flexShrink: 0, cursor: 'grab', touchAction: 'none' }}>
             <GripVertical size={14} />
           </Box>
           <Box style={{ width: 26, height: 26, flexShrink: 0, borderRadius: 4, background: color.hex, border: '1px solid var(--mantine-color-dark-3)' }} />
@@ -110,15 +112,14 @@ export function ColorItem({ color }: ColorItemProps) {
 }
 
 export function SortableColorItem({ color }: { color: Color }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: color.id, data: { type: 'color' } });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: color.id, data: { type: 'color' } });
   return (
     <Box
       ref={setNodeRef}
       {...attributes}
-      {...listeners}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1, cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
     >
-      <ColorItem color={color} />
+      <ColorItem color={color} dragHandleRef={setActivatorNodeRef} dragListeners={listeners as Record<string, (...args: unknown[]) => void>} />
     </Box>
   );
 }

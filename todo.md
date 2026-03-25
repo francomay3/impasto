@@ -2,3 +2,7 @@
 [ ] fix problem where the user image is not persisted trough sessions
 [ ] the pins should be draggable. right clicking on them should pop up a menu
 [x] right now, right clicking on the filtered image viewport pops up the same menu as right clikcing on the indexed viewport. that doesnt make snese. for example, i should not be able to add a pin on the indexed viewport
+[ ] on right click on a color in the pallete, you should be able to add to a group directly from there. also add a new category right there
+[ ] on right click on a color pin in the viewport, we shoudl get a menu open up too.
+[ ] find optimizations. the app can be a bit laggy. specially when dragging the image rapidly. dont know what exactly is causing the lag. maybe the pins updating? whatever is taking the cost, can it be optimized? maybe throttled or added to a worker for example? maybe the tag positioning passes is laggy? this can for sure run very throttled. what else in the project can be optimized? give me a through report. also, anything we are doing in the repo that could in the future benefit from other rendering methods, like using pixyjs, canvas api or something else? think that the app might grow a lot inthe future. for example, id like to have instant filter preview, maybe some webassembly can be put in place and so on. think big. oh and tell me, in general, how can i see/troubleshoot/debug what is draining my resources. 
+[ ] ❯ the "Ungrouped" text should be non interacatable. "No filters added yet too". in fact... lets try making all text in the editor non interactable.

@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import type { DragEndEvent } from '@dnd-kit/core';
-import { SmartPointerSensor } from '../../utils/dndSensor';
+import { SmartMouseSensor } from '../../utils/dndSensor';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { FilterItem } from './FilterItem';
 import { AddItemButton } from '../AddItemButton';
@@ -21,7 +21,7 @@ export function FilterPanel({ collapsed, onToggleCollapse }: Props) {
   const { filters, onReorderFilters, onAddFilter } = useFilterContext();
   const { open: openMenu } = useContextMenu();
   const addButtonRef = useRef<HTMLButtonElement>(null);
-  const sensors = useSensors(useSensor(SmartPointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(useSensor(SmartMouseSensor));
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
