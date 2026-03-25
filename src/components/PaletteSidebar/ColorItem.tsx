@@ -1,34 +1,33 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Stack, Box, Text, Badge, ActionIcon, Tooltip, TextInput, Menu } from '@mantine/core';
-import { Crosshair, X, GripVertical, Folder, Plus } from 'lucide-react';
+import { notifications } from '@mantine/notifications';
+import { Crosshair, X, GripVertical, Folder, Plus, Copy } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Color } from '../../types';
 import { usePaletteContext } from '../../context/PaletteContext';
+import { useContextMenu } from '../../context/ContextMenuContext';
+import { useContextTrigger } from '../../hooks/useContextTrigger';
 
 interface ColorItemProps {
   color: Color;
-  dragHandleProps?: React.HTMLAttributes<HTMLElement>;
-  showDragHandle?: boolean;
-  colorInputRef: (el: HTMLInputElement | null) => void;
 }
 
-export function ColorItem({ color, dragHandleProps, showDragHandle, colorInputRef }: ColorItemProps) {
-  const { groups, samplingColorId, onStartSampling, onColorChange, onRenameColor, onDeleteColor, onSetColorGroup, onAddGroup, onToggleHighlight } = usePaletteContext();
+export function ColorItem({ color }: ColorItemProps) {
+  const { groups, samplingColorId, onStartSampling, onRenameColor, onDeleteColor, onSetColorGroup, onAddGroup, onToggleHighlight } = usePaletteContext();
   const [editingName, setEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
+  const { open: openMenu } = useContextMenu();
 
   const handleNameEditStart = () => {
-    setEditNameValue(color.name || color.hex.toUpperCase());
+    setEditNameValue(color.name || color.hex.toLowerCase());
     setEditingName(true);
   };
 
   const handleNameSubmit = () => {
     const trimmed = editNameValue.trim();
-    const newName = trimmed === color.hex.toUpperCase() ? '' : trimmed;
-    if (newName !== (color.name ?? '')) {
-      onRenameColor(color.id, newName);
-    }
+    const newName = trimmed === color.hex.toLowerCase() ? '' : trimmed;
+    if (newName !== (color.name ?? '')) onRenameColor(color.id, newName);
     setEditingName(false);
   };
 
@@ -36,20 +35,26 @@ export function ColorItem({ color, dragHandleProps, showDragHandle, colorInputRe
     if (e.button === 1) { e.preventDefault(); onDeleteColor(color.id); }
   };
 
+  const openContextMenu = useCallback(({ x, y }: { x: number; y: number }) => {
+    openMenu({ x, y, items: [
+      { label: 'Sample from image', icon: <Crosshair size={14} />, onClick: () => onStartSampling(color.id) },
+      { label: 'Rename',            icon: <Folder size={14} />,    onClick: handleNameEditStart },
+      { label: 'Copy hex',          icon: <Copy size={14} />,      onClick: () => { navigator.clipboard.writeText(color.hex.toLowerCase()); notifications.show({ message: `Copied ${color.hex.toLowerCase()}`, color: 'green', autoClose: 1500 }); } },
+      { type: 'divider' },
+      { label: 'Delete', icon: <X size={14} />, onClick: () => onDeleteColor(color.id), color: 'red' },
+    ]});
+  }, [color, openMenu, onStartSampling, onDeleteColor]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const contextTrigger = useContextTrigger(openContextMenu);
+
   return (
-    <Box onMouseDown={handleAuxClick} style={{ border: samplingColorId === color.id ? '2px solid var(--mantine-color-blue-4)' : '1px solid var(--mantine-color-dark-4)', borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)' }}>
+    <Box onMouseDown={handleAuxClick} {...contextTrigger} style={{ border: samplingColorId === color.id ? '2px solid var(--mantine-color-blue-4)' : '1px solid var(--mantine-color-dark-4)', borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)' }}>
       <Stack gap={4}>
         <Box style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {showDragHandle && (
-            <Box {...dragHandleProps} style={{ cursor: 'grab', color: 'var(--mantine-color-dark-2)', display: 'flex', alignItems: 'center', flexShrink: 0, touchAction: 'none' }}>
-              <GripVertical size={14} />
-            </Box>
-          )}
-          <Box style={{ position: 'relative', width: 26, height: 26, flexShrink: 0 }}>
-            <Box style={{ width: 26, height: 26, borderRadius: 4, background: color.hex, border: '1px solid var(--mantine-color-dark-3)', cursor: 'pointer' }} />
-            <input type="color" value={color.hex} onChange={(e) => onColorChange(color.id, e.target.value)} ref={colorInputRef}
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
+          <Box style={{ color: 'var(--mantine-color-dark-3)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <GripVertical size={14} />
           </Box>
+          <Box style={{ width: 26, height: 26, flexShrink: 0, borderRadius: 4, background: color.hex, border: '1px solid var(--mantine-color-dark-3)' }} />
           {editingName ? (
             <TextInput value={editNameValue} onChange={(e) => setEditNameValue(e.currentTarget.value)}
               onBlur={handleNameSubmit} onKeyDown={(e) => { if (e.key === 'Enter') handleNameSubmit(); if (e.key === 'Escape') setEditingName(false); }}
@@ -57,14 +62,14 @@ export function ColorItem({ color, dragHandleProps, showDragHandle, colorInputRe
           ) : (
             <Text size="xs" ff={color.name ? undefined : 'monospace'} onClick={handleNameEditStart}
               style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'text' }}>
-              {color.name || color.hex.toUpperCase()}
+              {color.name || color.hex.toLowerCase()}
             </Text>
           )}
         </Box>
 
         <Box style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 46 }}>
           <Box style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, minWidth: 0 }}>
-            {color.name && <Text ff="monospace" c="dimmed" style={{ fontSize: 10 }}>{color.hex.toUpperCase()}</Text>}
+            {color.name && <Text ff="monospace" c="dimmed" style={{ fontSize: 10 }}>{color.hex.toLowerCase()}</Text>}
             {color.ratio > 0 && <Badge size="xs" variant="outline" color="gray">{color.ratio}%</Badge>}
           </Box>
           <Box style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
@@ -104,17 +109,16 @@ export function ColorItem({ color, dragHandleProps, showDragHandle, colorInputRe
   );
 }
 
-interface SortableColorItemProps {
-  color: Color;
-  showDragHandle?: boolean;
-  colorInputRef: (el: HTMLInputElement | null) => void;
-}
-
-export function SortableColorItem({ color, showDragHandle, colorInputRef }: SortableColorItemProps) {
+export function SortableColorItem({ color }: { color: Color }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: color.id, data: { type: 'color' } });
   return (
-    <Box ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}>
-      <ColorItem color={color} dragHandleProps={{ ...attributes, ...listeners }} showDragHandle={showDragHandle} colorInputRef={colorInputRef} />
+    <Box
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1, cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+    >
+      <ColorItem color={color} />
     </Box>
   );
 }

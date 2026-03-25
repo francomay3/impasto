@@ -3,9 +3,12 @@ import {
   getDocs, getDoc, query, orderBy, serverTimestamp, type Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { ProjectState } from '../types';
+import type { Color, ProjectState } from '../types';
 
-type StoredProject = Omit<ProjectState, 'imageDataUrl' | 'createdAt' | 'updatedAt'> & {
+// hex is always derived at runtime — never persisted
+type StoredColor = Omit<Color, 'hex'>;
+type StoredProject = Omit<ProjectState, 'imageDataUrl' | 'createdAt' | 'updatedAt' | 'palette'> & {
+  palette: StoredColor[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
   imageStorageUrl?: string;
@@ -20,6 +23,9 @@ function toProjectState(id: string, data: StoredProject): ProjectState {
     ...data,
     id,
     imageDataUrl: null,
+    palette: (data.palette as Array<StoredColor & { hex?: string }>)
+      .filter(c => c.sample)
+      .map(({ hex: _hex, ...c }) => ({ hex: '', ...c })),
     createdAt: data.createdAt.toDate().toISOString(),
     updatedAt: data.updatedAt.toDate().toISOString(),
   };
@@ -28,7 +34,7 @@ function toProjectState(id: string, data: StoredProject): ProjectState {
 function toPayload(state: ProjectState) {
   return {
     name: state.name,
-    palette: state.palette,
+    palette: state.palette.map(({ hex: _hex, ...c }) => c),
     groups: state.groups,
     paletteSize: state.paletteSize,
     filters: state.filters,
@@ -78,6 +84,14 @@ export async function saveFirestoreImageUrl(
   imageStorageUrl: string,
 ): Promise<void> {
   await updateDoc(doc(projectsCol(userId), projectId), { imageStorageUrl });
+}
+
+export async function renameFirestoreProject(
+  userId: string,
+  projectId: string,
+  name: string,
+): Promise<void> {
+  await updateDoc(doc(projectsCol(userId), projectId), { name, updatedAt: serverTimestamp() });
 }
 
 export async function deleteFirestoreProject(userId: string, projectId: string): Promise<void> {

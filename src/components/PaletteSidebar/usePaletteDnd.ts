@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
 import {
   closestCenter,
-  PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
   type CollisionDetection,
 } from '@dnd-kit/core';
+import { SmartPointerSensor } from '../../utils/dndSensor';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { Color, ColorGroup } from '../../types';
 
@@ -29,7 +29,7 @@ interface Return {
 
 export function usePaletteDnd({ palette, groups, onReorderGroups, onSetColorGroup, onReorderPalette }: Options): Return {
   const [draggingType, setDraggingType] = useState<'group' | 'color' | null>(null);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(useSensor(SmartPointerSensor, { activationConstraint: { distance: 5 } }));
 
   const collisionDetection: CollisionDetection = useCallback((args) => {
     const type = args.active.data.current?.type;

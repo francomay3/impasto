@@ -3,6 +3,12 @@ export type ColorGroup = {
   name: string;
 };
 
+export type ColorSample = {
+  x: number;
+  y: number;
+  radius: number;
+};
+
 export type Color = {
   id: string;
   hex: string;
@@ -12,6 +18,7 @@ export type Color = {
   mixRecipe: string;
   groupId?: string;
   highlighted?: boolean;
+  sample?: ColorSample;
 };
 
 export type Pigment = {

@@ -1,5 +1,5 @@
-import { useRef, useState, useCallback } from 'react';
-import { Stack, Box, Text, ActionIcon, Tooltip, NumberInput, Divider } from '@mantine/core';
+import { useState, useCallback } from 'react';
+import { Stack, Box, Text, ActionIcon, Tooltip } from '@mantine/core';
 import { FolderPlus } from 'lucide-react';
 import { DndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -12,12 +12,11 @@ import { usePaletteContext } from '../../context/PaletteContext';
 
 export function PaletteSidebar() {
   const {
-    palette, groups, blur, onBlurChange, onAddColor,
+    palette, groups, onAddColor,
     onAddGroup: ctxAddGroup, onRemoveGroup, onRenameGroup,
     onSetColorGroup, onReorderPalette, onReorderGroups,
   } = usePaletteContext();
 
-  const colorInputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [newGroupId, setNewGroupId] = useState<string | null>(null);
 
@@ -38,24 +37,12 @@ export function PaletteSidebar() {
     });
   };
 
-  const colorRef = (id: string) => (el: HTMLInputElement | null) => {
-    if (el) colorInputRefs.current.set(id, el);
-    else colorInputRefs.current.delete(id);
-  };
-
   const ungroupedColors = palette.filter(c => !c.groupId || !groups.find(g => g.id === c.groupId));
   const isDraggingColor = draggingType === 'color';
 
   return (
     <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <Stack gap="xs" p="xs">
-        <Text fw={600} size="sm">Pre-Indexing</Text>
-        <Stack gap={2}>
-          <Text size="xs" c="dimmed">Simplification blur</Text>
-          <NumberInput value={blur} min={0} max={50} suffix="px" onChange={(v) => onBlurChange(Number(v))} size="xs" />
-        </Stack>
-        <Divider />
-
         <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text fw={600} size="sm">Palette</Text>
           <Tooltip label="Add group">
@@ -80,7 +67,7 @@ export function PaletteSidebar() {
                   onDelete={() => onRemoveGroup(group.id)}>
                   <SortableContext items={groupColors.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     <Stack gap={4}>
-                      {groupColors.map(color => <SortableColorItem key={color.id} color={color} showDragHandle colorInputRef={colorRef(color.id)} />)}
+                      {groupColors.map(color => <SortableColorItem key={color.id} color={color} />)}
                     </Stack>
                   </SortableContext>
                 </SortableGroup>
@@ -94,7 +81,7 @@ export function PaletteSidebar() {
             {groups.length > 0 && <Text size="xs" c="dimmed" fw={500} style={{ marginTop: 4 }}>Ungrouped</Text>}
             <SortableContext items={ungroupedColors.map(c => c.id)} strategy={verticalListSortingStrategy}>
               <Stack gap={4}>
-                {ungroupedColors.map(color => <SortableColorItem key={color.id} color={color} showDragHandle colorInputRef={colorRef(color.id)} />)}
+                {ungroupedColors.map(color => <SortableColorItem key={color.id} color={color} />)}
               </Stack>
             </SortableContext>
             <GroupDropZone groupId={undefined} isDraggingColor={isDraggingColor} />
@@ -106,4 +93,3 @@ export function PaletteSidebar() {
   );
 }
 
-export { ColorItem };

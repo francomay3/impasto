@@ -1,16 +1,14 @@
 import { createContext, useContext } from 'react';
-import type { Color, ColorGroup } from '../types';
+import type { Color, ColorGroup, ColorSample } from '../types';
 
 export interface PaletteContextValue {
   palette: Color[];
   groups: ColorGroup[];
-  blur: number;
   samplingColorId: string | null;
-  onBlurChange: (v: number) => void;
   onStartSampling: (id: string) => void;
-  onColorChange: (id: string, hex: string) => void;
   onRenameColor: (id: string, name: string) => void;
   onAddColor: () => void;
+  onAddColorAtPosition: (sample: ColorSample, hex: string) => void;
   onDeleteColor: (id: string) => void;
   onToggleHighlight: (id: string) => void;
   onAddGroup: (id: string, name: string) => void;

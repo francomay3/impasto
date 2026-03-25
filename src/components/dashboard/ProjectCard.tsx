@@ -1,94 +1,81 @@
-import { Card, Text, ActionIcon, Group, Stack, Menu } from '@mantine/core';
-import { MoreHorizontal, FolderOpen, Trash2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Box, Card, Text, ActionIcon, Group, Stack, Menu, Modal, TextInput, Button } from '@mantine/core';
+import { MoreHorizontal, FolderOpen, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ProjectState } from '../../types';
+import useConfirmDialog from '../useConfirmDialog';
+import { ProjectCardPreview } from './ProjectCardPreview';
+import { useContextMenu } from '../../context/ContextMenuContext';
 
 interface Props {
   project: ProjectState;
   onDelete: (id: string) => void;
+  onRename: (id: string, name: string) => void;
 }
 
-function isUsable(hex: string) {
-  const v = parseInt(hex.replace('#', ''), 16);
-  const r = ((v >> 16) & 0xff) / 255;
-  const g = ((v >> 8) & 0xff) / 255;
-  const b = (v & 0xff) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  const s = max === min ? 0 : l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
-  return l >= 0.1 && l <= 0.85 && s >= 0.15;
+interface MenuItemsProps {
+  onOpen: () => void;
+  onOpenNewTab: () => void;
+  onRename: () => void;
+  onDelete: () => void;
 }
 
-function PaletteThumbnail({ palette }: { palette: ProjectState['palette'] }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const W = canvas.width;
-    const H = canvas.height;
-
-    ctx.fillStyle = '#1a1b1e';
-    ctx.fillRect(0, 0, W, H);
-
-    const usable = palette.filter(c => isUsable(c.hex));
-    const colors = usable.length > 0 ? usable : palette.length > 0 ? palette : [{ hex: '#444' }];
-    const shuffled = [...colors].sort(() => Math.random() - 0.5);
-
-    shuffled.forEach(({ hex }) => {
-      const blobs = 3 + Math.floor(Math.random() * 5);
-      for (let i = 0; i < blobs; i++) {
-        const x = Math.random() * W;
-        const y = Math.random() * H;
-        const r = 30 + Math.random() * 80;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-        g.addColorStop(0, hex + '99');
-        g.addColorStop(1, hex + '00');
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    });
-  }, [palette]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width={200}
-      height={200}
-      style={{ width: '100%', height: '100%', filter: 'blur(10px) saturate(1.5)', transform: 'scale(1.15)' }}
-    />
-  );
-}
-
-function ProjectCardPreview({ project }: { project: ProjectState }) {
-  const [loaded, setLoaded] = useState(false);
-
+function CardMenuItems({ onOpen, onOpenNewTab, onRename, onDelete }: MenuItemsProps) {
   return (
     <>
-      {!loaded && <PaletteThumbnail palette={project.palette} />}
-      {project.imageStorageUrl && (
-        <img
-          src={project.imageStorageUrl}
-          alt={project.name}
-          onLoad={() => setLoaded(true)}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: loaded ? 'block' : 'none' }}
-        />
-      )}
+      <Menu.Item leftSection={<FolderOpen size={14} />} onClick={onOpen}>Open</Menu.Item>
+      <Menu.Item leftSection={<ExternalLink size={14} />} onClick={onOpenNewTab}>Open in new tab</Menu.Item>
+      <Menu.Item leftSection={<Pencil size={14} />} onClick={onRename}>Rename</Menu.Item>
+      <Menu.Divider />
+      <Menu.Item leftSection={<Trash2 size={14} />} color="red" onClick={onDelete}>Delete</Menu.Item>
     </>
   );
 }
 
-export function ProjectCard({ project, onDelete }: Props) {
+export function ProjectCard({ project, onDelete, onRename }: Props) {
   const navigate = useNavigate();
+  const { open: openMenu } = useContextMenu();
   const [hovered, setHovered] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [nameInput, setNameInput] = useState('');
   const date = new Date(project.updatedAt).toLocaleDateString();
   const open = () => navigate(`/project/${project.id}`);
+  const openInNewTab = () => window.open(`/project/${project.id}`, '_blank');
+
+  const { confirm, confirmDialog } = useConfirmDialog({
+    title: 'Delete project',
+    description: `Are you sure you want to delete "${project.name}"? This action cannot be undone.`,
+    onConfirm: () => onDelete(project.id),
+  });
+
+  const handleRenameOpen = () => {
+    setNameInput(project.name);
+    setRenameOpen(true);
+  };
+
+  const handleRenameConfirm = () => {
+    const trimmed = nameInput.trim();
+    if (trimmed && trimmed !== project.name) onRename(project.id, trimmed);
+    setRenameOpen(false);
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        { label: 'Open',            icon: <FolderOpen size={14} />,   onClick: open },
+        { label: 'Open in new tab', icon: <ExternalLink size={14} />, onClick: openInNewTab },
+        { label: 'Rename',          icon: <Pencil size={14} />,       onClick: handleRenameOpen },
+        { type: 'divider' },
+        { label: 'Delete',          icon: <Trash2 size={14} />,       onClick: confirm, color: 'red' },
+      ],
+    });
+  };
+
+  const menuHandlers = { onOpen: open, onOpenNewTab: openInNewTab, onRename: handleRenameOpen, onDelete: confirm };
 
   return (
     <Card
@@ -101,6 +88,7 @@ export function ProjectCard({ project, onDelete }: Props) {
         transition: 'border-color 150ms ease',
       }}
       onClick={open}
+      onContextMenu={handleContextMenu}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -111,7 +99,7 @@ export function ProjectCard({ project, onDelete }: Props) {
       {project.palette.length > 0 && (
         <Card.Section style={{ display: 'flex', height: 8 }}>
           {project.palette.map(c => (
-            <div key={c.id} style={{ flex: 1, background: c.hex }} />
+            <Box key={c.id} style={{ flex: 1, background: c.hex }} />
           ))}
         </Card.Section>
       )}
@@ -129,19 +117,33 @@ export function ProjectCard({ project, onDelete }: Props) {
             </ActionIcon>
           </Menu.Target>
           <Menu.Dropdown>
-            <Menu.Item leftSection={<FolderOpen size={14} />} onClick={e => { e.stopPropagation(); open(); }}>
-              Open
-            </Menu.Item>
-            <Menu.Item
-              leftSection={<Trash2 size={14} />}
-              color="red"
-              onClick={e => { e.stopPropagation(); onDelete(project.id); }}
-            >
-              Delete
-            </Menu.Item>
+            <CardMenuItems {...menuHandlers} />
           </Menu.Dropdown>
         </Menu>
       </Group>
+
+      {confirmDialog}
+
+      <Modal
+        opened={renameOpen}
+        onClose={() => setRenameOpen(false)}
+        title="Rename project"
+        size="sm"
+        onClick={e => e.stopPropagation()}
+      >
+        <TextInput
+          label="Project name"
+          value={nameInput}
+          onChange={e => setNameInput(e.currentTarget.value)}
+          onKeyDown={e => e.key === 'Enter' && handleRenameConfirm()}
+          data-autofocus
+          mb="lg"
+        />
+        <Group justify="flex-end" gap="sm">
+          <Button variant="default" onClick={() => setRenameOpen(false)}>Cancel</Button>
+          <Button onClick={handleRenameConfirm} disabled={!nameInput.trim()}>Save</Button>
+        </Group>
+      </Modal>
     </Card>
   );
 }

@@ -60,8 +60,10 @@ export function useCanvasPipeline(
     const indexed = indexedCanvasRef.current;
     const worker = workerRef.current;
     if (!filtered || !indexed || !worker || palette.length === 0) return;
-    indexed.width = filtered.width;
-    indexed.height = filtered.height;
+    if (indexed.width !== filtered.width || indexed.height !== filtered.height) {
+      indexed.width = filtered.width;
+      indexed.height = filtered.height;
+    }
     const imageData = sourceData ?? filtered.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, filtered.width, filtered.height);
     const generation = ++renderGenerationRef.current;
     const bufferCopy = imageData.data.slice().buffer;

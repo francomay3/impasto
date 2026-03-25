@@ -5,9 +5,10 @@ import { sampleCircleAverage } from '../utils/imageProcessing';
 import { rgbToHex } from '../utils/colorUtils';
 import { useCanvasContext } from '../context/CanvasContext';
 import { HOTKEYS } from '../hotkeys';
+import type { ColorSample } from '../types';
 
 interface Props {
-  onSample: (hex: string) => void;
+  onSample: (sample: ColorSample, hex: string) => void;
   onCancel: () => void;
 }
 
@@ -74,7 +75,7 @@ export function SamplerOverlay({ onSample, onCancel }: Props) {
     const radiusInImagePixels = radius * scaleX;
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const [r, g, b] = sampleCircleAverage(imageData, cx, cy, radiusInImagePixels);
-    onSample(rgbToHex(r, g, b));
+    onSample({ x: cx, y: cy, radius: radiusInImagePixels }, rgbToHex(r, g, b));
   }, [filteredCanvasRef, radius, onSample]);
 
   return (

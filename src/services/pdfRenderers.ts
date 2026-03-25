@@ -85,13 +85,13 @@ export function renderSwatches(
 
     doc.setFontSize(8);
     doc.setTextColor(0);
-    const displayName = color.name || color.hex.toUpperCase();
+    const displayName = color.name || color.hex.toLowerCase();
     doc.text(displayName, x + textX, acy + 5);
     let recipeY = acy + 10;
     if (color.name) {
       doc.setFontSize(6);
       doc.setTextColor(120);
-      doc.text(color.hex.toUpperCase(), x + textX, acy + 9);
+      doc.text(color.hex.toLowerCase(), x + textX, acy + 9);
       doc.setFontSize(8);
       doc.setTextColor(0);
       recipeY = acy + 13;

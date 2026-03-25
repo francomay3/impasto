@@ -7,6 +7,8 @@ export interface CanvasContextValue {
   viewportTransform: ViewportTransform;
   isDragging: boolean;
   isSampling: boolean;
+  showLabels: boolean;
+  onToggleLabels: () => void;
   onWheel: (e: WheelEvent, rect: DOMRect) => void;
   onMouseDown: (e: React.MouseEvent) => void;
   onResetTransform: () => void;

@@ -9,6 +9,7 @@ export interface EditorContextValue {
   canRedo: boolean;
   isLoading: boolean;
   onExportClick: () => void;
+  onReplaceImage: () => void;
   onRename: (name: string) => void;
   onUndo: () => void;
   onRedo: () => void;

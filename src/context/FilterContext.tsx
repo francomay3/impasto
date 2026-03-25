@@ -10,12 +10,12 @@ export interface FilterContextValue {
   filters: FilterInstance[];
   samplingLevels: SamplingLevels | null;
   onAddFilter: (type: FilterType) => void;
+  onDuplicateFilter: (id: string) => void;
   onRemoveFilter: (id: string) => void;
   onUpdateFilter: (id: string, params: Record<string, number>) => void;
   onPreviewFilter: (id: string, params: Record<string, number>) => void;
   onReorderFilters: (filters: FilterInstance[]) => void;
   onStartSamplingLevels: (filterId: string, point: 'black' | 'white') => void;
-  onOpenFilterMenu: (pos: { x: number; y: number }) => void;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);

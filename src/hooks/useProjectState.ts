@@ -24,22 +24,33 @@ export function useProjectState({ initialState, onSave }: ProjectStateOptions) {
   }, [set, onSave]);
 
   const setImage = useCallback((dataUrl: string) => {
-    const initialColor: Color = { id: crypto.randomUUID(), hex: '#000000', locked: false, ratio: 0, mixRecipe: '' };
-    saveAndSet({ ...stateRef.current, imageDataUrl: dataUrl, palette: [initialColor], groups: [], filters: [], preIndexingBlur: 3, updatedAt: ts() });
+    saveAndSet({ ...stateRef.current, imageDataUrl: dataUrl, palette: [], groups: [], filters: [], preIndexingBlur: 3, updatedAt: ts() });
   }, [saveAndSet]);
 
   const setPalette = useCallback((palette: Color[]) => {
     saveAndSet({ ...stateRef.current, palette, updatedAt: ts() });
   }, [saveAndSet]);
 
+  // Updates sampled color hexes in state without persisting — hex is derived at runtime
+  const updateDerivedPalette = useCallback((palette: Color[]) => {
+    set({ ...stateRef.current, palette });
+  }, [set]);
+
   const updateColor = useCallback((id: string, changes: Partial<Color>) => {
     const palette = stateRef.current.palette.map(c => c.id === id ? { ...c, ...changes } : c);
     saveAndSet({ ...stateRef.current, palette, updatedAt: ts() });
   }, [saveAndSet]);
 
-  const addFilter = useCallback((type: FilterType) => {
-    const instance: FilterInstance = { id: crypto.randomUUID(), type, params: { ...DEFAULT_FILTER_PARAMS[type] } };
+  const addFilter = useCallback((type: FilterType, params?: Record<string, number>) => {
+    const instance: FilterInstance = { id: crypto.randomUUID(), type, params: params ?? { ...DEFAULT_FILTER_PARAMS[type] } };
     saveAndSet({ ...stateRef.current, filters: [...stateRef.current.filters, instance], updatedAt: ts() });
+  }, [saveAndSet]);
+
+  const duplicateFilter = useCallback((id: string) => {
+    const src = stateRef.current.filters.find(f => f.id === id);
+    if (!src) return;
+    const copy: FilterInstance = { id: crypto.randomUUID(), type: src.type, params: { ...src.params } };
+    saveAndSet({ ...stateRef.current, filters: [...stateRef.current.filters, copy], updatedAt: ts() });
   }, [saveAndSet]);
 
   const removeFilter = useCallback((id: string) => {
@@ -68,8 +79,8 @@ export function useProjectState({ initialState, onSave }: ProjectStateOptions) {
     saveAndSet({ ...stateRef.current, paletteSize, updatedAt: ts() });
   }, [saveAndSet]);
 
-  const addColor = useCallback((id: string) => {
-    const newColor: Color = { id, hex: '#000000', locked: false, ratio: 0, mixRecipe: '' };
+  const addSampledColor = useCallback((id: string, sample: Color['sample'], hex: string) => {
+    const newColor: Color = { id, hex, sample, locked: false, ratio: 0, mixRecipe: '' };
     saveAndSet({ ...stateRef.current, palette: [...stateRef.current.palette, newColor], updatedAt: ts() });
   }, [saveAndSet]);
 
@@ -111,9 +122,9 @@ export function useProjectState({ initialState, onSave }: ProjectStateOptions) {
   }, [set]);
 
   return {
-    state, setImage, setPalette, updateColor,
-    addFilter, removeFilter, updateFilter, updateFilterPreview, reorderFilters, setPreIndexingBlur,
-    setPaletteSize, addColor, removeColor,
+    state, setImage, setPalette, updateDerivedPalette, updateColor,
+    addFilter, duplicateFilter, removeFilter, updateFilter, updateFilterPreview, reorderFilters, setPreIndexingBlur,
+    setPaletteSize, addSampledColor, removeColor,
     addGroup, removeGroup, renameGroup, setColorGroup, reorderGroups, renameName,
     restoreState,
   };

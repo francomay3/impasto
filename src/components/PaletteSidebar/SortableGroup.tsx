@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Box, Text, ActionIcon, Tooltip, TextInput } from '@mantine/core';
-import { X, GripVertical, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, GripVertical, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import useConfirmDialog from '../useConfirmDialog';
 import type { ColorGroup } from '../../types';
 import { GroupDropZone } from './GroupDropZone';
+import { useContextMenu } from '../../context/ContextMenuContext';
+import { useContextTrigger } from '../../hooks/useContextTrigger';
 
 interface Props {
   group: ColorGroup;
@@ -24,6 +26,7 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
   const [editing, setEditing] = useState(() => autoEdit ?? false);
   const [editName, setEditName] = useState(group.name);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: group.id, data: { type: 'group' } });
+  const { open: openMenu } = useContextMenu();
 
   const { confirm: confirmDelete, confirmDialog } = useConfirmDialog({
     title: 'Delete group',
@@ -36,13 +39,27 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
     setEditing(false);
   };
 
+  const openContextMenu = useCallback(({ x, y }: { x: number; y: number }) => {
+    openMenu({ x, y, items: [
+      { label: 'Rename', icon: <Pencil size={14} />, onClick: () => { setEditing(true); setEditName(group.name); } },
+      ...(colorCount > 0 ? [{ label: collapsed ? 'Expand' : 'Collapse', icon: collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />, onClick: onToggleCollapse }] : []),
+      { type: 'divider' as const },
+      { label: 'Delete group', icon: <X size={14} />, onClick: () => (colorCount > 0 ? confirmDelete() : onDelete()), color: 'red' },
+    ]});
+  }, [group.name, collapsed, colorCount, openMenu, onToggleCollapse, confirmDelete, onDelete]);
+
+  const contextTrigger = useContextTrigger(openContextMenu);
+
   return (
-    <Box ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}>
+    <Box ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }} {...contextTrigger}>
       {confirmDialog}
       <Box style={{ border: '1px solid var(--mantine-color-dark-5)', borderRadius: 6, overflow: 'hidden' }}>
-        <Box style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px', background: 'var(--mantine-color-dark-6)' }}>
+        <Box
+          {...(showDragHandle ? { ...attributes, ...listeners } : {})}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px', background: 'var(--mantine-color-dark-6)', ...(showDragHandle ? { cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' } : {}) }}
+        >
           {showDragHandle && (
-            <Box {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--mantine-color-dark-2)', display: 'flex', flexShrink: 0, touchAction: 'none' }}>
+            <Box style={{ color: 'var(--mantine-color-dark-2)', display: 'flex', flexShrink: 0 }}>
               <GripVertical size={13} />
             </Box>
           )}

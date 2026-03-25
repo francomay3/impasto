@@ -1,12 +1,16 @@
 import { useRef } from 'react';
 import { Stack, ActionIcon, Tooltip, Group, Text, Box } from '@mantine/core';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
+import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import type { DragEndEvent } from '@dnd-kit/core';
+import { SmartPointerSensor } from '../../utils/dndSensor';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { FilterItem } from './FilterItem';
 import { AddItemButton } from '../AddItemButton';
 import { useFilterContext } from '../../context/FilterContext';
+import { useContextMenu } from '../../context/ContextMenuContext';
+import { buildFilterMenuItems } from './AddFilterMenu';
 
 interface Props {
   collapsed?: boolean;
@@ -14,9 +18,10 @@ interface Props {
 }
 
 export function FilterPanel({ collapsed, onToggleCollapse }: Props) {
-  const { filters, onReorderFilters, onOpenFilterMenu } = useFilterContext();
+  const { filters, onReorderFilters, onAddFilter } = useFilterContext();
+  const { open: openMenu } = useContextMenu();
   const addButtonRef = useRef<HTMLButtonElement>(null);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(useSensor(SmartPointerSensor, { activationConstraint: { distance: 5 } }));
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -48,17 +53,17 @@ export function FilterPanel({ collapsed, onToggleCollapse }: Props) {
           </ActionIcon>
         </Tooltip>
       </Group>
-      <Stack gap="xs" p="xs" style={{ flex: 1, overflowY: 'auto' }}>
+      <Stack gap="xs" p="xs" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         <AddItemButton
           ref={addButtonRef}
           label="Add Filter"
           hint="⌘F"
           onClick={() => {
             const rect = addButtonRef.current?.getBoundingClientRect();
-            if (rect) onOpenFilterMenu({ x: rect.left, y: rect.bottom });
+            if (rect) openMenu({ x: rect.left, y: rect.bottom, items: buildFilterMenuItems(onAddFilter) });
           }}
         />
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis, restrictToParentElement]}>
           <SortableContext items={filters.map(f => f.id)} strategy={verticalListSortingStrategy}>
             {filters.map(filter => <FilterItem key={filter.id} filter={filter} />)}
           </SortableContext>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Box, Group, ActionIcon, Text, Tooltip, Collapse } from '@mantine/core';
-import { GripVertical, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { GripVertical, ChevronDown, ChevronUp, Trash2, CopyPlus, ArrowUp, ArrowDown } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { FilterInstance, BrightnessContrastParams, HueSaturationParams, LevelsParams, BlurParams } from '../../types';
@@ -10,6 +10,8 @@ import { HueSaturation } from './widgets/HueSaturation';
 import { Levels } from './widgets/Levels';
 import { Blur } from './widgets/Blur';
 import { useFilterContext } from '../../context/FilterContext';
+import { useContextMenu } from '../../context/ContextMenuContext';
+import { useContextTrigger } from '../../hooks/useContextTrigger';
 
 interface FilterWidgetProps {
   filter: FilterInstance;
@@ -30,9 +32,10 @@ function FilterWidget({ filter, onUpdate, onPreview, samplingLevels, onStartSamp
 }
 
 export function FilterItem({ filter }: { filter: FilterInstance }) {
-  const { samplingLevels, onRemoveFilter, onUpdateFilter, onPreviewFilter, onStartSamplingLevels } = useFilterContext();
+  const { filters, samplingLevels, onRemoveFilter, onUpdateFilter, onPreviewFilter, onStartSamplingLevels, onDuplicateFilter, onReorderFilters } = useFilterContext();
   const [expanded, setExpanded] = useState(true);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: filter.id });
+  const { open: openMenu } = useContextMenu();
 
   const handleAuxClick = (e: React.MouseEvent) => {
     if (e.button === 1) { e.preventDefault(); onRemoveFilter(filter.id); }
@@ -40,14 +43,34 @@ export function FilterItem({ filter }: { filter: FilterInstance }) {
 
   const activeSamplingPoint = samplingLevels?.filterId === filter.id ? samplingLevels.point : null;
 
+  const openContextMenu = useCallback(({ x, y }: { x: number; y: number }) => {
+    const idx = filters.findIndex(f => f.id === filter.id);
+    const swap = (a: number, b: number) => {
+      const next = [...filters];
+      [next[a], next[b]] = [next[b], next[a]];
+      onReorderFilters(next);
+    };
+    openMenu({ x, y, items: [
+      { label: expanded ? 'Collapse' : 'Expand', icon: expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />, onClick: () => setExpanded(v => !v) },
+      { type: 'divider' },
+      { label: 'Move up',   icon: <ArrowUp size={14} />,   onClick: () => swap(idx, idx - 1), disabled: idx <= 0 },
+      { label: 'Move down', icon: <ArrowDown size={14} />, onClick: () => swap(idx, idx + 1), disabled: idx >= filters.length - 1 },
+      { label: 'Duplicate', icon: <CopyPlus size={14} />,  onClick: () => onDuplicateFilter(filter.id) },
+      { type: 'divider' },
+      { label: 'Remove', icon: <Trash2 size={14} />, onClick: () => onRemoveFilter(filter.id), color: 'red' },
+    ]});
+  }, [filters, filter.id, expanded, openMenu, onReorderFilters, onDuplicateFilter, onRemoveFilter]);
+
+  const contextTrigger = useContextTrigger(openContextMenu);
+
   return (
-    <Box ref={setNodeRef} onMouseDown={handleAuxClick}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, border: '1px solid var(--mantine-color-dark-5)', borderRadius: 6, overflow: 'hidden', background: 'var(--mantine-color-dark-7)' }}
+    <Box ref={setNodeRef} onMouseDown={handleAuxClick} {...contextTrigger}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, border: '1px solid var(--mantine-color-dark-5)', borderRadius: 6, overflow: 'hidden', background: 'var(--mantine-color-dark-7)', flexShrink: 0 }}
     >
-      <Group px="xs" py={6} gap={4} style={{ background: 'var(--mantine-color-dark-6)' }} {...attributes}>
-        <ActionIcon size="xs" variant="transparent" color="gray" style={{ cursor: 'grab' }} {...listeners}>
+      <Group px="xs" py={6} gap={4} {...attributes} {...listeners} onDoubleClick={() => setExpanded(v => !v)} style={{ background: 'var(--mantine-color-dark-6)', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none' }}>
+        <Box style={{ color: 'var(--mantine-color-dark-3)', display: 'flex', alignItems: 'center' }}>
           <GripVertical size={14} />
-        </ActionIcon>
+        </Box>
         <Text size="xs" fw={500} style={{ flex: 1 }}>{FILTER_LABELS[filter.type]}</Text>
         <ActionIcon size="xs" variant="subtle" color="gray" onClick={() => setExpanded(v => !v)}>
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}

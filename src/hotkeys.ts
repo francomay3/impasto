@@ -10,6 +10,7 @@ export const HOTKEYS = {
   REDO:       'mod+shift+Z',
   REDO_ALT:   'mod+Y',
   CANCEL:     'Escape',
-  ADD_FILTER: 'mod+F',
-  ADD_COLOR:  'C',
+  ADD_FILTER:      'mod+F',
+  ADD_COLOR:       'C',
+  SHOW_SHORTCUTS:  '?',
 } as const;

@@ -1,13 +1,16 @@
 import { AppShell, Group, Menu, Skeleton, Stack, Text, UnstyledButton } from '@mantine/core';
+import { useDisclosure, useHotkeys } from '@mantine/hooks';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EditableTitle } from './EditableTitle';
 import { UserMenu } from './UserMenu';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
 import { FilterMenuItems } from './FilterPanel/AddFilterMenu';
+import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 import { useEditorContext } from '../context/EditorContext';
 import { useFilterContext } from '../context/FilterContext';
 import { usePaletteContext } from '../context/PaletteContext';
+import { HOTKEYS } from '../hotkeys';
 
 function MenuButton({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -33,9 +36,11 @@ function MenuButton({ label, children }: { label: string; children: React.ReactN
 
 export function AppHeader() {
   const navigate = useNavigate();
-  const { projectName, hasImage, onExportClick, onRename, onUndo, onRedo, canUndo, canRedo, saveStatus, isLoading } = useEditorContext();
+  const { projectName, hasImage, onExportClick, onReplaceImage, onRename, onUndo, onRedo, canUndo, canRedo, saveStatus, isLoading } = useEditorContext();
   const { onAddFilter } = useFilterContext();
   const { onAddColor } = usePaletteContext();
+  const [shortcutsOpened, { open: openShortcuts, close: closeShortcuts }] = useDisclosure(false);
+  useHotkeys([[HOTKEYS.SHOW_SHORTCUTS, openShortcuts]]);
   return (
     <AppShell.Header style={{ background: 'var(--mantine-color-dark-9)', borderBottom: '1px solid var(--mantine-color-dark-6)' }}>
       <style>{`.header-menu-btn:hover { background: var(--mantine-color-dark-6); }`}</style>
@@ -49,7 +54,7 @@ export function AppHeader() {
                 <Menu.Item disabled>New Project</Menu.Item>
                 <Menu.Item disabled>Open…</Menu.Item>
                 <Menu.Divider />
-                <Menu.Item disabled>Import Image…</Menu.Item>
+                <Menu.Item disabled={!hasImage} onClick={hasImage ? onReplaceImage : undefined}>Import Image…</Menu.Item>
                 <Menu.Divider />
                 <Menu.Item disabled>Save</Menu.Item>
                 <Menu.Item disabled={!hasImage} onClick={hasImage ? onExportClick : undefined}>
@@ -80,7 +85,7 @@ export function AppHeader() {
                 </Menu.Item>
               </MenuButton>
               <MenuButton label="Help">
-                <Menu.Item disabled>Keyboard Shortcuts</Menu.Item>
+                <Menu.Item onClick={openShortcuts} rightSection={<Text size="xs" c="dimmed">?</Text>}>Keyboard Shortcuts</Menu.Item>
                 <Menu.Item disabled>Documentation</Menu.Item>
                 <Menu.Divider />
                 <Menu.Item disabled>
@@ -95,6 +100,7 @@ export function AppHeader() {
           <UserMenu />
         </Group>
       </Group>
+      <KeyboardShortcutsModal opened={shortcutsOpened} onClose={closeShortcuts} />
     </AppShell.Header>
   );
 }

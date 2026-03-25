@@ -5,6 +5,7 @@ import {
   listFirestoreProjects,
   createFirestoreProject,
   deleteFirestoreProject,
+  renameFirestoreProject,
 } from '../services/FirestoreService';
 import { useAuth } from '../context/AuthContext';
 
@@ -40,5 +41,11 @@ export function useProjects() {
     setProjects(prev => prev.filter(p => p.id !== projectId));
   }, [user]);
 
-  return { projects, loading, create, remove };
+  const rename = useCallback(async (projectId: string, name: string) => {
+    if (!user) return;
+    await renameFirestoreProject(user.uid, projectId, name);
+    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, name } : p));
+  }, [user]);
+
+  return { projects, loading, create, remove, rename };
 }

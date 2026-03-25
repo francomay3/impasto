@@ -1,17 +1,17 @@
-import { Box, Container, Button, Group, Loader, Center } from '@mantine/core';
-import { Plus } from 'lucide-react';
+import { Box, Container, Loader, Center } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useProjects } from '../hooks/useProjects';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { ProjectGrid } from '../components/dashboard/ProjectGrid';
 import { UpgradeModal } from '../components/dashboard/UpgradeModal';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 const FREE_PROJECT_LIMIT = 1;
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { projects, loading, create, remove } = useProjects();
+  const { projects, loading, create, remove, rename } = useProjects();
   const [search, setSearch] = useState('');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
@@ -33,20 +33,14 @@ export function DashboardPage() {
       <DashboardHeader search={search} onSearch={setSearch} />
 
       <Container size="xl" py="xl">
-        {projects.length > 0 && (
-          <Group justify="flex-end" mb="xl">
-            <Button onClick={handleCreate} leftSection={<Plus size={16} />} color="primary">
-              New project
-            </Button>
-          </Group>
-        )}
-
         {loading ? (
           <Center h="50vh">
             <Loader color="primary" />
           </Center>
         ) : (
-          <ProjectGrid projects={filtered} onDelete={remove} onCreate={handleCreate} />
+          <ErrorBoundary label="Project grid" compact>
+            <ProjectGrid projects={filtered} onDelete={remove} onRename={rename} onCreate={handleCreate} />
+          </ErrorBoundary>
         )}
       </Container>
 
