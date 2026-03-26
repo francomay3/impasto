@@ -11,6 +11,8 @@ export interface PaletteContextValue {
   onAddColorAtPosition: (sample: ColorSample, hex: string) => void;
   onDeleteColor: (id: string) => void;
   onToggleHighlight: (id: string) => void;
+  onMoveSamplePin: (id: string, sample: ColorSample) => void;
+  onRemoveSamplePin: (id: string) => void;
   onAddGroup: (id: string, name: string) => void;
   onRemoveGroup: (id: string) => void;
   onRenameGroup: (id: string, name: string) => void;

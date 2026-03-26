@@ -6,6 +6,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Color } from '../../types';
 import { usePaletteContext } from '../../context/PaletteContext';
+import { useEditorContext } from '../../context/EditorContext';
 import { useContextMenu } from '../../context/ContextMenuContext';
 import { useContextTrigger } from '../../hooks/useContextTrigger';
 
@@ -17,6 +18,7 @@ interface ColorItemProps {
 
 export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
   const { groups, samplingColorId, onStartSampling, onRenameColor, onDeleteColor, onSetColorGroup, onAddGroup, onToggleHighlight } = usePaletteContext();
+  const { selectedColorId, onSelectColor } = useEditorContext();
   const [editingName, setEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
   const { open: openMenu } = useContextMenu();
@@ -49,8 +51,19 @@ export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProp
 
   const contextTrigger = useContextTrigger(openContextMenu);
 
+  const border = samplingColorId === color.id
+    ? '2px solid var(--mantine-color-blue-4)'
+    : selectedColorId === color.id
+      ? '2px solid var(--mantine-color-primary-4)'
+      : '1px solid var(--mantine-color-dark-4)';
+
   return (
-    <Box onMouseDown={handleAuxClick} {...contextTrigger} style={{ border: samplingColorId === color.id ? '2px solid var(--mantine-color-blue-4)' : '1px solid var(--mantine-color-dark-4)', borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)' }}>
+    <Box
+      onMouseDown={handleAuxClick}
+      onClick={() => onSelectColor(selectedColorId === color.id ? null : color.id)}
+      {...contextTrigger}
+      style={{ border, borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)', cursor: 'pointer' }}
+    >
       <Stack gap={4}>
         <Box style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Box ref={dragHandleRef} {...dragListeners} style={{ color: 'var(--mantine-color-dark-3)', display: 'flex', alignItems: 'center', flexShrink: 0, cursor: 'grab', touchAction: 'none' }}>

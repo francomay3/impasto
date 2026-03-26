@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { AppShell, Box, Center, Group, Loader, Stack } from '@mantine/core';
+import { AppShell, Center, Loader } from '@mantine/core';
 
 import { useProjectState } from './hooks/useProjectState';
 import { useHistory } from './hooks/useHistory';
@@ -9,19 +9,11 @@ import { useViewportTransform } from './hooks/useViewportTransform';
 import { useImageHandlers } from './hooks/useImageHandlers';
 import { useUndoRedo } from './hooks/useUndoRedo';
 import { useEditorHotkeys } from './hooks/useEditorHotkeys';
-import { FilterPanel } from './components/FilterPanel';
-import { PaletteSidebar } from './components/PaletteSidebar';
-import { ImageUploader } from './components/ImageUploader';
-import { CanvasViewport } from './components/CanvasViewport';
-import { SamplerOverlay } from './components/SamplerOverlay';
-import { SamplePinsOverlay } from './components/SamplePinsOverlay';
 import { ReplaceImageModal, type ReplaceImageModalRef } from './components/ReplaceImageModal';
 import { AppHeader } from './components/AppHeader';
 import { ExportModal } from './components/ExportModal';
+import { EditorTabs } from './components/EditorTabs';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ViewportToolbar } from './components/ViewportToolbar';
-import { FilteredViewportControls } from './components/FilteredViewportControls';
-import { IndexedViewportControls } from './components/IndexedViewportControls';
 import { PaletteContext } from './context/PaletteContext';
 import { FilterContext } from './context/FilterContext';
 import { EditorContext } from './context/EditorContext';
@@ -49,10 +41,10 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   const pipeline = useCanvasPipeline(filteredCanvasRef, indexedCanvasRef);
   const viewport = useViewportTransform();
   const [samplingColorId, setSamplingColorId] = useState<string | null>(null);
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
   const [samplingLevels, setSamplingLevels] = useState<SamplingLevels>(null);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
-  const [navbarCollapsed, setNavbarCollapsed] = useState(false);
   const replaceRef = useRef<ReplaceImageModalRef>(null);
 
   const { handleImageLoadBitmap, handleAddColor, handleAddColorAtPosition, handleDeleteColor,
@@ -69,25 +61,30 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
     if (onNewImageFile) onNewImageFile(file);
   }, [handleImageLoadBitmap, onNewImageFile]);
 
-  useEditorHotkeys({ onUndo: handleUndo, onRedo: handleRedo, onAddFilter: addFilter, onAddColor: handleAddColor });
+  useEditorHotkeys({ onUndo: handleUndo, onRedo: handleRedo, onAddFilter: addFilter, onAddColor: handleAddColor, onClearSelection: () => setSelectedColorId(null) });
 
   const paletteValue = {
     palette: state.palette, groups: state.groups ?? [], samplingColorId,
     onStartSampling: (id) => { setSamplingLevels(null); setSamplingColorId(id); },
     onRenameColor: (id, name) => updateColor(id, { name }),
     onAddColor: handleAddColor, onAddColorAtPosition: handleAddColorAtPosition, onDeleteColor: handleDeleteColor, onToggleHighlight: handleToggleHighlight,
+    onMoveSamplePin: (id, sample) => updateColor(id, { sample }),
+    onRemoveSamplePin: (id) => updateColor(id, { sample: undefined }),
     onAddGroup: addGroup, onRemoveGroup: removeGroup, onRenameGroup: renameGroup,
     onSetColorGroup: setColorGroup, onReorderPalette: setPalette, onReorderGroups: reorderGroups,
   };
 
   const filterValue = {
-    filters: state.filters, samplingLevels,
+    filters: state.filters, preIndexingBlur: state.preIndexingBlur, samplingLevels,
     onAddFilter: addFilter, onDuplicateFilter: duplicateFilter, onRemoveFilter: removeFilter,
     onUpdateFilter: updateFilter, onPreviewFilter: updateFilterPreview, onReorderFilters: reorderFilters,
     onStartSamplingLevels: (filterId, point) => { setSamplingColorId(null); setSamplingLevels({ filterId, point }); },
+    onSampleLevels: handleSampleLevels,
+    onCancelSamplingLevels: () => setSamplingLevels(null),
   };
 
   const canvasValue = {
+    sourceImage: state.sourceImage,
     filteredCanvasRef, indexedCanvasRef,
     viewportTransform: viewport.transform,
     isDragging: viewport.isDragging,
@@ -101,6 +98,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   const editorValue = {
     projectName: state.name, hasImage: !!state.sourceImage, saveStatus,
     canUndo, canRedo, isLoading: !!isLoading,
+    selectedColorId, onSelectColor: setSelectedColorId,
     onExportClick: () => setExportModalOpen(true),
     onReplaceImage: () => replaceRef.current?.open(),
     onRename: renameName, onUndo: handleUndo, onRedo: handleRedo,
@@ -111,51 +109,17 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
     <EditorContext.Provider value={editorValue}>
     <PaletteContext.Provider value={paletteValue}>
     <FilterContext.Provider value={filterValue}>
-      <AppShell
-        header={{ height: 68 }}
-        navbar={{ width: navbarCollapsed ? 52 : 260, breakpoint: 'sm' }}
-        aside={{ width: 260, breakpoint: 'md', collapsed: { mobile: true } }}
-        padding={0}
-      >
-        <AppHeader />
-
-        <AppShell.Navbar style={{ background: 'var(--mantine-color-dark-8)', borderRight: '1px solid var(--mantine-color-dark-6)', overflow: 'hidden' }}>
-          <ErrorBoundary label="Filter panel" compact>
-            <FilterPanel collapsed={navbarCollapsed} onToggleCollapse={() => setNavbarCollapsed(v => !v)} />
-          </ErrorBoundary>
-        </AppShell.Navbar>
-
-        <AppShell.Main style={{ background: 'var(--mantine-color-dark-9)' }}>
+      <AppShell header={{ height: 68 }} padding={0}>
+        <ErrorBoundary label="Header" compact>
+          <AppHeader />
+        </ErrorBoundary>
+        <AppShell.Main style={{ background: 'var(--mantine-color-dark-9)', paddingTop: "calc(var(--app-shell-header-height) + 4px)" }}>
           {isLoading ? (
             <Center h="calc(100vh - var(--app-shell-header-height))"><Loader color="primary" /></Center>
-          ) : !state.sourceImage ? (
-            <Box p="xl"><ImageUploader onFileSelected={handleFileSelected} /></Box>
           ) : (
-            <ErrorBoundary label="Canvas" compact>
-              <Stack gap={0} style={{ height: 'calc(100vh - var(--app-shell-header-height))', overflow: 'hidden' }}>
-                <ViewportToolbar
-                  left={<FilteredViewportControls />}
-                  right={<IndexedViewportControls blur={state.preIndexingBlur} onBlurChange={setPreIndexingBlur} />}
-                />
-                <Group align="flex-start" style={{ flex: 1, gap: 0, overflow: 'hidden' }}>
-                  <CanvasViewport ref={filteredCanvasRef}>
-                    <SamplePinsOverlay />
-                    {samplingColorId && <SamplerOverlay onSample={handleSample} onCancel={handleCancelSample} />}
-                    {samplingLevels && <SamplerOverlay onSample={handleSampleLevels} onCancel={() => setSamplingLevels(null)} />}
-                  </CanvasViewport>
-                  <CanvasViewport ref={indexedCanvasRef} variant="indexed" />
-                </Group>
-              </Stack>
-            </ErrorBoundary>
+            <EditorTabs height="calc(100vh - var(--app-shell-header-height))" />
           )}
         </AppShell.Main>
-
-        <AppShell.Aside style={{ background: 'var(--mantine-color-dark-8)', borderLeft: '1px solid var(--mantine-color-dark-6)', overflowY: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
-          <ErrorBoundary label="Palette sidebar" compact>
-            <PaletteSidebar />
-          </ErrorBoundary>
-        </AppShell.Aside>
-
         <ExportModal opened={exportModalOpen} state={state} onClose={() => setExportModalOpen(false)} />
         <ReplaceImageModal ref={replaceRef} hasSamples={state.palette.some(c => c.sample)} onFileSelected={handleFileSelected} />
       </AppShell>

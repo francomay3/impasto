@@ -1,160 +1,119 @@
-import { useState, useLayoutEffect, Fragment } from 'react';
-import { createPortal } from 'react-dom';
-import { Tooltip, Popover, Box } from '@mantine/core';
-import { usePaletteContext } from '../context/PaletteContext';
+import { useRef, useState, useCallback } from 'react';
+import { Trash2, RefreshCw, PinOff } from 'lucide-react';
 import { useCanvasContext } from '../context/CanvasContext';
-import { estimateLabelWidth, resolveLabelOffsets } from '../utils/labelLayout';
-import { PinPopover } from './PinPopover';
-import type { CSSProperties } from 'react';
+import { usePaletteContext } from '../context/PaletteContext';
+import { useEditorContext } from '../context/EditorContext';
+import { useContextMenu } from '../context/ContextMenuContext';
+import { estimateLabelWidth } from '../utils/labelLayout';
+import type { ColorSample } from '../types';
 
 const DOT_R = 6;
+const HIT_R = DOT_R + 5;
+const LABEL_H = 20;
+const H_PAD = 14;
 
-interface ActivePin {
-  id: string;
-  name: string;
-  groupId: string | null;
+function clientToSvg(svg: SVGSVGElement, clientX: number, clientY: number) {
+  const pt = svg.createSVGPoint();
+  pt.x = clientX; pt.y = clientY;
+  return pt.matrixTransform(svg.getScreenCTM()!.inverse());
+}
+
+interface DragState {
+  colorId: string;
+  startPt: { x: number; y: number };
+  originalSample: ColorSample;
 }
 
 export function SamplePinsOverlay() {
-  const { palette, groups, onRenameColor, onSetColorGroup } = usePaletteContext();
-  const { filteredCanvasRef, viewportTransform, isSampling, showLabels } = useCanvasContext();
-  const [activePin, setActivePin] = useState<ActivePin | null>(null);
-  type Layout = { canvas: DOMRect; container: DOMRect; cw: number; ch: number; target: HTMLElement };
-  const [layout, setLayout] = useState<Layout | null>(null);
-
-  useLayoutEffect(() => {
-    const canvas = filteredCanvasRef.current;
-    const container = canvas?.closest('[data-canvas-viewport]') as HTMLElement | null;
-    if (!canvas || !container) return;
-    const update = () => setLayout({
-      canvas: canvas.getBoundingClientRect(),
-      container: container.getBoundingClientRect(),
-      cw: canvas.width,
-      ch: canvas.height,
-      target: container,
-    });
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(canvas);
-    return () => ro.disconnect();
-  }, [viewportTransform, filteredCanvasRef]);
+  const { sourceImage, viewportTransform, isSampling, showLabels } = useCanvasContext();
+  const { palette, onDeleteColor, onStartSampling, onMoveSamplePin, onRemoveSamplePin } = usePaletteContext();
+  const { selectedColorId, onSelectColor } = useEditorContext();
+  const { open: openMenu } = useContextMenu();
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const hasDraggedRef = useRef(false);
 
   const sampledColors = palette.filter(c => c.sample);
-  if (!layout || layout.cw === 0 || sampledColors.length === 0 || isSampling) return null;
 
-  const sx = layout.canvas.width / layout.cw;
-  const sy = layout.canvas.height / layout.ch;
-  const ox = layout.canvas.left - layout.container.left;
-  const oy = layout.canvas.top - layout.container.top;
+  const handleMouseDown = useCallback((e: React.MouseEvent, colorId: string) => {
+    e.stopPropagation();
+    const svg = svgRef.current;
+    const color = palette.find(c => c.id === colorId);
+    if (!svg || !color?.sample) return;
+    hasDraggedRef.current = false;
+    const startPt = clientToSvg(svg, e.clientX, e.clientY);
+    setDrag({ colorId, startPt: { x: startPt.x, y: startPt.y }, originalSample: { ...color.sample } });
+  }, [palette]);
 
-  const pins = sampledColors.map(c => ({
-    px: ox + c.sample!.x * sx,
-    py: oy + c.sample!.y * sy,
-    labelWidth: estimateLabelWidth(c.name || c.hex),
-  }));
-  const labelOffsets = resolveLabelOffsets(pins, DOT_R);
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!drag || !svgRef.current || !sourceImage) return;
+    hasDraggedRef.current = true;
+    const pt = clientToSvg(svgRef.current, e.clientX, e.clientY);
+    const x = Math.round(Math.max(0, Math.min(sourceImage.width - 1, drag.originalSample.x + pt.x - drag.startPt.x)));
+    const y = Math.round(Math.max(0, Math.min(sourceImage.height - 1, drag.originalSample.y + pt.y - drag.startPt.y)));
+    onMoveSamplePin(drag.colorId, { ...drag.originalSample, x, y });
+  }, [drag, sourceImage, onMoveSamplePin]);
 
-  const commitAndClose = () => {
-    if (activePin) {
-      onRenameColor(activePin.id, activePin.name.trim());
-      onSetColorGroup(activePin.id, activePin.groupId ?? undefined);
-    }
-    setActivePin(null);
-  };
+  const handleMouseUp = useCallback(() => setDrag(null), []);
 
-  const cancelAndClose = () => setActivePin(null);
+  const handleContextMenu = useCallback((e: React.MouseEvent, colorId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openMenu({ x: e.clientX, y: e.clientY, items: [
+      { label: 'Resample', icon: <RefreshCw size={14} />, onClick: () => onStartSampling(colorId) },
+      { label: 'Remove pin', icon: <PinOff size={14} />, onClick: () => onRemoveSamplePin(colorId) },
+      { type: 'divider' as const },
+      { label: 'Delete color', icon: <Trash2 size={14} />, onClick: () => onDeleteColor(colorId) },
+    ]});
+  }, [openMenu, onStartSampling, onRemoveSamplePin, onDeleteColor]);
 
-  return createPortal(
-    <Box style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 10 }}>
-      {sampledColors.map((c, i) => {
-        const { radius } = c.sample!;
-        const { px, py } = pins[i];
-        const cr = radius * sx;
-        const labelY = py + labelOffsets[i];
+  if (!sourceImage || isSampling || sampledColors.length === 0) return null;
+
+  const { width: imgW, height: imgH } = sourceImage;
+  const inv = 1 / viewportTransform.scale;
+
+  return (
+    <svg
+      ref={svgRef}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible', pointerEvents: drag ? 'all' : 'none' }}
+      viewBox={`0 0 ${imgW} ${imgH}`}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
+      {drag && <rect x={0} y={0} width={imgW} height={imgH} fill="transparent" style={{ pointerEvents: 'all', cursor: 'grabbing' }} />}
+
+      {sampledColors.map(c => {
+        const { x, y, radius } = c.sample!;
+        const isSelected = selectedColorId === c.id;
         const label = c.name || c.hex;
-        const isActive = activePin?.id === c.id;
+        const lw = estimateLabelWidth(label);
 
         return (
-          <Fragment key={c.id}>
-            {cr > DOT_R && (
-              <Box style={{
-                position: 'absolute',
-                left: px - cr, top: py - cr,
-                width: cr * 2, height: cr * 2,
-                borderRadius: '50%',
-                border: '2px solid rgba(255,255,255,0.65)',
-                boxShadow: '0 0 0 1.5px rgba(0,0,0,0.3)',
-                pointerEvents: 'none',
-              }} />
+          <g key={c.id} transform={`translate(${x}, ${y})`}>
+            {radius * viewportTransform.scale > DOT_R && (
+              <circle r={radius} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={1.5 * inv} />
             )}
-
-            <Popover
-              opened={!!isActive}
-              onClose={cancelAndClose}
-              position="bottom"
-              withArrow
-              shadow="md"
-              closeOnClickOutside={false}
+            <g
+              transform={`scale(${inv})`}
+              style={{ pointerEvents: 'auto', cursor: drag?.colorId === c.id ? 'grabbing' : 'grab' }}
+              onMouseDown={(e) => handleMouseDown(e, c.id)}
+              onClick={(e) => { e.stopPropagation(); if (!hasDraggedRef.current) onSelectColor(selectedColorId === c.id ? null : c.id); }}
+              onContextMenu={(e) => handleContextMenu(e, c.id)}
             >
-              <Popover.Target>
-                <Tooltip label={label} openDelay={300} position="top" disabled={!!isActive || showLabels}>
-                  <Box
-                    style={{ position: 'absolute', left: px - DOT_R, top: py - DOT_R, pointerEvents: 'auto', cursor: 'pointer' }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={() => {
-                      if (isActive) return;
-                      setActivePin({ id: c.id, name: c.name || '', groupId: c.groupId ?? null });
-                    }}
-                  >
-                    <Box style={{
-                      width: DOT_R * 2, height: DOT_R * 2, borderRadius: '50%',
-                      background: c.hex, border: '2.5px solid white',
-                      boxShadow: '0 1px 6px rgba(0,0,0,0.5)',
-                    }} />
-                  </Box>
-                </Tooltip>
-              </Popover.Target>
-              <Popover.Dropdown>
-                {isActive && activePin && (
-                  <PinPopover
-                    name={activePin.name}
-                    hex={c.hex}
-                    groupId={activePin.groupId}
-                    groups={groups}
-                    onNameChange={(name) => setActivePin(p => p && { ...p, name })}
-                    onGroupChange={(groupId) => setActivePin(p => p && { ...p, groupId })}
-                    onCommit={commitAndClose}
-                    onCancel={cancelAndClose}
-                  />
-                )}
-              </Popover.Dropdown>
-            </Popover>
-
-            {showLabels && !isActive && (
-              <Box
-                style={{ position: 'absolute', left: px + DOT_R + 6, top: labelY, pointerEvents: 'auto', cursor: 'pointer' }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={() => setActivePin({ id: c.id, name: c.name || '', groupId: c.groupId ?? null })}
-              >
-                <Box style={labelStyle}>{label}</Box>
-              </Box>
-            )}
-          </Fragment>
+              <circle r={HIT_R} fill="transparent" />
+              <circle r={DOT_R} fill={c.hex} stroke={isSelected ? 'var(--mantine-color-primary-4)' : 'white'} strokeWidth={isSelected ? 3 : 2} />
+              {showLabels && (
+                <g transform={`translate(${DOT_R + 6}, ${-LABEL_H / 2})`}>
+                  <rect x={0} y={0} width={lw} height={LABEL_H} rx={4} fill="rgba(0,0,0,0.7)" />
+                  <text x={H_PAD / 2} y={14} fontSize={11} fontFamily="monospace" letterSpacing="0.03em" fill="rgba(255,255,255,0.92)" style={{ userSelect: 'none', pointerEvents: 'none' }}>
+                    {label}
+                  </text>
+                </g>
+              )}
+            </g>
+          </g>
         );
       })}
-    </Box>,
-    layout.target
+    </svg>
   );
 }
-
-const labelStyle: CSSProperties = {
-  height: 20, padding: '0 7px',
-  borderRadius: 4, fontSize: 11,
-  lineHeight: '20px', fontFamily: 'monospace',
-  letterSpacing: '0.03em', whiteSpace: 'nowrap',
-  background: 'rgba(0,0,0,0.7)',
-  backdropFilter: 'blur(6px)',
-  color: 'rgba(255,255,255,0.92)',
-  boxShadow: '0 1px 4px rgba(0,0,0,0.35)',
-  userSelect: 'none',
-};

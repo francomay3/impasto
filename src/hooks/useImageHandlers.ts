@@ -78,6 +78,11 @@ export function useImageHandlers({
     renderPalette();
   }, [state.preIndexingBlur]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!state.sourceImage) return;
+    renderPalette();
+  }, [state.palette]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleImageLoadBitmap = useCallback((bitmap: ImageBitmap) => {
     resetTransform?.();
     const rawImage = pipeline.loadBitmap(bitmap);

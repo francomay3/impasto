@@ -11,9 +11,10 @@ interface Params {
   onRedo: () => void;
   onAddFilter: (type: FilterType) => void;
   onAddColor: () => void;
+  onClearSelection: () => void;
 }
 
-export function useEditorHotkeys({ onUndo, onRedo, onAddFilter, onAddColor }: Params) {
+export function useEditorHotkeys({ onUndo, onRedo, onAddFilter, onAddColor, onClearSelection }: Params) {
   const mousePos = useRef({ x: 0, y: 0 });
   const { open: openMenu } = useContextMenu();
 
@@ -28,6 +29,7 @@ export function useEditorHotkeys({ onUndo, onRedo, onAddFilter, onAddColor }: Pa
     [HOTKEYS.UNDO,       onUndo],
     [HOTKEYS.REDO,       onRedo],
     [HOTKEYS.REDO_ALT,   onRedo],
+    [HOTKEYS.CANCEL,     onClearSelection],
     [HOTKEYS.ADD_FILTER, () => openMenu({ ...mousePos.current, items: buildFilterMenuItems(onAddFilter) })],
     [HOTKEYS.ADD_COLOR,  onAddColor],
   ]);

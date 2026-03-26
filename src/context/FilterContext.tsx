@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { FilterInstance, FilterType } from '../types';
+import type { FilterInstance, FilterType, ColorSample } from '../types';
 
 export interface SamplingLevels {
   filterId: string;
@@ -8,6 +8,7 @@ export interface SamplingLevels {
 
 export interface FilterContextValue {
   filters: FilterInstance[];
+  preIndexingBlur: number;
   samplingLevels: SamplingLevels | null;
   onAddFilter: (type: FilterType) => void;
   onDuplicateFilter: (id: string) => void;
@@ -16,6 +17,8 @@ export interface FilterContextValue {
   onPreviewFilter: (id: string, params: Record<string, number>) => void;
   onReorderFilters: (filters: FilterInstance[]) => void;
   onStartSamplingLevels: (filterId: string, point: 'black' | 'white') => void;
+  onSampleLevels: (sample: ColorSample, hex: string) => void;
+  onCancelSamplingLevels: () => void;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);

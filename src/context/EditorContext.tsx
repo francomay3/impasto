@@ -8,6 +8,8 @@ export interface EditorContextValue {
   canUndo: boolean;
   canRedo: boolean;
   isLoading: boolean;
+  selectedColorId: string | null;
+  onSelectColor: (id: string | null) => void;
   onExportClick: () => void;
   onReplaceImage: () => void;
   onRename: (name: string) => void;
