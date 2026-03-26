@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { notifications } from '@mantine/notifications';
 import { useDebouncedValue } from '@mantine/hooks';
-import type { FilterInstance, LevelsParams, Color, ColorSample } from '../types';
+import type { FilterInstance, LevelsParams, ColorSample } from '../types';
 import type { useCanvasPipeline } from './useCanvasPipeline';
 import type { useProjectState } from './useProjectState';
 import { sampleCircleAverage } from '../utils/imageProcessing';
@@ -32,13 +32,16 @@ export function useImageHandlers({
 }: Options) {
   const lastImageDataRef = useRef<ImageData | null>(null);
   const pendingNewColorId = useRef<string | null>(null);
+  const justLoadedImageRef = useRef<object | null>(null);
   const [debouncedFilters] = useDebouncedValue(state.filters, 300);
 
   const renderPalette = useCallback((imageData?: ImageData, palette?: typeof state.palette) => {
     const data = imageData ?? lastImageDataRef.current;
     if (!data) return;
+    const activePalette = palette ?? state.palette;
+    if (activePalette.length === 0) return;
     const forIndexing = pipeline.blurImageData(data, state.preIndexingBlur);
-    pipeline.renderIndexed(palette ?? state.palette, forIndexing);
+    pipeline.renderIndexed(activePalette, forIndexing);
   }, [pipeline, state]);
 
   const deriveAndRender = useCallback((imageData: ImageData) => {
@@ -55,26 +58,35 @@ export function useImageHandlers({
   }, [state.palette, setPalette, renderPalette]);
 
   useEffect(() => {
-    if (!state.imageDataUrl) return;
+    if (!state.sourceImage) return;
+    // Skip if handleImageLoadBitmap already ran the pipeline for this exact image object
+    if (state.sourceImage === justLoadedImageRef.current) { justLoadedImageRef.current = null; return; }
     resetTransform?.();
-    pipeline.loadImage(state.imageDataUrl).then(() => {
-      const imageData = pipeline.applyFilterPipeline(debouncedFilters as FilterInstance[]);
-      if (imageData) deriveAndRender(imageData);
-    });
-  }, [state.imageDataUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+    pipeline.loadImage(state.sourceImage);
+    const imageData = pipeline.applyFilterPipeline(debouncedFilters as FilterInstance[]);
+    if (imageData) deriveAndRender(imageData);
+  }, [state.sourceImage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!state.imageDataUrl) return;
+    if (!state.sourceImage) return;
     const imageData = pipeline.applyFilterPipeline(debouncedFilters as FilterInstance[]);
     if (imageData) deriveAndRender(imageData);
   }, [debouncedFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!state.imageDataUrl) return;
+    if (!state.sourceImage) return;
     renderPalette();
   }, [state.preIndexingBlur]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleImageLoad = useCallback((dataUrl: string) => { setImage(dataUrl); }, [setImage]);
+  const handleImageLoadBitmap = useCallback((bitmap: ImageBitmap) => {
+    resetTransform?.();
+    const rawImage = pipeline.loadBitmap(bitmap);
+    justLoadedImageRef.current = rawImage;
+    setImage(rawImage);
+    const imageData = pipeline.applyFilterPipeline([]);
+    if (imageData) deriveAndRender(imageData);
+    bitmap.close();
+  }, [pipeline, setImage, deriveAndRender, resetTransform]);
 
   const handleAddColor = useCallback(() => {
     const id = crypto.randomUUID();
@@ -143,5 +155,5 @@ export function useImageHandlers({
     setSamplingLevels(null);
   }, [samplingLevels, state.filters, updateFilter, setSamplingLevels]);
 
-  return { handleImageLoad, handleAddColor, handleAddColorAtPosition, handleDeleteColor, handleToggleHighlight, handleSample, handleCancelSample, handleSampleLevels };
+  return { handleImageLoadBitmap, handleAddColor, handleAddColorAtPosition, handleDeleteColor, handleToggleHighlight, handleSample, handleCancelSample, handleSampleLevels };
 }

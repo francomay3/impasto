@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "crates/greet",
+    "crates/img_blur",
+    "crates/img_ops",
+    "crates/img_index",
+]
+resolver = "2"

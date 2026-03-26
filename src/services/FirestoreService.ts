@@ -7,7 +7,7 @@ import type { Color, ProjectState } from '../types';
 
 // hex is always derived at runtime — never persisted
 type StoredColor = Omit<Color, 'hex'>;
-type StoredProject = Omit<ProjectState, 'imageDataUrl' | 'createdAt' | 'updatedAt' | 'palette'> & {
+type StoredProject = Omit<ProjectState, 'sourceImage' | 'createdAt' | 'updatedAt' | 'palette'> & {
   palette: StoredColor[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -22,7 +22,7 @@ function toProjectState(id: string, data: StoredProject): ProjectState {
   return {
     ...data,
     id,
-    imageDataUrl: null,
+    sourceImage: null,
     palette: (data.palette as Array<StoredColor & { hex?: string }>)
       .filter(c => c.sample)
       .map(({ hex: _hex, ...c }) => ({ hex: '', ...c })),

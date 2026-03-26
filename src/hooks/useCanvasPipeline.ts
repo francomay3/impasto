@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react';
-import type { FilterInstance, Color } from '../types';
+import type { FilterInstance, Color, RawImage } from '../types';
+import { createRawImage } from '../types';
 import { applyFilters, blurImageData } from '../utils/imageProcessing';
 import { quantizeImage } from '../utils/kMeansWrapper';
 import { findMixRecipe } from '../services/ColorMixer';
@@ -26,18 +27,25 @@ export function useCanvasPipeline(
     return () => worker.terminate();
   }, [indexedCanvasRef]);
 
-  const loadImage = useCallback((dataUrl: string): Promise<void> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = sourceCanvasRef.current;
-        canvas.width = img.width;
-        canvas.height = img.height;
-        canvas.getContext('2d', { willReadFrequently: true })!.drawImage(img, 0, 0);
-        resolve();
-      };
-      img.src = dataUrl;
-    });
+  const loadImage = useCallback((image: RawImage): void => {
+    const canvas = sourceCanvasRef.current;
+    canvas.width = image.width;
+    canvas.height = image.height;
+    canvas.getContext('2d', { willReadFrequently: true })!.putImageData(
+      new ImageData(image.data, image.width, image.height), 0, 0,
+    );
+  }, []);
+
+  // Draws a bitmap directly into the source canvas and returns the raw pixels.
+  // Uses willReadFrequently so getImageData is a fast CPU read — no GPU stall.
+  const loadBitmap = useCallback((bitmap: ImageBitmap): RawImage => {
+    const canvas = sourceCanvasRef.current;
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+    ctx.drawImage(bitmap, 0, 0);
+    const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    return createRawImage(data, width, height);
   }, []);
 
   const applyFilterPipeline = useCallback((filters: FilterInstance[]): ImageData | null => {
@@ -70,5 +78,5 @@ export function useCanvasPipeline(
     worker.postMessage({ data: new Uint8ClampedArray(bufferCopy), width: imageData.width, height: imageData.height, palette, generation }, [bufferCopy]);
   }, [filteredCanvasRef, indexedCanvasRef]);
 
-  return { sourceCanvasRef, loadImage, applyFilterPipeline, blurImageData, runQuantization, renderIndexed };
+  return { sourceCanvasRef, loadImage, loadBitmap, applyFilterPipeline, blurImageData, runQuantization, renderIndexed };
 }

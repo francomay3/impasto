@@ -4,7 +4,7 @@ import { notifications } from '@mantine/notifications';
 import { HOTKEYS } from '../hotkeys';
 import type { FilterType } from '../types';
 import { useContextMenu } from '../context/ContextMenuContext';
-import { buildFilterMenuItems } from '../components/FilterPanel/AddFilterMenu';
+import { buildFilterMenuItems } from '../components/FilterPanel/filterMenuData';
 
 interface Params {
   onUndo: () => void;

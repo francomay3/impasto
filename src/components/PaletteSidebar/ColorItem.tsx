@@ -21,10 +21,10 @@ export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProp
   const [editNameValue, setEditNameValue] = useState('');
   const { open: openMenu } = useContextMenu();
 
-  const handleNameEditStart = () => {
+  const handleNameEditStart = useCallback(() => {
     setEditNameValue(color.name || color.hex.toLowerCase());
     setEditingName(true);
-  };
+  }, [color.name, color.hex]);
 
   const handleNameSubmit = () => {
     const trimmed = editNameValue.trim();
@@ -45,7 +45,7 @@ export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProp
       { type: 'divider' },
       { label: 'Delete', icon: <X size={14} />, onClick: () => onDeleteColor(color.id), color: 'red' },
     ]});
-  }, [color, openMenu, onStartSampling, onDeleteColor]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [color, openMenu, onStartSampling, onDeleteColor, handleNameEditStart]);
 
   const contextTrigger = useContextTrigger(openContextMenu);
 

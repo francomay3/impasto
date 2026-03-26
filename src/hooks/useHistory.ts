@@ -1,21 +1,21 @@
 import { useRef, useState } from 'react';
-import type { ProjectState } from '../types';
+import type { ProjectState, RawImage } from '../types';
 
 const MAX_HISTORY = 50;
 const MAX_IMAGES = 2;
 
 type ImageId = string;
-type Snapshot = Omit<ProjectState, 'imageDataUrl'> & { imageId: ImageId | null };
+type Snapshot = Omit<ProjectState, 'sourceImage'> & { imageId: ImageId | null };
 
 function addImage(
-  store: Map<ImageId, string>,
+  store: Map<ImageId, RawImage>,
   order: ImageId[],
   past: Snapshot[],
-  url: string,
+  image: RawImage,
 ): ImageId {
-  for (const [id, u] of store) if (u === url) return id;
+  for (const [id, img] of store) if (img === image) return id;
   const id = crypto.randomUUID();
-  store.set(id, url);
+  store.set(id, image);
   order.push(id);
   if (order.length > MAX_IMAGES) {
     const evictId = order.shift()!;
@@ -31,24 +31,24 @@ function addImage(
 
 function toSnapshot(
   state: ProjectState,
-  store: Map<ImageId, string>,
+  store: Map<ImageId, RawImage>,
   order: ImageId[],
   past: Snapshot[],
   prevImageId: ImageId | null,
 ): Snapshot {
-  const { imageDataUrl, ...rest } = state;
-  if (!imageDataUrl) return { ...rest, imageId: null };
-  if (prevImageId && store.get(prevImageId) === imageDataUrl) return { ...rest, imageId: prevImageId };
-  return { ...rest, imageId: addImage(store, order, past, imageDataUrl) };
+  const { sourceImage, ...rest } = state;
+  if (!sourceImage) return { ...rest, imageId: null };
+  if (prevImageId && store.get(prevImageId) === sourceImage) return { ...rest, imageId: prevImageId };
+  return { ...rest, imageId: addImage(store, order, past, sourceImage) };
 }
 
-function fromSnapshot(snapshot: Snapshot, store: Map<ImageId, string>): ProjectState {
+function fromSnapshot(snapshot: Snapshot, store: Map<ImageId, RawImage>): ProjectState {
   const { imageId, ...rest } = snapshot;
-  return { ...rest, imageDataUrl: imageId ? (store.get(imageId) ?? null) : null };
+  return { ...rest, sourceImage: imageId ? (store.get(imageId) ?? null) : null };
 }
 
 export function useHistory(initialState: ProjectState) {
-  const initStore = new Map<ImageId, string>();
+  const initStore = new Map<ImageId, RawImage>();
   const initOrder: ImageId[] = [];
   const initPast: Snapshot[] = [];
   const store = useRef(initStore);

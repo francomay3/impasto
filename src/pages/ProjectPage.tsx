@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getFirestoreProject, saveFirestoreProject, saveFirestoreImageUrl } from '../services/FirestoreService';
 import { uploadProjectImage } from '../services/ImageStorageService';
 import Editor from '../Editor';
-import { DEFAULT_PROJECT_STATE } from '../types';
+import { DEFAULT_PROJECT_STATE, createRawImage } from '../types';
 import type { ProjectState } from '../types';
 
 type LoadState = ProjectState | 'loading' | 'not-found';
@@ -19,12 +19,15 @@ async function resolveInitialState(
   if (project.imageStorageUrl) {
     const res = await fetch(project.imageStorageUrl);
     const blob = await res.blob();
-    const dataUrl = await new Promise<string>(resolve => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-    return { ...project, imageDataUrl: dataUrl };
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+    ctx.drawImage(bitmap, 0, 0);
+    const { data, width, height } = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+    bitmap.close();
+    return { ...project, sourceImage: createRawImage(data, width, height) };
   }
 
   return project;

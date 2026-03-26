@@ -55,7 +55,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
   const replaceRef = useRef<ReplaceImageModalRef>(null);
 
-  const { handleImageLoad, handleAddColor, handleAddColorAtPosition, handleDeleteColor,
+  const { handleImageLoadBitmap, handleAddColor, handleAddColorAtPosition, handleDeleteColor,
     handleToggleHighlight, handleSample, handleCancelSample, handleSampleLevels } = useImageHandlers({
     state, pipeline, setImage, updateColor, setPalette: updateDerivedPalette, addSampledColor, removeColor, updateFilter,
     samplingColorId, setSamplingColorId, samplingLevels, setSamplingLevels,
@@ -65,11 +65,9 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   const { handleUndo, handleRedo } = useUndoRedo({ historyUndo, historyRedo, restoreState, save });
 
   const handleFileSelected = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => handleImageLoad(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    createImageBitmap(file).then(bitmap => handleImageLoadBitmap(bitmap));
     if (onNewImageFile) onNewImageFile(file);
-  }, [handleImageLoad, onNewImageFile]);
+  }, [handleImageLoadBitmap, onNewImageFile]);
 
   useEditorHotkeys({ onUndo: handleUndo, onRedo: handleRedo, onAddFilter: addFilter, onAddColor: handleAddColor });
 
@@ -101,7 +99,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   };
 
   const editorValue = {
-    projectName: state.name, hasImage: !!state.imageDataUrl, saveStatus,
+    projectName: state.name, hasImage: !!state.sourceImage, saveStatus,
     canUndo, canRedo, isLoading: !!isLoading,
     onExportClick: () => setExportModalOpen(true),
     onReplaceImage: () => replaceRef.current?.open(),
@@ -130,7 +128,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
         <AppShell.Main style={{ background: 'var(--mantine-color-dark-9)' }}>
           {isLoading ? (
             <Center h="calc(100vh - var(--app-shell-header-height))"><Loader color="primary" /></Center>
-          ) : !state.imageDataUrl ? (
+          ) : !state.sourceImage ? (
             <Box p="xl"><ImageUploader onFileSelected={handleFileSelected} /></Box>
           ) : (
             <ErrorBoundary label="Canvas" compact>

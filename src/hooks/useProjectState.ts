@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import type { ProjectState, Color, ColorGroup, FilterInstance, FilterType } from '../types';
+import type { ProjectState, RawImage, Color, ColorGroup, FilterInstance, FilterType } from '../types';
 import { DEFAULT_FILTER_PARAMS } from '../types';
 
 interface ProjectStateOptions {
@@ -23,8 +23,8 @@ export function useProjectState({ initialState, onSave }: ProjectStateOptions) {
     onSave(next);
   }, [set, onSave]);
 
-  const setImage = useCallback((dataUrl: string) => {
-    saveAndSet({ ...stateRef.current, imageDataUrl: dataUrl, palette: [], groups: [], filters: [], preIndexingBlur: 3, updatedAt: ts() });
+  const setImage = useCallback((image: RawImage) => {
+    saveAndSet({ ...stateRef.current, sourceImage: image, palette: [], groups: [], filters: [], preIndexingBlur: 3, updatedAt: ts() });
   }, [saveAndSet]);
 
   const setPalette = useCallback((palette: Color[]) => {

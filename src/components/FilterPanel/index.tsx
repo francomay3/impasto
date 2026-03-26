@@ -10,7 +10,7 @@ import { FilterItem } from './FilterItem';
 import { AddItemButton } from '../AddItemButton';
 import { useFilterContext } from '../../context/FilterContext';
 import { useContextMenu } from '../../context/ContextMenuContext';
-import { buildFilterMenuItems } from './AddFilterMenu';
+import { buildFilterMenuItems } from './filterMenuData';
 
 interface Props {
   collapsed?: boolean;

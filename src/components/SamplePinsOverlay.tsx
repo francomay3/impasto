@@ -19,15 +19,19 @@ export function SamplePinsOverlay() {
   const { palette, groups, onRenameColor, onSetColorGroup } = usePaletteContext();
   const { filteredCanvasRef, viewportTransform, isSampling, showLabels } = useCanvasContext();
   const [activePin, setActivePin] = useState<ActivePin | null>(null);
-  const [rects, setRects] = useState<{ canvas: DOMRect; container: DOMRect } | null>(null);
+  type Layout = { canvas: DOMRect; container: DOMRect; cw: number; ch: number; target: HTMLElement };
+  const [layout, setLayout] = useState<Layout | null>(null);
 
   useLayoutEffect(() => {
     const canvas = filteredCanvasRef.current;
     const container = canvas?.closest('[data-canvas-viewport]') as HTMLElement | null;
     if (!canvas || !container) return;
-    const update = () => setRects({
+    const update = () => setLayout({
       canvas: canvas.getBoundingClientRect(),
       container: container.getBoundingClientRect(),
+      cw: canvas.width,
+      ch: canvas.height,
+      target: container,
     });
     update();
     const ro = new ResizeObserver(update);
@@ -35,15 +39,13 @@ export function SamplePinsOverlay() {
     return () => ro.disconnect();
   }, [viewportTransform, filteredCanvasRef]);
 
-  const canvas = filteredCanvasRef.current;
-  const container = canvas?.closest('[data-canvas-viewport]') as HTMLElement | null;
   const sampledColors = palette.filter(c => c.sample);
-  if (!rects || !canvas || !container || canvas.width === 0 || sampledColors.length === 0 || isSampling) return null;
+  if (!layout || layout.cw === 0 || sampledColors.length === 0 || isSampling) return null;
 
-  const sx = rects.canvas.width / canvas.width;
-  const sy = rects.canvas.height / canvas.height;
-  const ox = rects.canvas.left - rects.container.left;
-  const oy = rects.canvas.top - rects.container.top;
+  const sx = layout.canvas.width / layout.cw;
+  const sy = layout.canvas.height / layout.ch;
+  const ox = layout.canvas.left - layout.container.left;
+  const oy = layout.canvas.top - layout.container.top;
 
   const pins = sampledColors.map(c => ({
     px: ox + c.sample!.x * sx,
@@ -141,7 +143,7 @@ export function SamplePinsOverlay() {
         );
       })}
     </Box>,
-    container
+    layout.target
   );
 }
 
