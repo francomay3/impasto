@@ -9,6 +9,7 @@ import { useIndexedImage } from '../../hooks/useIndexedImage';
 import { CanvasViewport } from '../CanvasViewport';
 import { SamplePinsOverlay } from '../SamplePinsOverlay';
 import { SamplerOverlay } from '../SamplerOverlay';
+import { MarqueeSelectOverlay } from '../MarqueeSelectOverlay';
 
 const labelStyle: React.CSSProperties = {
   position: 'absolute',
@@ -68,6 +69,7 @@ export function PaletteTabContent() {
                 ? <SamplerOverlay canvasRef={filteredRef} onSample={onSampleColor} onCancel={onCancelSampleColor} />
                 : null}
               <SamplePinsOverlay canvasRef={filteredRef} />
+              <MarqueeSelectOverlay canvasRef={filteredRef} />
             </>
           }
         />
@@ -76,10 +78,10 @@ export function PaletteTabContent() {
       <Box style={{ width: 1, height: '100%', background: 'var(--mantine-color-dark-6)', flexShrink: 0 }} />
       <Box style={{ flex: 1, minWidth: 0, position: 'relative', height: '100%', display: 'flex' }}>
         <CanvasViewport ref={indexedRef} variant="indexed" />
-        <Text style={labelStyle} size="xs" c="dimmed">Indexed</Text>
-        {isIndexedLoading && (
-          <Loader size="xs" style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 1 }} />
-        )}
+        <Group style={{ ...labelStyle, gap: 6 }}>
+          <Text size="xs" c="dimmed">Indexed colors</Text>
+          {isIndexedLoading && <Loader size="xs" />}
+        </Group>
       </Box>
     </Group>
   );

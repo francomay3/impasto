@@ -18,6 +18,7 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (!loading && projects.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCreating(true);
       create().then(id => navigate(`/project/${id}`, { replace: true }));
     }

@@ -63,7 +63,7 @@ export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
     setMouseClient({ x: e.clientX, y: e.clientY });
   }, []);
 
-  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = sourceCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
@@ -79,7 +79,7 @@ export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const [r, g, b] = sampleCircleAverage(imageData, cx, cy, radiusInImagePixels);
     onSample({ x: cx, y: cy, radius: radiusInImagePixels }, rgbToHex(r, g, b));
-  }, [sourceCanvasRef, radius, onSample]);
+  };
 
   return (
     <Box style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>

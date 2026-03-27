@@ -20,7 +20,7 @@ export function useLongPress(
   callback: (e: React.PointerEvent) => void,
   { threshold = 500, moveThreshold = 5 }: Options = {}
 ): LongPressHandlers {
-  const timerRef  = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const startPos  = useRef<{ x: number; y: number } | null>(null);
 
   const cancel = useCallback(() => {

@@ -54,14 +54,14 @@ export const FILTER_LABELS: Record<FilterType, string> = {
 };
 
 export type RawImage = {
-  data: Uint8ClampedArray;
+  data: Uint8ClampedArray<ArrayBuffer>;
   width: number;
   height: number;
 };
 
 // Creates a RawImage with `data` non-enumerable so React DevTools does not
 // try to walk the Uint8ClampedArray's 12M+ indexed properties on every commit.
-export function createRawImage(data: Uint8ClampedArray, width: number, height: number): RawImage {
+export function createRawImage(data: Uint8ClampedArray<ArrayBuffer>, width: number, height: number): RawImage {
   const img = { width, height } as RawImage;
   Object.defineProperty(img, 'data', { value: data, enumerable: false, writable: true, configurable: true });
   return img;

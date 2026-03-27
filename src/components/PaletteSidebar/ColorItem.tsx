@@ -8,6 +8,7 @@ import { usePaletteContext } from '../../context/PaletteContext';
 import { useEditorContext } from '../../context/EditorContext';
 import { useContextTrigger } from '../../hooks/useContextTrigger';
 import { useColorContextMenu } from '../../hooks/useColorContextMenu';
+import { useSelectionContextMenu } from '../../hooks/useSelectionContextMenu';
 
 interface ColorItemProps {
   color: Color;
@@ -15,12 +16,13 @@ interface ColorItemProps {
   dragListeners?: Record<string, (...args: unknown[]) => void>;
 }
 
-export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
+function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
   const { groups, samplingColorId, onStartSampling, onRenameColor, onDeleteColor, onSetColorGroup, onAddGroup } = usePaletteContext();
-  const { selectedColorId, onSelectColor, hoveredColorId, onHoverColor, hiddenPinIds, onTogglePinVisibility } = useEditorContext();
+  const { selectedColorIds, onSelectColor, onToggleColorSelection, hoveredColorId, onHoverColor, hiddenPinIds, onTogglePinVisibility } = useEditorContext();
   const [editingName, setEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
   const openColorMenu = useColorContextMenu();
+  const openSelectionMenu = useSelectionContextMenu();
 
   const handleNameEditStart = useCallback(() => {
     setEditNameValue(color.name || color.hex.toLowerCase());
@@ -38,15 +40,26 @@ export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProp
     if (e.button === 1) { e.preventDefault(); onDeleteColor(color.id); }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (e.metaKey || e.shiftKey) onToggleColorSelection(color.id);
+    else onSelectColor(color.id);
+  };
+
   const openContextMenu = useCallback(({ x, y }: { x: number; y: number }) => {
-    openColorMenu(color.id, { x, y }, { onRenameStart: handleNameEditStart });
-  }, [color.id, openColorMenu, handleNameEditStart]);
+    if (selectedColorIds.size > 1 && selectedColorIds.has(color.id)) {
+      openSelectionMenu({ x, y });
+    } else {
+      openColorMenu(color.id, { x, y }, { onRenameStart: handleNameEditStart });
+    }
+  }, [color.id, selectedColorIds, openColorMenu, openSelectionMenu, handleNameEditStart]);
 
   const contextTrigger = useContextTrigger(openContextMenu);
 
+  const isSelected = selectedColorIds.has(color.id);
   const border = samplingColorId === color.id
     ? '2px solid var(--mantine-color-blue-4)'
-    : selectedColorId === color.id
+    : isSelected
       ? '2px solid var(--mantine-color-primary-4)'
       : hoveredColorId === color.id
         ? '2px solid var(--mantine-color-secondary-4)'
@@ -55,11 +68,11 @@ export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProp
   return (
     <Box
       onMouseDown={handleAuxClick}
-      onClick={(e) => { e.stopPropagation(); onSelectColor(selectedColorId === color.id ? null : color.id); }}
+      onClick={handleClick}
       onMouseEnter={() => onHoverColor(color.id)}
       onMouseLeave={() => onHoverColor(null)}
       {...contextTrigger}
-      style={{ border, borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)', cursor: 'pointer' }}
+      style={{ border, borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)', cursor: 'pointer', userSelect: 'none' }}
     >
       <Stack gap={4}>
         <Box style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -81,7 +94,7 @@ export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProp
 
         <Box style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 46 }}>
           <Box style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, minWidth: 0 }}>
-            {color.name && <Text ff="monospace" c="dimmed" style={{ fontSize: 10 }}>{color.hex.toLowerCase()}</Text>}
+            {color.name && <Text ff="monospace" c="dimmed" style={{ fontSize: 10, userSelect: 'text' }}>{color.hex.toLowerCase()}</Text>}
             {color.ratio > 0 && <Badge size="xs" variant="outline" color="gray">{color.ratio}%</Badge>}
           </Box>
           <Box style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>

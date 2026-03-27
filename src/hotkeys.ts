@@ -14,4 +14,7 @@ export const HOTKEYS = {
   ADD_COLOR:       'C',
   DELETE_COLOR:    'X',
   SHOW_SHORTCUTS:  '?',
+  TOOL_EYEDROPPER: 'E',
+  TOOL_SELECT:     'V',
+  TOOL_MARQUEE:    'S',
 } as const;

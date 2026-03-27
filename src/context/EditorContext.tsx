@@ -1,15 +1,17 @@
 import { createContext, useContext } from 'react';
 import type { SaveStatus } from '../hooks/useSaveStatus';
 
-export interface EditorContextValue {
+interface EditorContextValue {
   projectName: string;
   hasImage: boolean;
   saveStatus: SaveStatus;
   canUndo: boolean;
   canRedo: boolean;
   isLoading: boolean;
-  selectedColorId: string | null;
+  selectedColorIds: Set<string>;
   onSelectColor: (id: string | null) => void;
+  onToggleColorSelection: (id: string) => void;
+  onSetSelection: (ids: Set<string>) => void;
   hoveredColorId: string | null;
   onHoverColor: (id: string | null) => void;
   onExportClick: () => void;

@@ -1,10 +1,9 @@
 import { Stack, ActionIcon, Tooltip, Divider } from '@mantine/core';
-import type { LucideIcon } from 'lucide-react';
 
 export type ToolRailItem =
   | {
       type?: 'action';
-      icon: LucideIcon;
+      icon: React.ReactNode;
       label: string;
       onClick?: () => void;
       active?: boolean;
@@ -20,7 +19,9 @@ export function ToolRail({ items }: Props) {
   return (
     <Stack
       gap={4}
-      p={6}
+      px={6}
+      pt={10}
+      pb={6}
       align="center"
       style={{
         width: 48,
@@ -34,7 +35,6 @@ export function ToolRail({ items }: Props) {
         if (item.type === 'separator') {
           return <Divider key={i} w="70%" my={2} />;
         }
-        const Icon = item.icon;
         return (
           <Tooltip key={i} label={item.label} position="right" withArrow>
             <ActionIcon
@@ -45,7 +45,7 @@ export function ToolRail({ items }: Props) {
               onClick={item.onClick}
               aria-label={item.label}
             >
-              <Icon size={16} />
+              {item.icon}
             </ActionIcon>
           </Tooltip>
         );

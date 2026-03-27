@@ -1,4 +1,4 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
 
 const MAX_DIMENSION = 2048;
@@ -39,12 +39,4 @@ export async function uploadProjectImage(
   const r = imageRef(userId, projectId);
   await uploadBytes(r, compressed, { contentType: 'image/webp' });
   return getDownloadURL(r);
-}
-
-export async function deleteProjectImage(userId: string, projectId: string): Promise<void> {
-  try {
-    await deleteObject(imageRef(userId, projectId));
-  } catch {
-    // Image may not exist — ignore
-  }
 }

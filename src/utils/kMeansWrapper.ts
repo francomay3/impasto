@@ -60,21 +60,3 @@ export function quantizeImage(
 
   return colors;
 }
-
-export function remapToIndexed(imageData: ImageData, palette: Color[]): ImageData {
-  const { data, width, height } = imageData;
-  const out = new Uint8ClampedArray(data.length);
-  const rgbs = palette.map(c => hexToRgb(c.hex));
-
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i], g = data[i + 1], b = data[i + 2];
-    let best = 0, bestDist = Infinity;
-    rgbs.forEach(([pr, pg, pb]: [number, number, number], idx: number) => {
-      const d = Math.hypot(r - pr, g - pg, b - pb);
-      if (d < bestDist) { bestDist = d; best = idx; }
-    });
-    out[i] = rgbs[best][0]; out[i + 1] = rgbs[best][1]; out[i + 2] = rgbs[best][2];
-    out[i + 3] = data[i + 3];
-  }
-  return new ImageData(out, width, height);
-}

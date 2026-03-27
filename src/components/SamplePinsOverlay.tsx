@@ -3,13 +3,15 @@ import { Tooltip } from '@mantine/core';
 import { useCanvasContext } from '../context/CanvasContext';
 import { usePaletteContext } from '../context/PaletteContext';
 import { useEditorContext } from '../context/EditorContext';
+import { useToolContext } from '../context/ToolContext';
 import { useColorContextMenu } from '../hooks/useColorContextMenu';
+import { useSelectionContextMenu } from '../hooks/useSelectionContextMenu';
 import { useCanvasMeasure } from '../hooks/useCanvasMeasure';
 import { PinEditPopover } from './PinEditPopover';
 import type { ColorSample } from '../types';
 
-const DOT_R = 6; // desired screen pixels
-const HIT_R = DOT_R + 5; // desired screen pixels
+const DOT_R = 6;
+const HIT_R = DOT_R + 5;
 
 function clientToSvg(svg: SVGSVGElement, clientX: number, clientY: number) {
   const pt = svg.createSVGPoint();
@@ -27,7 +29,6 @@ interface DragState {
 interface EditPin { colorId: string; position: { x: number; y: number } }
 
 interface Props {
-  /** Canvas to measure position from. Defaults to filteredCanvasRef from CanvasContext. */
   canvasRef?: RefObject<HTMLCanvasElement | null>;
 }
 
@@ -35,8 +36,10 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
   const { sourceImage, viewportTransform, isSampling, filteredCanvasRef } = useCanvasContext();
   const resolvedCanvasRef = canvasRef ?? filteredCanvasRef;
   const { palette, groups, onPinMoveEnd } = usePaletteContext();
-  const { selectedColorId, onSelectColor, hoveredColorId, onHoverColor, hiddenPinIds } = useEditorContext();
+  const { selectedColorIds, onSelectColor, onToggleColorSelection, hoveredColorId, onHoverColor, hiddenPinIds } = useEditorContext();
+  const { activeTool } = useToolContext();
   const openColorMenu = useColorContextMenu();
+  const openSelectionMenu = useSelectionContextMenu();
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [editPin, setEditPin] = useState<EditPin | null>(null);
@@ -44,13 +47,16 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
 
   const { canvasRect, measure } = useCanvasMeasure(resolvedCanvasRef);
   useEffect(() => { measure(); }, [viewportTransform, measure]);
-  useEffect(() => { if (isSampling) setDrag(null); else measure(); }, [isSampling, measure]);
+  useEffect(() => { if (!isSampling) measure(); }, [isSampling, measure]);
 
+  const effectiveDrag = isSampling ? null : drag;
+  const inSelectMode = activeTool === 'select' || activeTool === 'marquee';
   const sampledColors = palette.filter(c => c.sample && !hiddenPinIds.has(c.id));
 
   const handleMouseDown = useCallback((e: React.MouseEvent, colorId: string) => {
     if (e.button !== 0) return;
     e.stopPropagation();
+    if (inSelectMode) return;
     const svg = svgRef.current;
     const color = palette.find(c => c.id === colorId);
     if (!svg || !color?.sample) return;
@@ -58,7 +64,7 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
     const startPt = clientToSvg(svg, e.clientX, e.clientY);
     const originalSample = { ...color.sample };
     setDrag({ colorId, startPt: { x: startPt.x, y: startPt.y }, originalSample, currentSample: originalSample });
-  }, [palette]);
+  }, [palette, inSelectMode]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!drag || !svgRef.current || !sourceImage) return;
@@ -74,11 +80,22 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
     setDrag(null);
   }, [drag, onPinMoveEnd]);
 
+  const handlePinClick = useCallback((e: React.MouseEvent, colorId: string) => {
+    e.stopPropagation();
+    if (hasDraggedRef.current) return;
+    if (e.metaKey || e.shiftKey) onToggleColorSelection(colorId);
+    else onSelectColor(colorId);
+  }, [onSelectColor, onToggleColorSelection]);
+
   const handleContextMenu = useCallback((e: React.MouseEvent, colorId: string) => {
     e.preventDefault(); e.stopPropagation();
     const pos = { x: e.clientX, y: e.clientY };
-    openColorMenu(colorId, pos, { onEditStart: () => setEditPin({ colorId, position: pos }) });
-  }, [openColorMenu]);
+    if (selectedColorIds.size > 1 && selectedColorIds.has(colorId)) {
+      openSelectionMenu(pos);
+    } else {
+      openColorMenu(colorId, pos, { onEditStart: () => setEditPin({ colorId, position: pos }) });
+    }
+  }, [openColorMenu, openSelectionMenu, selectedColorIds]);
 
   if (!sourceImage || sampledColors.length === 0 || !canvasRect || canvasRect.width === 0) return null;
 
@@ -92,21 +109,20 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
         style={{
           position: 'absolute', left: canvasRect.left, top: canvasRect.top,
           width: canvasRect.width, height: canvasRect.height,
-          overflow: 'visible', pointerEvents: drag ? 'all' : 'none',
+          overflow: 'visible', pointerEvents: effectiveDrag ? 'all' : 'none',
         }}
         viewBox={`0 0 ${imgW} ${imgH}`}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-        {drag && <rect x={0} y={0} width={imgW} height={imgH} fill="transparent" style={{ pointerEvents: 'all', cursor: 'grabbing' }} />}
+        {effectiveDrag && <rect x={0} y={0} width={imgW} height={imgH} fill="transparent" style={{ pointerEvents: 'all', cursor: 'grabbing' }} />}
         {sampledColors.map(c => {
-          const activeSample = (drag?.colorId === c.id) ? drag.currentSample : c.sample!;
+          const activeSample = (effectiveDrag?.colorId === c.id) ? effectiveDrag.currentSample : c.sample!;
           const { x, y, radius } = activeSample;
-          const isSelected = selectedColorId === c.id;
+          const isSelected = selectedColorIds.has(c.id);
           const isHovered = hoveredColorId === c.id;
           const group = c.groupId ? groups.find(g => g.id === c.groupId) : undefined;
-          const label = c.name || c.hex;
-          const tooltipLabel = group ? `${label}\n${group.name}` : label;
+          const tooltipLabel = group ? `${c.name || c.hex}\n${group.name}` : (c.name || c.hex);
           return (
             <g key={c.id} transform={`translate(${x}, ${y})`}>
               {radius > DOT_R * inv && (
@@ -115,9 +131,9 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
               <Tooltip label={<span style={{ whiteSpace: 'pre-line' }}>{tooltipLabel}</span>} openDelay={300} withinPortal>
                 <g
                   transform={`scale(${inv})`}
-                  style={{ pointerEvents: 'auto', cursor: drag?.colorId === c.id ? 'grabbing' : 'grab' }}
+                  style={{ pointerEvents: 'auto', cursor: effectiveDrag?.colorId === c.id ? 'grabbing' : 'grab' }}
                   onMouseDown={(e) => handleMouseDown(e, c.id)}
-                  onClick={(e) => { e.stopPropagation(); if (!hasDraggedRef.current) onSelectColor(selectedColorId === c.id ? null : c.id); }}
+                  onClick={(e) => handlePinClick(e, c.id)}
                   onMouseEnter={() => onHoverColor(c.id)}
                   onMouseLeave={() => onHoverColor(null)}
                   onContextMenu={(e) => handleContextMenu(e, c.id)}

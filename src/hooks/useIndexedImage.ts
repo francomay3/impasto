@@ -3,7 +3,7 @@ import type { RawImage } from '../types';
 import { useWorkerBackpressure } from './useWorkerBackpressure';
 import ImgIndexWorker from '../workers/img-index.worker?worker';
 
-export type LabColor = { l: number; a: number; b: number };
+type LabColor = { l: number; a: number; b: number };
 
 type WorkerOutput = { buffer: ArrayBuffer };
 

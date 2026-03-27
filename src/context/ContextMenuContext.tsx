@@ -15,7 +15,7 @@ export interface ContextMenuLabel   { type: 'label'; label: string }
 
 export type ContextMenuEntry = ContextMenuItem | ContextMenuDivider | ContextMenuLabel;
 
-export interface OpenMenuOptions {
+interface OpenMenuOptions {
   x: number;
   y: number;
   items: ContextMenuEntry[];

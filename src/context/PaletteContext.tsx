@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { Color, ColorGroup, ColorSample } from '../types';
 
-export interface PaletteContextValue {
+interface PaletteContextValue {
   palette: Color[];
   groups: ColorGroup[];
   samplingColorId: string | null;

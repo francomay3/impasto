@@ -2,7 +2,7 @@ import { createContext, useContext, type RefObject } from 'react';
 import type { ViewportTransform } from '../hooks/useViewportTransform';
 import type { RawImage } from '../types';
 
-export interface CanvasContextValue {
+interface CanvasContextValue {
   sourceImage: RawImage | null;
   filteredCanvasRef: RefObject<HTMLCanvasElement | null>;
   indexedCanvasRef: RefObject<HTMLCanvasElement | null>;

@@ -7,7 +7,7 @@ const DEBOUNCE_MS = 300;
 
 export function useSaveStatus(onSave: (state: ProjectState) => void | Promise<void>) {
   const [status, setStatus] = useState<SaveStatus>('saved');
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const latestRef = useRef<ProjectState | null>(null);
   const genRef = useRef(0);
 

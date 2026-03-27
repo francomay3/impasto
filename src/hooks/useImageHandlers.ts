@@ -91,7 +91,7 @@ export function useImageHandlers({
     const imageData = pipeline.applyFilterPipeline(state.filters as FilterInstance[]);
     if (imageData) deriveAndRender(imageData);
     bitmap.close();
-  }, [pipeline, setImage, deriveAndRender, resetTransform, state.filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pipeline, setImage, deriveAndRender, resetTransform, state.filters]);
 
   const handleAddColor = useCallback(() => {
     const id = crypto.randomUUID();

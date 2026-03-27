@@ -6,7 +6,7 @@ export interface SamplingLevels {
   point: 'black' | 'white';
 }
 
-export interface FilterContextValue {
+interface FilterContextValue {
   filters: FilterInstance[];
   preIndexingBlur: number;
   samplingLevels: SamplingLevels | null;

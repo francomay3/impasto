@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthGuard } from './AuthGuard';
 import { DashboardPage } from '../pages/DashboardPage';
 import { ProjectPage } from '../pages/ProjectPage';
-import { WasmLabPage } from '../pages/WasmLabPage';
 import { ContextMenuProvider } from '../context/ContextMenuContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
@@ -11,7 +10,6 @@ export function AppRouter() {
     <BrowserRouter>
       <ContextMenuProvider>
         <Routes>
-          <Route path="/wasm-lab" element={<ErrorBoundary><WasmLabPage /></ErrorBoundary>} />
           <Route
             path="*"
             element={

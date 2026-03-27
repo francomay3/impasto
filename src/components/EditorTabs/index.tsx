@@ -1,7 +1,9 @@
 import { Box, Stack, Tabs, Text, Title } from '@mantine/core';
-import { Layers, Palette, BarChart2, Grid, Scaling, Brush, ImageUp, Plus, FolderPlus, Download, Upload } from 'lucide-react';
+import { Layers, Palette, BarChart2, Grid, Scaling, Brush, ImageUp } from 'lucide-react';
 import { ToolRail } from '../ToolRail';
 import type { ToolRailItem } from '../ToolRail';
+import { TOOLS } from '../../tools';
+import { useToolContext } from '../../context/ToolContext';
 import { FilterPanel } from '../FilterPanel';
 import { PaletteSidebar } from '../PaletteSidebar';
 import { ErrorBoundary } from '../ErrorBoundary';
@@ -30,13 +32,6 @@ function TabLayout({ children, aside, rail }: { children?: React.ReactNode; asid
   );
 }
 
-const paletteRailItems: ToolRailItem[] = [
-  { icon: Plus, label: 'Add Color', onClick: () => console.log('Add Color') },
-  { icon: FolderPlus, label: 'Add Group', onClick: () => console.log('Add Group') },
-  { type: 'separator' },
-  { icon: Upload, label: 'Import Palette', onClick: () => console.log('Import Palette') },
-  { icon: Download, label: 'Export Palette', onClick: () => console.log('Export Palette') },
-];
 
 interface Props {
   height?: string | number;
@@ -45,6 +40,14 @@ interface Props {
 export function EditorTabs({ height = '100%' }: Props) {
   const { activeTab, onSetActiveTab, onFileSelected } = useEditorContext();
   const { sourceImage } = useCanvasContext();
+  const { activeTool, setActiveTool } = useToolContext();
+
+  const toolRailItems: ToolRailItem[] = TOOLS.map(tool => ({
+    icon: <tool.icon size={16} />,
+    label: `${tool.label} (${tool.shortcut})`,
+    active: activeTool === tool.id,
+    onClick: () => setActiveTool(activeTool === tool.id ? null : tool.id),
+  }));
 
   if (!sourceImage) {
     return (
@@ -95,7 +98,7 @@ export function EditorTabs({ height = '100%' }: Props) {
 
       <Tabs.Panel value="palette" style={{ flex: 1, overflow: 'hidden' }}>
         <TabLayout
-          rail={<ToolRail items={paletteRailItems} />}
+          rail={<ToolRail items={toolRailItems} />}
           aside={
             <ErrorBoundary label="Palette sidebar" compact>
               <PaletteSidebar />

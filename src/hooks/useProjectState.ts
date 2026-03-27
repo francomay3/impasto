@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import type { ProjectState, RawImage, Color, ColorGroup, FilterInstance, FilterType } from '../types';
+import type { ProjectState, RawImage, Color, ColorGroup, FilterInstance, FilterType, FilterParams } from '../types';
 import { DEFAULT_FILTER_PARAMS } from '../types';
 
 interface ProjectStateOptions {
@@ -41,7 +41,7 @@ export function useProjectState({ initialState, onSave }: ProjectStateOptions) {
     saveAndSet({ ...stateRef.current, palette, updatedAt: ts() });
   }, [saveAndSet]);
 
-  const addFilter = useCallback((type: FilterType, params?: Record<string, number>) => {
+  const addFilter = useCallback((type: FilterType, params?: FilterParams) => {
     const instance: FilterInstance = { id: crypto.randomUUID(), type, params: params ?? { ...DEFAULT_FILTER_PARAMS[type] } };
     saveAndSet({ ...stateRef.current, filters: [...stateRef.current.filters, instance], updatedAt: ts() });
   }, [saveAndSet]);

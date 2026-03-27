@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, type RefObject } from 'react';
 
-export interface CanvasRect { left: number; top: number; width: number; height: number }
+interface CanvasRect { left: number; top: number; width: number; height: number }
 
 export function useCanvasMeasure(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const [canvasRect, setCanvasRect] = useState<CanvasRect | null>(null);

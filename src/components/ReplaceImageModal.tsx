@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { Modal, Text, Button, Group, Stack } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,6 +19,14 @@ export const ReplaceImageModal = forwardRef<ReplaceImageModalRef, Props>(
     const inputRef = useRef<HTMLInputElement>(null);
     const pendingFileRef = useRef<File | null>(null);
 
+    const confirm = useCallback((file?: File) => {
+      setOpened(false);
+      const f = file ?? pendingFileRef.current;
+      if (f) onFileSelected(f);
+      else inputRef.current?.click();
+      pendingFileRef.current = null;
+    }, [onFileSelected]);
+
     useImperativeHandle(ref, () => ({
       open() {
         pendingFileRef.current = null;
@@ -30,18 +38,7 @@ export const ReplaceImageModal = forwardRef<ReplaceImageModalRef, Props>(
         if (hasSamples) setOpened(true);
         else confirm(file);
       },
-    }), [hasSamples]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const confirm = (file?: File) => {
-      setOpened(false);
-      const f = file ?? pendingFileRef.current;
-      if (f) {
-        onFileSelected(f);
-      } else {
-        inputRef.current?.click();
-      }
-      pendingFileRef.current = null;
-    };
+    }), [hasSamples, confirm]);
 
     const handleFile = (file: File) => {
       if (!file.type.startsWith('image/')) return;

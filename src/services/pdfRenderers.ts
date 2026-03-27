@@ -6,7 +6,7 @@ const ROW_H = 32;
 const SWATCH_SIZE = 12;
 const PIE_SIZE = 12;
 
-export function drawPieDataUrl(entries: MixEntry[]): string {
+function drawPieDataUrl(entries: MixEntry[]): string {
   const px = 64;
   const canvas = document.createElement('canvas');
   canvas.width = px;
