@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Stack, Text } from '@mantine/core';
+import { Stack, Text, Group, ActionIcon, Tooltip } from '@mantine/core';
 import { DndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { FolderPlus } from 'lucide-react';
 import { AddItemButton } from '../AddItemButton';
 import { SortableColorItem } from './ColorItem';
 import { GroupDropZone } from './GroupDropZone';
@@ -43,9 +44,22 @@ export function PaletteSidebar() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-      <Stack gap="xs" p="xs" onClick={() => onSelectColor(null)}>
-        <AddItemButton label="Add Color" hint="C" onClick={onAddColor} />
-        <AddItemButton label="Add Group" onClick={() => handleAddGroup(crypto.randomUUID(), `Group ${groups.length + 1}`)} />
+      <Stack gap="xs" p="xs" onClick={() => onSelectColor(null)} data-testid="palette-sidebar">
+        <Group gap={6} wrap="nowrap">
+          <AddItemButton label="Add Color" hint="C" onClick={onAddColor} style={{ flex: 1 }} />
+          <Tooltip label="Add Group" position="right" withArrow>
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="md"
+              data-testid="add-group"
+              style={{ border: '1px dashed var(--mantine-color-dark-4)', flexShrink: 0 }}
+              onClick={() => handleAddGroup(crypto.randomUUID(), `Group ${groups.length + 1}`)}
+            >
+              <FolderPlus size={15} />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
 
         <SortableContext items={groups.map(g => g.id)} strategy={verticalListSortingStrategy}>
           <Stack gap={6}>
@@ -61,7 +75,7 @@ export function PaletteSidebar() {
                   onDelete={() => onRemoveGroup(group.id)}>
                   <SortableContext items={groupColors.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     <Stack gap={4}>
-                      {groupColors.map(color => <SortableColorItem key={color.id} color={color} />)}
+                      {groupColors.map(color => <SortableColorItem key={color.id} color={color} index={displayPalette.indexOf(color)} />)}
                     </Stack>
                   </SortableContext>
                 </SortableGroup>
@@ -77,7 +91,7 @@ export function PaletteSidebar() {
         {(groups.length === 0 || ungroupedColors.length > 0) ? (
           <SortableContext items={ungroupedColors.map(c => c.id)} strategy={verticalListSortingStrategy}>
             <Stack gap={4}>
-              {ungroupedColors.map(color => <SortableColorItem key={color.id} color={color} />)}
+              {ungroupedColors.map(color => <SortableColorItem key={color.id} color={color} index={displayPalette.indexOf(color)} />)}
             </Stack>
           </SortableContext>
         ) : (

@@ -6,6 +6,7 @@ interface Props {
   label: string;
   hint?: string;
   onClick?: () => void;
+  style?: import('react').CSSProperties;
 }
 
 export const AddItemButton = forwardRef<HTMLButtonElement, Props>(

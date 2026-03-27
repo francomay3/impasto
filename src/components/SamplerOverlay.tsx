@@ -1,9 +1,10 @@
 import { useRef, useEffect, useState, useCallback, type RefObject } from 'react';
-import { Box, Slider, Text, Stack, Button } from '@mantine/core';
+import { Box } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 import { sampleCircleAverage } from '../utils/imageProcessing';
 import { rgbToHex } from '../utils/colorUtils';
 import { useCanvasContext } from '../context/CanvasContext';
+import { useToolContext } from '../context/ToolContext';
 import { HOTKEYS } from '../hotkeys';
 import type { ColorSample } from '../types';
 
@@ -16,10 +17,10 @@ interface Props {
 
 export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
   const { filteredCanvasRef, viewportTransform } = useCanvasContext();
+  const { samplingRadius: radius, setSamplingRadius: setRadius } = useToolContext();
   const sourceCanvasRef = canvasRef ?? filteredCanvasRef;
   const viewportScale = viewportTransform.scale;
   const overlayRef = useRef<HTMLCanvasElement>(null);
-  const [radius, setRadius] = useState(30);
   // Store raw client coords so we can recompute overlay-relative position after zoom resizes the overlay.
   const [mouseClient, setMouseClient] = useState({ x: -9999, y: -9999 });
 
@@ -30,11 +31,11 @@ export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
       if (!e.altKey) return;
       e.preventDefault();
       const delta = e.deltaY !== 0 ? e.deltaY : e.deltaX;
-      setRadius(r => Math.max(1, Math.min(100, r - Math.sign(delta) * 3)));
+      setRadius(Math.max(1, Math.min(200, radius - Math.sign(delta) * 3)));
     };
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, []);
+  }, [radius, setRadius]);
 
   useEffect(() => {
     const overlay = overlayRef.current;
@@ -64,6 +65,7 @@ export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
   }, []);
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.stopPropagation();
     const canvas = sourceCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
@@ -85,6 +87,7 @@ export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
     <Box style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
       <canvas
         ref={overlayRef}
+        data-testid="sampler-overlay"
         onMouseMove={handleMouseMove}
         onClick={handleClick}
         onContextMenu={(e) => { e.preventDefault(); onCancel(); }}
@@ -94,13 +97,6 @@ export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
           cursor: 'crosshair', zIndex: 10,
         }}
       />
-      <Box style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 20, background: 'rgba(0,0,0,0.7)', borderRadius: 6, padding: 8 }}>
-        <Stack gap={4}>
-          <Text size="xs" c="dimmed">Radius: {radius}px (Alt+Scroll)</Text>
-          <Slider value={radius} min={1} max={100} onChange={setRadius} size="xs" style={{ width: 120 }} />
-          <Button size="xs" variant="subtle" color="red" onClick={onCancel}>Cancel (Esc)</Button>
-        </Stack>
-      </Box>
     </Box>
   );
 }

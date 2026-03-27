@@ -15,7 +15,7 @@ interface Params {
   onClearSelection: () => void;
   onDeleteSelectedColor: () => void;
   onPasteFile: (file: File) => void;
-  setActiveTool: (id: ToolId | null) => void;
+  setActiveTool: (id: ToolId) => void;
   onToggleSelectTool: () => void;
   onToggleMarqueeTool: () => void;
 }
@@ -49,7 +49,7 @@ export function useEditorHotkeys({ onUndo, onRedo, onAddFilter, onAddColor, onCl
     [HOTKEYS.UNDO,       onUndo],
     [HOTKEYS.REDO,       onRedo],
     [HOTKEYS.REDO_ALT,   onRedo],
-    [HOTKEYS.CANCEL,          () => { onClearSelection(); setActiveTool(null); }],
+    [HOTKEYS.CANCEL,          () => { onClearSelection(); setActiveTool('select'); }],
     [HOTKEYS.ADD_FILTER,      () => openMenu({ ...mousePos.current, items: buildFilterMenuItems(onAddFilter) })],
     [HOTKEYS.ADD_COLOR,       onAddColor],
     [HOTKEYS.DELETE_COLOR,    onDeleteSelectedColor],

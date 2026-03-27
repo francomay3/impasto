@@ -47,7 +47,8 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   const viewport = useViewportTransform();
   const replaceRef = useRef<ReplaceImageModalRef>(null);
   const [samplingColorId, setSamplingColorId] = useState<string | null>(null);
-  const [activeTool, setActiveTool] = useState<ToolId | null>(null);
+  const [activeTool, setActiveTool] = useState<ToolId>('select');
+  const [samplingRadius, setSamplingRadius] = useState(30);
   const [hoveredColorId, setHoveredColorId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('filters');
   const [samplingLevels, setSamplingLevels] = useState<SamplingLevels | null>(null);
@@ -87,9 +88,9 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   const paletteValue = {
     palette: state.palette, groups: state.groups ?? [], samplingColorId,
     isAddingColor: activeTool === 'eyedropper',
-    onStartSampling: (id: string) => { setSamplingLevels(null); setActiveTool(null); setSamplingColorId(id); },
+    onStartSampling: (id: string) => { setSamplingLevels(null); setActiveTool('select'); setSamplingColorId(id); },
     onSampleColor: handleSampleWithSelect, onCancelSampleColor: handleCancelSample,
-    onAddNewColor: handleAddNewColor, onCancelAddingColor: () => setActiveTool(null),
+    onAddNewColor: handleAddNewColor, onCancelAddingColor: () => setActiveTool('select'),
     onRenameColor: (id: string, name: string) => updateColor(id, { name }),
     onAddColor: handleAddColor, onAddColorAtPosition: handleAddColorAtPosition, onDeleteColor: handleDeleteColor,
     onPinMoveEnd: handlePinMoveEnd, onRemoveSamplePin: (id: string) => updateColor(id, { sample: undefined }),
@@ -124,7 +125,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   };
 
   return (
-    <ToolContext.Provider value={{ activeTool, setActiveTool }}>
+    <ToolContext.Provider value={{ activeTool, setActiveTool, samplingRadius, setSamplingRadius }}>
     <CanvasContext.Provider value={canvasValue}>
     <EditorContext.Provider value={editorValue}>
     <PaletteContext.Provider value={paletteValue}>

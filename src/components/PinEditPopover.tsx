@@ -87,7 +87,7 @@ export function PinEditPopover({ colorId, position, onClose }: Props) {
         style={{ position: 'fixed', left, top, zIndex: 400, width: POPOVER_W }}
       >
         <Stack gap="xs">
-          <Text size="xs" fw={600} c="dimmed">Edit pin</Text>
+          <Text size="xs" fw={600} c="dimmed">Edit color</Text>
           <TextInput
             label="Name"
             size="xs"

@@ -9,11 +9,15 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue>({ user: null, loading: true });
 
+const E2E_TEST_MODE = import.meta.env.VITE_E2E_TEST_MODE === 'true';
+const TEST_USER = E2E_TEST_MODE ? ({ uid: 'test-uid', email: 'test@example.com' } as unknown as User) : null;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(TEST_USER);
+  const [loading, setLoading] = useState(!E2E_TEST_MODE);
 
   useEffect(() => {
+    if (E2E_TEST_MODE) return;
     return onAuthStateChanged(auth, async (u) => {
       if (u) {
         await u.reload();

@@ -36,12 +36,13 @@ async function resolveInitialState(
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const [loadState, setLoadState] = useState<LoadState>('loading');
+  const isTestMode = import.meta.env.VITE_E2E_TEST_MODE === 'true';
+  const [loadState, setLoadState] = useState<LoadState>(isTestMode ? DEFAULT_PROJECT_STATE : 'loading');
 
   useEffect(() => {
-    if (!user || !id) return;
+    if (isTestMode || !user || !id) return;
     resolveInitialState(user.uid, id).then(setLoadState);
-  }, [user, id]);
+  }, [user, id, isTestMode]);
 
   const onSave = useCallback(async (state: ProjectState) => {
     if (!user || !id) return;

@@ -12,6 +12,7 @@ import { PaletteTabContent } from './PaletteTabContent';
 import { ImageUploader } from '../ImageUploader';
 import { useEditorContext } from '../../context/EditorContext';
 import { useCanvasContext } from '../../context/CanvasContext';
+import { ContextualToolbar } from '../ContextualToolbar';
 
 const asideStyle: React.CSSProperties = {
   width: 260,
@@ -22,11 +23,19 @@ const asideStyle: React.CSSProperties = {
   scrollbarWidth: 'none',
 };
 
-function TabLayout({ children, aside, rail }: { children?: React.ReactNode; aside: React.ReactNode; rail?: React.ReactNode }) {
+function TabLayout({ children, aside, rail, toolbar }: {
+  children?: React.ReactNode;
+  aside: React.ReactNode;
+  rail?: React.ReactNode;
+  toolbar?: React.ReactNode;
+}) {
   return (
     <Box style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
       {rail}
-      <Box style={{ flex: 1, overflow: 'hidden' }}>{children}</Box>
+      <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {toolbar}
+        <Box style={{ flex: 1, overflow: 'hidden' }}>{children}</Box>
+      </Box>
       <Box style={asideStyle} className="hide-scrollbar">{aside}</Box>
     </Box>
   );
@@ -45,8 +54,9 @@ export function EditorTabs({ height = '100%' }: Props) {
   const toolRailItems: ToolRailItem[] = TOOLS.map(tool => ({
     icon: <tool.icon size={16} />,
     label: `${tool.label} (${tool.shortcut})`,
+    testId: `tool-${tool.id}`,
     active: activeTool === tool.id,
-    onClick: () => setActiveTool(activeTool === tool.id ? null : tool.id),
+    onClick: () => setActiveTool(tool.id),
   }));
 
   if (!sourceImage) {
@@ -85,11 +95,14 @@ export function EditorTabs({ height = '100%' }: Props) {
       </Tabs.List>
 
       <Tabs.Panel value="filters" style={{ flex: 1, overflow: 'hidden' }}>
-        <TabLayout aside={
-          <ErrorBoundary label="Filter panel" compact>
-            <FilterPanel />
-          </ErrorBoundary>
-        }>
+        <TabLayout
+          toolbar={<ContextualToolbar tab="filters" />}
+          aside={
+            <ErrorBoundary label="Filter panel" compact>
+              <FilterPanel />
+            </ErrorBoundary>
+          }
+        >
           <ErrorBoundary label="Filters view" compact>
             <FiltersTabContent />
           </ErrorBoundary>
@@ -98,6 +111,7 @@ export function EditorTabs({ height = '100%' }: Props) {
 
       <Tabs.Panel value="palette" style={{ flex: 1, overflow: 'hidden' }}>
         <TabLayout
+          toolbar={<ContextualToolbar tab="palette" />}
           rail={<ToolRail items={toolRailItems} />}
           aside={
             <ErrorBoundary label="Palette sidebar" compact>

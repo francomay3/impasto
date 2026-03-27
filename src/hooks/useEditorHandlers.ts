@@ -7,13 +7,13 @@ import type { ReplaceImageModalRef } from '../components/ReplaceImageModal';
 
 interface Params {
   state: ProjectState;
-  activeTool: ToolId | null;
+  activeTool: ToolId;
   samplingColorId: string | null;
   handleAddColorAtPosition: (sample: ColorSample, hex: string) => string;
   handleSample: (sample: ColorSample, hex: string) => void;
   handleDeleteColor: (id: string) => void;
   handleImageLoadBitmap: (bitmap: ImageBitmap) => void;
-  setActiveTool: (id: ToolId | null) => void;
+  setActiveTool: (id: ToolId) => void;
   setActiveTab: (tab: string) => void;
   replaceRef: RefObject<ReplaceImageModalRef | null>;
   onNewImageFile?: (file: File) => void;
@@ -55,7 +55,7 @@ export function useEditorHandlers({
   const handleAddNewColor = useCallback((sample: ColorSample, hex: string) => {
     const id = handleAddColorAtPosition(sample, hex);
     setSelectedColorIds(new Set([id]));
-    setActiveTool(null);
+    setActiveTool('select');
   }, [handleAddColorAtPosition, setActiveTool]);
 
   const handleSampleWithSelect = useCallback((sample: ColorSample, hex: string) => {
@@ -69,11 +69,11 @@ export function useEditorHandlers({
   }, [handleDeleteColor]);
 
   const handleToggleSelectTool = useCallback(() => {
-    setActiveTool(activeTool === 'select' ? null : 'select');
-  }, [activeTool, setActiveTool]);
+    setActiveTool('select');
+  }, [setActiveTool]);
 
   const handleToggleMarqueeTool = useCallback(() => {
-    setActiveTool(activeTool === 'marquee' ? null : 'marquee');
+    setActiveTool(activeTool === 'marquee' ? 'select' : 'marquee');
   }, [activeTool, setActiveTool]);
 
   const handlePasteFile = useCallback((file: File) => {

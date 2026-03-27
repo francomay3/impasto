@@ -20,7 +20,7 @@ export function AuthScreen() {
   };
 
   return (
-    <Center h="100vh" style={{ background: 'var(--mantine-color-dark-9)' }}>
+    <Center h="100vh" style={{ background: 'var(--mantine-color-dark-9)' }} data-testid="auth-screen">
       <Paper
         p="xl"
         radius="md"
@@ -42,6 +42,7 @@ export function AuthScreen() {
             variant="default"
             size="md"
             fullWidth
+            data-testid="sign-in-google"
           >
             Continue with Google
           </Button>

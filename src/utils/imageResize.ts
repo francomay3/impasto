@@ -10,7 +10,7 @@ function toBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promi
   });
 }
 
-function withWebpExtension(filename: string): string {
+export function withWebpExtension(filename: string): string {
   const dot = filename.lastIndexOf('.');
   const base = dot >= 0 ? filename.slice(0, dot) : filename;
   return `${base}.webp`;

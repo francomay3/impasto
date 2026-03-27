@@ -11,6 +11,7 @@ import {
 import { SmartMouseSensor } from '../../utils/dndSensor';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { Color, ColorGroup } from '../../types';
+import { movePaletteItemBefore, appendPaletteItemToGroup, reorderWithinGroup } from './paletteDndTransforms';
 
 interface Options {
   palette: Color[];
@@ -59,19 +60,7 @@ export function usePaletteDnd({ palette, groups, onReorderGroups, onReorderPalet
     if (active.data.current?.type !== 'color') return;
     if (over.data.current?.type !== 'color') return;
 
-    setDragPalette(current => {
-      const p = current!;
-      const activeColor = p.find(c => c.id === active.id);
-      const overColor = p.find(c => c.id === over.id);
-      if (!activeColor || !overColor) return p;
-      if (activeColor.groupId === overColor.groupId) return p;
-
-      const withoutActive = p.filter(c => c.id !== active.id);
-      const overIdx = withoutActive.findIndex(c => c.id === over.id);
-      const result = [...withoutActive];
-      result.splice(overIdx, 0, { ...activeColor, groupId: overColor.groupId });
-      return result;
-    });
+    setDragPalette(current => movePaletteItemBefore(current!, String(active.id), String(over.id)));
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -99,36 +88,19 @@ export function usePaletteDnd({ palette, groups, onReorderGroups, onReorderPalet
       // Dropped on empty group drop zone — append to that group
       if (overData?.type === 'groupDrop') {
         const targetGroupId = overData.groupId as string | undefined;
-        const activeColor = p.find(c => c.id === active.id);
-        if (activeColor && activeColor.groupId !== targetGroupId) {
-          const withoutActive = p.filter(c => c.id !== active.id);
-          const lastIdx = withoutActive.reduce((last, c, i) => c.groupId === targetGroupId ? i : last, -1);
-          const result = [...withoutActive];
-          result.splice(lastIdx + 1, 0, { ...activeColor, groupId: targetGroupId });
-          onReorderPalette(result);
-        } else if (dragPalette) {
-          onReorderPalette(dragPalette);
-        }
+        const next = appendPaletteItemToGroup(p, String(active.id), targetGroupId);
+        if (next !== p) onReorderPalette(next);
+        else if (dragPalette) onReorderPalette(dragPalette);
         setDragPalette(null);
         return;
       }
 
       // Dropped on a color in the same group — finalize sort position
-      const activeColor = p.find(c => c.id === active.id);
-      const overColor = p.find(c => c.id === over.id);
-      if (activeColor && overColor && activeColor.groupId === overColor.groupId) {
-        const gid = activeColor.groupId;
-        const groupColors = p.filter(c => c.groupId === gid);
-        const oldIdx = groupColors.findIndex(c => c.id === active.id);
-        const newIdx = groupColors.findIndex(c => c.id === over.id);
-        if (oldIdx !== newIdx) {
-          const reordered = arrayMove(groupColors, oldIdx, newIdx);
-          let gi = 0;
-          const newPalette = p.map(c => c.groupId === gid ? reordered[gi++] : c);
-          onReorderPalette(newPalette);
-          setDragPalette(null);
-          return;
-        }
+      const reordered = reorderWithinGroup(p, String(active.id), String(over.id));
+      if (reordered !== p) {
+        onReorderPalette(reordered);
+        setDragPalette(null);
+        return;
       }
 
       if (dragPalette) onReorderPalette(dragPalette);

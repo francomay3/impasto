@@ -24,7 +24,7 @@ export function FilterSlider({ label, value, min, max, defaultValue, onChange, o
           </Tooltip>
         )}
       </Group>
-      <Slider value={value} min={min} max={max} onChange={onChange} onChangeEnd={onChangeEnd} size="xs" />
+      <Slider value={value} min={min} max={max} onChange={onChange} onChangeEnd={onChangeEnd} size="xs" thumbProps={{ 'aria-label': label }} />
     </Stack>
   );
 }

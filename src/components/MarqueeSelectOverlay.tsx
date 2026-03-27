@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import type { RefObject } from 'react';
 import { Box } from '@mantine/core';
+import { PinEditPopover } from './PinEditPopover';
 import { useCanvasContext } from '../context/CanvasContext';
 import { usePaletteContext } from '../context/PaletteContext';
 import { useEditorContext } from '../context/EditorContext';
@@ -28,6 +29,7 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
   const selectedColorIdsRef = useRef(selectedColorIds);
   const hasDraggedRef = useRef(false);
   const [drag, setDrag] = useState<DragRect | null>(null);
+  const [editPin, setEditPin] = useState<{ colorId: string; position: { x: number; y: number } } | null>(null);
 
   useEffect(() => { selectedColorIdsRef.current = selectedColorIds; }, [selectedColorIds]);
   useEffect(() => { measure(); }, [viewportTransform, measure]);
@@ -124,7 +126,7 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
       openSelectionMenu(pos);
     } else if (pinId) {
       e.stopPropagation();
-      openColorMenu(pinId, pos);
+      openColorMenu(pinId, pos, { onEditStart: () => setEditPin({ colorId: pinId, position: pos }) });
     }
   }, [findPinAt, selectedColorIds, openSelectionMenu, openColorMenu]);
 
@@ -153,6 +155,7 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
         onContextMenu={handleContextMenu}
       />
       {rectStyle && <Box style={rectStyle} />}
+      {editPin && <PinEditPopover colorId={editPin.colorId} position={editPin.position} onClose={() => setEditPin(null)} />}
     </>
   );
 }

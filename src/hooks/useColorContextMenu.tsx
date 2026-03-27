@@ -1,11 +1,10 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
-import { Crosshair, Pencil, Copy, PinOff, Trash2, Settings2 } from 'lucide-react';
+import { Crosshair, Copy, PinOff, Trash2, Settings2 } from 'lucide-react';
 import { usePaletteContext } from '../context/PaletteContext';
 import { useContextMenu } from '../context/ContextMenuContext';
 
 interface OpenOptions {
-  onRenameStart?: () => void;
   onEditStart?: () => void;
 }
 
@@ -21,8 +20,7 @@ export function useColorContextMenu() {
       x: pos.x,
       y: pos.y,
       items: [
-        { label: 'Sample from image', icon: <Crosshair size={14} />, onClick: () => onStartSampling(colorId) },
-        ...(opts.onRenameStart ? [{ label: 'Rename', icon: <Pencil size={14} />, onClick: opts.onRenameStart }] : []),
+        { label: 'Resample', icon: <Crosshair size={14} />, onClick: () => onStartSampling(colorId) },
         ...(opts.onEditStart ? [{ label: 'Edit', icon: <Settings2 size={14} />, onClick: opts.onEditStart }] : []),
         {
           label: 'Copy hex',

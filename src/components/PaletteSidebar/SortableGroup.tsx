@@ -55,7 +55,7 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
   const contextTrigger = useContextTrigger(openContextMenu);
 
   return (
-    <Box ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }} {...contextTrigger}>
+    <Box ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }} data-testid="group-item" {...contextTrigger}>
       {confirmDialog}
       <Box style={{ border: '1px solid var(--mantine-color-dark-5)', borderRadius: 6, overflow: 'hidden' }}>
         <Box
@@ -82,7 +82,7 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
                 onFocus={(e) => e.currentTarget.select()} size="xs" autoFocus style={{ flex: 1 }} onClick={(e) => e.stopPropagation()} />
             ) : (
               <Box style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-                <Text size="xs" fw={600} c="dimmed" style={{ userSelect: 'none' }}>{group.name}</Text>
+                <Text size="xs" fw={600} c="dimmed" data-testid="group-name" style={{ userSelect: 'none' }}>{group.name}</Text>
                 {colorCount === 0 && <Text size="xs" c="dimmed" style={{ fontStyle: 'italic', opacity: 0.5 }}>empty</Text>}
               </Box>
             )}
@@ -97,7 +97,7 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
           )}
           {!editing && (
             <Tooltip label="Delete group">
-              <ActionIcon size="xs" variant="subtle" color="red" onClick={(e) => { e.stopPropagation(); void (colorCount > 0 ? confirmDelete() : onDelete()); }}>
+              <ActionIcon size="xs" variant="subtle" color="red" data-testid="group-delete" onClick={(e) => { e.stopPropagation(); void (colorCount > 0 ? confirmDelete() : onDelete()); }}>
                 <X size={11} />
               </ActionIcon>
             </Tooltip>

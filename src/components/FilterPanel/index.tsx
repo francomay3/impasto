@@ -26,7 +26,7 @@ export function FilterPanel() {
   }
 
   return (
-    <Stack gap="xs" p="xs">
+    <Stack gap="xs" p="xs" data-testid="filter-panel">
       <AddItemButton
         ref={addButtonRef}
         label="Add Filter"

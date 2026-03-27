@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Text, TextInput } from '@mantine/core';
+import { Box, Text, TextInput } from '@mantine/core';
 
 interface Props {
   name: string;
@@ -19,19 +19,21 @@ export function EditableTitle({ name, onRename }: Props) {
 
   if (editing) {
     return (
-      <TextInput
-        value={value}
-        onChange={e => setValue(e.currentTarget.value)}
-        onBlur={commit}
-        onKeyDown={e => {
-          if (e.key === 'Enter') commit();
-          if (e.key === 'Escape') { setValue(name); setEditing(false); }
-        }}
-        autoFocus
-        size="xs"
-        style={{ width: Math.max(140, value.length * 9) }}
-        styles={{ input: { fontWeight: 600, fontSize: 15, padding: '2px 6px' } }}
-      />
+      <Box data-testid="project-title">
+        <TextInput
+          value={value}
+          onChange={e => setValue(e.currentTarget.value)}
+          onBlur={commit}
+          onKeyDown={e => {
+            if (e.key === 'Enter') commit();
+            if (e.key === 'Escape') { setValue(name); setEditing(false); }
+          }}
+          autoFocus
+          size="xs"
+          style={{ width: Math.max(140, value.length * 9) }}
+          styles={{ input: { fontWeight: 600, fontSize: 15, padding: '2px 6px' } }}
+        />
+      </Box>
     );
   }
 
@@ -39,6 +41,7 @@ export function EditableTitle({ name, onRename }: Props) {
     <Text
       size="sm"
       fw={600}
+      data-testid="project-title"
       onClick={() => { setValue(name); setEditing(true); }}
       style={{
         cursor: 'text',

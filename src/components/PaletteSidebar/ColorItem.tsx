@@ -9,6 +9,7 @@ import { useEditorContext } from '../../context/EditorContext';
 import { useContextTrigger } from '../../hooks/useContextTrigger';
 import { useColorContextMenu } from '../../hooks/useColorContextMenu';
 import { useSelectionContextMenu } from '../../hooks/useSelectionContextMenu';
+import { PinEditPopover } from '../PinEditPopover';
 
 interface ColorItemProps {
   color: Color;
@@ -21,6 +22,7 @@ function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
   const { selectedColorIds, onSelectColor, onToggleColorSelection, hoveredColorId, onHoverColor, hiddenPinIds, onTogglePinVisibility } = useEditorContext();
   const [editingName, setEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
+  const [editPopoverPos, setEditPopoverPos] = useState<{ x: number; y: number } | null>(null);
   const openColorMenu = useColorContextMenu();
   const openSelectionMenu = useSelectionContextMenu();
 
@@ -50,29 +52,30 @@ function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
     if (selectedColorIds.size > 1 && selectedColorIds.has(color.id)) {
       openSelectionMenu({ x, y });
     } else {
-      openColorMenu(color.id, { x, y }, { onRenameStart: handleNameEditStart });
+      openColorMenu(color.id, { x, y }, { onEditStart: () => setEditPopoverPos({ x, y }) });
     }
-  }, [color.id, selectedColorIds, openColorMenu, openSelectionMenu, handleNameEditStart]);
+  }, [color.id, selectedColorIds, openColorMenu, openSelectionMenu]);
 
   const contextTrigger = useContextTrigger(openContextMenu);
 
   const isSelected = selectedColorIds.has(color.id);
-  const border = samplingColorId === color.id
+  const outline = samplingColorId === color.id
     ? '2px solid var(--mantine-color-blue-4)'
     : isSelected
       ? '2px solid var(--mantine-color-primary-4)'
       : hoveredColorId === color.id
         ? '2px solid var(--mantine-color-secondary-4)'
-        : '1px solid var(--mantine-color-dark-4)';
+        : undefined;
 
   return (
+    <>
     <Box
       onMouseDown={handleAuxClick}
       onClick={handleClick}
       onMouseEnter={() => onHoverColor(color.id)}
       onMouseLeave={() => onHoverColor(null)}
       {...contextTrigger}
-      style={{ border, borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)', cursor: 'pointer', userSelect: 'none' }}
+      style={{ border: '1px solid var(--mantine-color-dark-4)', outline, outlineOffset: -2, borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)', cursor: 'pointer', userSelect: 'none' }}
     >
       <Stack gap={4}>
         <Box style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -85,7 +88,7 @@ function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
               onBlur={handleNameSubmit} onKeyDown={(e) => { if (e.key === 'Enter') handleNameSubmit(); if (e.key === 'Escape') setEditingName(false); }}
               size="xs" autoFocus style={{ flex: 1 }} />
           ) : (
-            <Text size="xs" ff={color.name ? undefined : 'monospace'} onClick={handleNameEditStart}
+            <Text size="xs" ff={color.name ? undefined : 'monospace'} onClick={handleNameEditStart} data-testid="color-name"
               style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'text' }}>
               {color.name || color.hex.toLowerCase()}
             </Text>
@@ -126,7 +129,7 @@ function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
               <ActionIcon size="sm" variant="subtle" color="blue" onClick={() => onStartSampling(color.id)}><Crosshair size={13} /></ActionIcon>
             </Tooltip>
             <Tooltip label="Delete color">
-              <ActionIcon size="sm" variant="subtle" color="red" onClick={() => onDeleteColor(color.id)}><X size={13} /></ActionIcon>
+              <ActionIcon size="sm" variant="subtle" color="red" data-testid="color-delete" onClick={() => onDeleteColor(color.id)}><X size={13} /></ActionIcon>
             </Tooltip>
           </Box>
         </Box>
@@ -134,16 +137,21 @@ function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
         {color.mixRecipe && <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>{color.mixRecipe}</Text>}
       </Stack>
     </Box>
+    {editPopoverPos && <PinEditPopover colorId={color.id} position={editPopoverPos} onClose={() => setEditPopoverPos(null)} />}
+    </>
   );
 }
 
-export function SortableColorItem({ color }: { color: Color }) {
+export function SortableColorItem({ color, index }: { color: Color; index: number }) {
+  const { selectedColorIds } = useEditorContext();
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: color.id, data: { type: 'color' } });
   return (
     <Box
       ref={setNodeRef}
       {...attributes}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      data-testid={`color-item-${index}`}
+      data-selected={selectedColorIds.has(color.id) ? 'true' : undefined}
     >
       <ColorItem color={color} dragHandleRef={setActivatorNodeRef} dragListeners={listeners as Record<string, (...args: unknown[]) => void>} />
     </Box>

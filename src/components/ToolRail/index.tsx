@@ -5,6 +5,7 @@ export type ToolRailItem =
       type?: 'action';
       icon: React.ReactNode;
       label: string;
+      testId?: string;
       onClick?: () => void;
       active?: boolean;
       disabled?: boolean;
@@ -44,6 +45,8 @@ export function ToolRail({ items }: Props) {
               disabled={item.disabled}
               onClick={item.onClick}
               aria-label={item.label}
+              data-testid={item.testId}
+              data-active={item.active ? 'true' : undefined}
             >
               {item.icon}
             </ActionIcon>

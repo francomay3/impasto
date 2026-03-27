@@ -1,11 +1,11 @@
 import type { FilterInstance, BrightnessContrastParams, HueSaturationParams, LevelsParams, BlurParams } from '../types';
+import { brightnessContrastChannel, hueSaturationPixel, levelsChannel } from './pixelMath';
 
 function applyBrightnessContrast(imageData: ImageData, p: BrightnessContrastParams): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
-  const cf = (259 * (p.contrast + 255)) / (255 * (259 - p.contrast));
   for (let i = 0; i < data.length; i += 4) {
     for (let c = 0; c < 3; c++) {
-      data[i + c] = Math.max(0, Math.min(255, cf * (data[i + c] + p.brightness - 128) + 128));
+      data[i + c] = brightnessContrastChannel(data[i + c], p.brightness, p.contrast);
     }
   }
   return new ImageData(data, imageData.width, imageData.height);
@@ -13,25 +13,18 @@ function applyBrightnessContrast(imageData: ImageData, p: BrightnessContrastPara
 
 function applyHueSaturation(imageData: ImageData, p: HueSaturationParams): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
-  const sat = (p.saturation + 100) / 100;
   for (let i = 0; i < data.length; i += 4) {
-    const r = data[i] + p.temperature;
-    const g = data[i + 1] + p.tint;
-    const b = data[i + 2] - p.temperature;
-    const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-    data[i] = Math.max(0, Math.min(255, gray + sat * (r - gray)));
-    data[i + 1] = Math.max(0, Math.min(255, gray + sat * (g - gray)));
-    data[i + 2] = Math.max(0, Math.min(255, gray + sat * (b - gray)));
+    const [r, g, b] = hueSaturationPixel(data[i], data[i + 1], data[i + 2], p.saturation, p.temperature, p.tint);
+    data[i] = r; data[i + 1] = g; data[i + 2] = b;
   }
   return new ImageData(data, imageData.width, imageData.height);
 }
 
 function applyLevels(imageData: ImageData, p: LevelsParams): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
-  const range = Math.max(1, p.whitePoint - p.blackPoint);
   for (let i = 0; i < data.length; i += 4) {
     for (let c = 0; c < 3; c++) {
-      data[i + c] = Math.max(0, Math.min(255, (data[i + c] - p.blackPoint) / range * 255));
+      data[i + c] = levelsChannel(data[i + c], p.blackPoint, p.whitePoint);
     }
   }
   return new ImageData(data, imageData.width, imageData.height);

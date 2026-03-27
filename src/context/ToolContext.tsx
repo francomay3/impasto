@@ -2,8 +2,10 @@ import { createContext, useContext } from 'react';
 import type { ToolId } from '../tools';
 
 interface ToolContextValue {
-  activeTool: ToolId | null;
-  setActiveTool: (id: ToolId | null) => void;
+  activeTool: ToolId;
+  setActiveTool: (id: ToolId) => void;
+  samplingRadius: number;
+  setSamplingRadius: (r: number) => void;
 }
 
 const ToolContext = createContext<ToolContextValue | null>(null);

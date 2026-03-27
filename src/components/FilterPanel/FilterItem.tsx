@@ -64,7 +64,7 @@ export function FilterItem({ filter }: { filter: FilterInstance }) {
   const contextTrigger = useContextTrigger(openContextMenu);
 
   return (
-    <Box ref={setNodeRef} onMouseDown={handleAuxClick} {...contextTrigger}
+    <Box ref={setNodeRef} onMouseDown={handleAuxClick} {...contextTrigger} data-testid="filter-item"
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, border: '1px solid var(--mantine-color-dark-5)', borderRadius: 6, overflow: 'hidden', background: 'var(--mantine-color-dark-7)', flexShrink: 0 }}
     >
       <Group px="xs" py={6} gap={4} {...attributes} {...listeners} onDoubleClick={() => setExpanded(v => !v)} style={{ background: 'var(--mantine-color-dark-6)', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none' }}>
@@ -76,7 +76,7 @@ export function FilterItem({ filter }: { filter: FilterInstance }) {
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </ActionIcon>
         <Tooltip label="Remove filter" transitionProps={{ duration: 0 }}>
-          <ActionIcon size="xs" variant="subtle" color="red" onClick={() => onRemoveFilter(filter.id)}>
+          <ActionIcon size="xs" variant="subtle" color="red" data-testid="filter-remove" onClick={() => onRemoveFilter(filter.id)}>
             <Trash2 size={12} />
           </ActionIcon>
         </Tooltip>

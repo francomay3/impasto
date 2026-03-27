@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { applyZoomStep, panOnZoom, panOnDrag } from './viewportMath';
 
 export interface ViewportTransform {
   scale: number;
@@ -19,14 +20,15 @@ export function useViewportTransform() {
 
   const handleWheel = useCallback((e: WheelEvent, rect: DOMRect) => {
     e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
     const prev = transformRef.current;
-    const newScale = Math.max(0.25, Math.min(16, prev.scale * factor));
+    const newScale = applyZoomStep(prev.scale, e.deltaY < 0);
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
-    const newPanX = mx - (mx - prev.panX) * (newScale / prev.scale);
-    const newPanY = my - (my - prev.panY) * (newScale / prev.scale);
-    applyTransform({ scale: newScale, panX: newPanX, panY: newPanY });
+    applyTransform({
+      scale: newScale,
+      panX: panOnZoom(mx, prev.panX, prev.scale, newScale),
+      panY: panOnZoom(my, prev.panY, prev.scale, newScale),
+    });
   }, [applyTransform]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -42,8 +44,8 @@ export function useViewportTransform() {
       if (!dragRef.current) return;
       applyTransform({
         ...transformRef.current,
-        panX: dragRef.current.startPanX + (ev.clientX - dragRef.current.startX),
-        panY: dragRef.current.startPanY + (ev.clientY - dragRef.current.startY),
+        panX: panOnDrag(dragRef.current.startPanX, dragRef.current.startX, ev.clientX),
+        panY: panOnDrag(dragRef.current.startPanY, dragRef.current.startY, ev.clientY),
       });
     };
 

@@ -21,11 +21,10 @@ const labelStyle: React.CSSProperties = {
 };
 
 export function PaletteTabContent() {
-  const { sourceImage } = useCanvasContext();
+  const { sourceImage, indexedCanvasRef } = useCanvasContext();
   const { filters, preIndexingBlur } = useFilterContext();
   const { palette, samplingColorId, isAddingColor, onSampleColor, onCancelSampleColor, onAddNewColor, onCancelAddingColor } = usePaletteContext();
   const filteredRef = useRef<HTMLCanvasElement>(null);
-  const indexedRef = useRef<HTMLCanvasElement>(null);
 
   const filteredData = useFilteredImage(sourceImage, filters);
 
@@ -48,12 +47,12 @@ export function PaletteTabContent() {
   }, [filteredData]);
 
   useEffect(() => {
-    const canvas = indexedRef.current;
+    const canvas = indexedCanvasRef.current;
     if (!canvas || !indexedData) return;
     canvas.width = indexedData.width;
     canvas.height = indexedData.height;
     canvas.getContext('2d')!.putImageData(indexedData, 0, 0);
-  }, [indexedData]);
+  }, [indexedData, indexedCanvasRef]);
 
   return (
     <Group gap={0} wrap="nowrap" style={{ height: '100%', overflow: 'hidden' }}>
@@ -77,7 +76,7 @@ export function PaletteTabContent() {
       </Box>
       <Box style={{ width: 1, height: '100%', background: 'var(--mantine-color-dark-6)', flexShrink: 0 }} />
       <Box style={{ flex: 1, minWidth: 0, position: 'relative', height: '100%', display: 'flex' }}>
-        <CanvasViewport ref={indexedRef} variant="indexed" />
+        <CanvasViewport ref={indexedCanvasRef} variant="indexed" />
         <Group style={{ ...labelStyle, gap: 6 }}>
           <Text size="xs" c="dimmed">Indexed colors</Text>
           {isIndexedLoading && <Loader size="xs" />}
