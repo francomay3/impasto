@@ -1,16 +1,15 @@
-import { useRef, useState, useCallback } from 'react';
-import { Trash2, RefreshCw, PinOff } from 'lucide-react';
+import { useRef, useState, useCallback, useEffect, type RefObject } from 'react';
+import { Tooltip } from '@mantine/core';
 import { useCanvasContext } from '../context/CanvasContext';
 import { usePaletteContext } from '../context/PaletteContext';
 import { useEditorContext } from '../context/EditorContext';
-import { useContextMenu } from '../context/ContextMenuContext';
-import { estimateLabelWidth } from '../utils/labelLayout';
+import { useColorContextMenu } from '../hooks/useColorContextMenu';
+import { useCanvasMeasure } from '../hooks/useCanvasMeasure';
+import { PinEditPopover } from './PinEditPopover';
 import type { ColorSample } from '../types';
 
-const DOT_R = 6;
-const HIT_R = DOT_R + 5;
-const LABEL_H = 20;
-const H_PAD = 14;
+const DOT_R = 6; // desired screen pixels
+const HIT_R = DOT_R + 5; // desired screen pixels
 
 function clientToSvg(svg: SVGSVGElement, clientX: number, clientY: number) {
   const pt = svg.createSVGPoint();
@@ -22,27 +21,43 @@ interface DragState {
   colorId: string;
   startPt: { x: number; y: number };
   originalSample: ColorSample;
+  currentSample: ColorSample;
 }
 
-export function SamplePinsOverlay() {
-  const { sourceImage, viewportTransform, isSampling, showLabels } = useCanvasContext();
-  const { palette, onDeleteColor, onStartSampling, onMoveSamplePin, onRemoveSamplePin } = usePaletteContext();
-  const { selectedColorId, onSelectColor } = useEditorContext();
-  const { open: openMenu } = useContextMenu();
+interface EditPin { colorId: string; position: { x: number; y: number } }
+
+interface Props {
+  /** Canvas to measure position from. Defaults to filteredCanvasRef from CanvasContext. */
+  canvasRef?: RefObject<HTMLCanvasElement | null>;
+}
+
+export function SamplePinsOverlay({ canvasRef }: Props) {
+  const { sourceImage, viewportTransform, isSampling, filteredCanvasRef } = useCanvasContext();
+  const resolvedCanvasRef = canvasRef ?? filteredCanvasRef;
+  const { palette, groups, onPinMoveEnd } = usePaletteContext();
+  const { selectedColorId, onSelectColor, hoveredColorId, onHoverColor, hiddenPinIds } = useEditorContext();
+  const openColorMenu = useColorContextMenu();
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
+  const [editPin, setEditPin] = useState<EditPin | null>(null);
   const hasDraggedRef = useRef(false);
 
-  const sampledColors = palette.filter(c => c.sample);
+  const { canvasRect, measure } = useCanvasMeasure(resolvedCanvasRef);
+  useEffect(() => { measure(); }, [viewportTransform, measure]);
+  useEffect(() => { if (isSampling) setDrag(null); else measure(); }, [isSampling, measure]);
+
+  const sampledColors = palette.filter(c => c.sample && !hiddenPinIds.has(c.id));
 
   const handleMouseDown = useCallback((e: React.MouseEvent, colorId: string) => {
+    if (e.button !== 0) return;
     e.stopPropagation();
     const svg = svgRef.current;
     const color = palette.find(c => c.id === colorId);
     if (!svg || !color?.sample) return;
     hasDraggedRef.current = false;
     const startPt = clientToSvg(svg, e.clientX, e.clientY);
-    setDrag({ colorId, startPt: { x: startPt.x, y: startPt.y }, originalSample: { ...color.sample } });
+    const originalSample = { ...color.sample };
+    setDrag({ colorId, startPt: { x: startPt.x, y: startPt.y }, originalSample, currentSample: originalSample });
   }, [palette]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -51,69 +66,71 @@ export function SamplePinsOverlay() {
     const pt = clientToSvg(svgRef.current, e.clientX, e.clientY);
     const x = Math.round(Math.max(0, Math.min(sourceImage.width - 1, drag.originalSample.x + pt.x - drag.startPt.x)));
     const y = Math.round(Math.max(0, Math.min(sourceImage.height - 1, drag.originalSample.y + pt.y - drag.startPt.y)));
-    onMoveSamplePin(drag.colorId, { ...drag.originalSample, x, y });
-  }, [drag, sourceImage, onMoveSamplePin]);
+    setDrag(prev => prev ? { ...prev, currentSample: { ...prev.originalSample, x, y } } : null);
+  }, [drag, sourceImage]);
 
-  const handleMouseUp = useCallback(() => setDrag(null), []);
+  const handleMouseUp = useCallback(() => {
+    if (drag && hasDraggedRef.current) onPinMoveEnd(drag.colorId, drag.currentSample);
+    setDrag(null);
+  }, [drag, onPinMoveEnd]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, colorId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openMenu({ x: e.clientX, y: e.clientY, items: [
-      { label: 'Resample', icon: <RefreshCw size={14} />, onClick: () => onStartSampling(colorId) },
-      { label: 'Remove pin', icon: <PinOff size={14} />, onClick: () => onRemoveSamplePin(colorId) },
-      { type: 'divider' as const },
-      { label: 'Delete color', icon: <Trash2 size={14} />, onClick: () => onDeleteColor(colorId) },
-    ]});
-  }, [openMenu, onStartSampling, onRemoveSamplePin, onDeleteColor]);
+    e.preventDefault(); e.stopPropagation();
+    const pos = { x: e.clientX, y: e.clientY };
+    openColorMenu(colorId, pos, { onEditStart: () => setEditPin({ colorId, position: pos }) });
+  }, [openColorMenu]);
 
-  if (!sourceImage || isSampling || sampledColors.length === 0) return null;
+  if (!sourceImage || sampledColors.length === 0 || !canvasRect || canvasRect.width === 0) return null;
 
   const { width: imgW, height: imgH } = sourceImage;
-  const inv = 1 / viewportTransform.scale;
+  const inv = imgW / canvasRect.width;
 
   return (
-    <svg
-      ref={svgRef}
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible', pointerEvents: drag ? 'all' : 'none' }}
-      viewBox={`0 0 ${imgW} ${imgH}`}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-    >
-      {drag && <rect x={0} y={0} width={imgW} height={imgH} fill="transparent" style={{ pointerEvents: 'all', cursor: 'grabbing' }} />}
-
-      {sampledColors.map(c => {
-        const { x, y, radius } = c.sample!;
-        const isSelected = selectedColorId === c.id;
-        const label = c.name || c.hex;
-        const lw = estimateLabelWidth(label);
-
-        return (
-          <g key={c.id} transform={`translate(${x}, ${y})`}>
-            {radius * viewportTransform.scale > DOT_R && (
-              <circle r={radius} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={1.5 * inv} />
-            )}
-            <g
-              transform={`scale(${inv})`}
-              style={{ pointerEvents: 'auto', cursor: drag?.colorId === c.id ? 'grabbing' : 'grab' }}
-              onMouseDown={(e) => handleMouseDown(e, c.id)}
-              onClick={(e) => { e.stopPropagation(); if (!hasDraggedRef.current) onSelectColor(selectedColorId === c.id ? null : c.id); }}
-              onContextMenu={(e) => handleContextMenu(e, c.id)}
-            >
-              <circle r={HIT_R} fill="transparent" />
-              <circle r={DOT_R} fill={c.hex} stroke={isSelected ? 'var(--mantine-color-primary-4)' : 'white'} strokeWidth={isSelected ? 3 : 2} />
-              {showLabels && (
-                <g transform={`translate(${DOT_R + 6}, ${-LABEL_H / 2})`}>
-                  <rect x={0} y={0} width={lw} height={LABEL_H} rx={4} fill="rgba(0,0,0,0.7)" />
-                  <text x={H_PAD / 2} y={14} fontSize={11} fontFamily="monospace" letterSpacing="0.03em" fill="rgba(255,255,255,0.92)" style={{ userSelect: 'none', pointerEvents: 'none' }}>
-                    {label}
-                  </text>
-                </g>
+    <>
+      <svg
+        ref={svgRef}
+        style={{
+          position: 'absolute', left: canvasRect.left, top: canvasRect.top,
+          width: canvasRect.width, height: canvasRect.height,
+          overflow: 'visible', pointerEvents: drag ? 'all' : 'none',
+        }}
+        viewBox={`0 0 ${imgW} ${imgH}`}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+      >
+        {drag && <rect x={0} y={0} width={imgW} height={imgH} fill="transparent" style={{ pointerEvents: 'all', cursor: 'grabbing' }} />}
+        {sampledColors.map(c => {
+          const activeSample = (drag?.colorId === c.id) ? drag.currentSample : c.sample!;
+          const { x, y, radius } = activeSample;
+          const isSelected = selectedColorId === c.id;
+          const isHovered = hoveredColorId === c.id;
+          const group = c.groupId ? groups.find(g => g.id === c.groupId) : undefined;
+          const label = c.name || c.hex;
+          const tooltipLabel = group ? `${label}\n${group.name}` : label;
+          return (
+            <g key={c.id} transform={`translate(${x}, ${y})`}>
+              {radius > DOT_R * inv && (
+                <circle r={radius} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={1.5 * inv} />
               )}
+              <Tooltip label={<span style={{ whiteSpace: 'pre-line' }}>{tooltipLabel}</span>} openDelay={300} withinPortal>
+                <g
+                  transform={`scale(${inv})`}
+                  style={{ pointerEvents: 'auto', cursor: drag?.colorId === c.id ? 'grabbing' : 'grab' }}
+                  onMouseDown={(e) => handleMouseDown(e, c.id)}
+                  onClick={(e) => { e.stopPropagation(); if (!hasDraggedRef.current) onSelectColor(selectedColorId === c.id ? null : c.id); }}
+                  onMouseEnter={() => onHoverColor(c.id)}
+                  onMouseLeave={() => onHoverColor(null)}
+                  onContextMenu={(e) => handleContextMenu(e, c.id)}
+                >
+                  <circle r={HIT_R} fill="transparent" />
+                  <circle r={DOT_R} fill={c.hex} stroke={isSelected ? 'var(--mantine-color-primary-4)' : isHovered ? 'var(--mantine-color-secondary-4)' : 'white'} strokeWidth={isSelected || isHovered ? 3 : 2} />
+                </g>
+              </Tooltip>
             </g>
-          </g>
-        );
-      })}
-    </svg>
+          );
+        })}
+      </svg>
+      {editPin && <PinEditPopover colorId={editPin.colorId} position={editPin.position} onClose={() => setEditPin(null)} />}
+    </>
   );
 }

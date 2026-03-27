@@ -1,10 +1,15 @@
-import { Box, Tabs } from '@mantine/core';
-import { Layers, Palette, BarChart2, Grid, Scaling, Brush } from 'lucide-react';
+import { Box, Stack, Tabs, Text, Title } from '@mantine/core';
+import { Layers, Palette, BarChart2, Grid, Scaling, Brush, ImageUp, Plus, FolderPlus, Download, Upload } from 'lucide-react';
+import { ToolRail } from '../ToolRail';
+import type { ToolRailItem } from '../ToolRail';
 import { FilterPanel } from '../FilterPanel';
 import { PaletteSidebar } from '../PaletteSidebar';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { FiltersTabContent } from './FiltersTabContent';
 import { PaletteTabContent } from './PaletteTabContent';
+import { ImageUploader } from '../ImageUploader';
+import { useEditorContext } from '../../context/EditorContext';
+import { useCanvasContext } from '../../context/CanvasContext';
 
 const asideStyle: React.CSSProperties = {
   width: 260,
@@ -15,23 +20,54 @@ const asideStyle: React.CSSProperties = {
   scrollbarWidth: 'none',
 };
 
-function TabLayout({ children, aside }: { children?: React.ReactNode; aside: React.ReactNode }) {
+function TabLayout({ children, aside, rail }: { children?: React.ReactNode; aside: React.ReactNode; rail?: React.ReactNode }) {
   return (
     <Box style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+      {rail}
       <Box style={{ flex: 1, overflow: 'hidden' }}>{children}</Box>
       <Box style={asideStyle} className="hide-scrollbar">{aside}</Box>
     </Box>
   );
 }
 
+const paletteRailItems: ToolRailItem[] = [
+  { icon: Plus, label: 'Add Color', onClick: () => console.log('Add Color') },
+  { icon: FolderPlus, label: 'Add Group', onClick: () => console.log('Add Group') },
+  { type: 'separator' },
+  { icon: Upload, label: 'Import Palette', onClick: () => console.log('Import Palette') },
+  { icon: Download, label: 'Export Palette', onClick: () => console.log('Export Palette') },
+];
+
 interface Props {
   height?: string | number;
 }
 
 export function EditorTabs({ height = '100%' }: Props) {
+  const { activeTab, onSetActiveTab, onFileSelected } = useEditorContext();
+  const { sourceImage } = useCanvasContext();
+
+  if (!sourceImage) {
+    return (
+      <Box style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+        <Stack align="center" gap="xl" style={{ width: '100%', maxWidth: 560 }}>
+          <Stack align="center" gap="xs">
+            <ImageUp size={48} color="var(--mantine-color-dark-3)" />
+            <Title order={3} c="dimmed" fw={400}>Start by loading an image</Title>
+            <Text size="sm" c="dimmed">Drop a photo here or click to browse</Text>
+          </Stack>
+          <ImageUploader
+            onFileSelected={onFileSelected}
+            style={{ width: '100%', padding: 64, borderRadius: 12 }}
+          />
+        </Stack>
+      </Box>
+    );
+  }
+
   return (
     <Tabs
-      defaultValue="filters"
+      value={activeTab}
+      onChange={(v) => v && onSetActiveTab(v)}
       keepMounted
       variant="outline"
       style={{ height, display: 'flex', flexDirection: 'column' }}
@@ -48,7 +84,7 @@ export function EditorTabs({ height = '100%' }: Props) {
       <Tabs.Panel value="filters" style={{ flex: 1, overflow: 'hidden' }}>
         <TabLayout aside={
           <ErrorBoundary label="Filter panel" compact>
-            <FilterPanel collapsed={false} onToggleCollapse={() => {}} />
+            <FilterPanel />
           </ErrorBoundary>
         }>
           <ErrorBoundary label="Filters view" compact>
@@ -58,11 +94,14 @@ export function EditorTabs({ height = '100%' }: Props) {
       </Tabs.Panel>
 
       <Tabs.Panel value="palette" style={{ flex: 1, overflow: 'hidden' }}>
-        <TabLayout aside={
-          <ErrorBoundary label="Palette sidebar" compact>
-            <PaletteSidebar />
-          </ErrorBoundary>
-        }>
+        <TabLayout
+          rail={<ToolRail items={paletteRailItems} />}
+          aside={
+            <ErrorBoundary label="Palette sidebar" compact>
+              <PaletteSidebar />
+            </ErrorBoundary>
+          }
+        >
           <ErrorBoundary label="Palette view" compact>
             <PaletteTabContent />
           </ErrorBoundary>

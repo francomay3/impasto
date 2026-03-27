@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Box, Text, ActionIcon, Tooltip, TextInput } from '@mantine/core';
-import { X, GripVertical, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
+import { X, GripVertical, ChevronDown, ChevronRight, Pencil, Eye, EyeOff } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import useConfirmDialog from '../useConfirmDialog';
@@ -8,6 +8,7 @@ import type { ColorGroup } from '../../types';
 import { GroupDropZone } from './GroupDropZone';
 import { useContextMenu } from '../../context/ContextMenuContext';
 import { useContextTrigger } from '../../hooks/useContextTrigger';
+import { useEditorContext } from '../../context/EditorContext';
 
 interface Props {
   group: ColorGroup;
@@ -17,14 +18,17 @@ interface Props {
   autoEdit?: boolean;
   showDragHandle?: boolean;
   colorCount: number;
+  sampleColorIds: string[];
   onToggleCollapse: () => void;
   onRename: (name: string) => void;
   onDelete: () => void;
 }
 
-export function SortableGroup({ group, children, collapsed, isDraggingColor, autoEdit, showDragHandle, colorCount, onToggleCollapse, onRename, onDelete }: Props) {
+export function SortableGroup({ group, children, collapsed, isDraggingColor, autoEdit, showDragHandle, colorCount, sampleColorIds, onToggleCollapse, onRename, onDelete }: Props) {
   const [editing, setEditing] = useState(() => autoEdit ?? false);
   const [editName, setEditName] = useState(group.name);
+  const { hiddenPinIds, onSetGroupPinsVisible } = useEditorContext();
+  const allPinsHidden = sampleColorIds.length > 0 && sampleColorIds.every(id => hiddenPinIds.has(id));
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: group.id, data: { type: 'group' } });
   const { open: openMenu } = useContextMenu();
 
@@ -83,6 +87,14 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
               </Box>
             )}
           </Box>
+          {!editing && sampleColorIds.length > 0 && (
+            <Tooltip label={allPinsHidden ? 'Show group pins' : 'Hide group pins'}>
+              <ActionIcon size="xs" variant="subtle" color="gray"
+                onClick={(e) => { e.stopPropagation(); onSetGroupPinsVisible(sampleColorIds, allPinsHidden); }}>
+                {allPinsHidden ? <EyeOff size={11} /> : <Eye size={11} />}
+              </ActionIcon>
+            </Tooltip>
+          )}
           {!editing && (
             <Tooltip label="Delete group">
               <ActionIcon size="xs" variant="subtle" color="red" onClick={(e) => { e.stopPropagation(); void (colorCount > 0 ? confirmDelete() : onDelete()); }}>

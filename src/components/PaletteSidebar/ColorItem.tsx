@@ -1,14 +1,13 @@
 import { useState, useCallback } from 'react';
 import { Stack, Box, Text, Badge, ActionIcon, Tooltip, TextInput, Menu } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import { Crosshair, X, GripVertical, Folder, Plus, Copy } from 'lucide-react';
+import { Crosshair, X, GripVertical, Folder, Plus, Eye, EyeOff } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Color } from '../../types';
 import { usePaletteContext } from '../../context/PaletteContext';
 import { useEditorContext } from '../../context/EditorContext';
-import { useContextMenu } from '../../context/ContextMenuContext';
 import { useContextTrigger } from '../../hooks/useContextTrigger';
+import { useColorContextMenu } from '../../hooks/useColorContextMenu';
 
 interface ColorItemProps {
   color: Color;
@@ -17,11 +16,11 @@ interface ColorItemProps {
 }
 
 export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
-  const { groups, samplingColorId, onStartSampling, onRenameColor, onDeleteColor, onSetColorGroup, onAddGroup, onToggleHighlight } = usePaletteContext();
-  const { selectedColorId, onSelectColor } = useEditorContext();
+  const { groups, samplingColorId, onStartSampling, onRenameColor, onDeleteColor, onSetColorGroup, onAddGroup } = usePaletteContext();
+  const { selectedColorId, onSelectColor, hoveredColorId, onHoverColor, hiddenPinIds, onTogglePinVisibility } = useEditorContext();
   const [editingName, setEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
-  const { open: openMenu } = useContextMenu();
+  const openColorMenu = useColorContextMenu();
 
   const handleNameEditStart = useCallback(() => {
     setEditNameValue(color.name || color.hex.toLowerCase());
@@ -40,14 +39,8 @@ export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProp
   };
 
   const openContextMenu = useCallback(({ x, y }: { x: number; y: number }) => {
-    openMenu({ x, y, items: [
-      { label: 'Sample from image', icon: <Crosshair size={14} />, onClick: () => onStartSampling(color.id) },
-      { label: 'Rename',            icon: <Folder size={14} />,    onClick: handleNameEditStart },
-      { label: 'Copy hex',          icon: <Copy size={14} />,      onClick: () => { navigator.clipboard.writeText(color.hex.toLowerCase()); notifications.show({ message: `Copied ${color.hex.toLowerCase()}`, color: 'green', autoClose: 1500 }); } },
-      { type: 'divider' },
-      { label: 'Delete', icon: <X size={14} />, onClick: () => onDeleteColor(color.id), color: 'red' },
-    ]});
-  }, [color, openMenu, onStartSampling, onDeleteColor, handleNameEditStart]);
+    openColorMenu(color.id, { x, y }, { onRenameStart: handleNameEditStart });
+  }, [color.id, openColorMenu, handleNameEditStart]);
 
   const contextTrigger = useContextTrigger(openContextMenu);
 
@@ -55,12 +48,16 @@ export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProp
     ? '2px solid var(--mantine-color-blue-4)'
     : selectedColorId === color.id
       ? '2px solid var(--mantine-color-primary-4)'
-      : '1px solid var(--mantine-color-dark-4)';
+      : hoveredColorId === color.id
+        ? '2px solid var(--mantine-color-secondary-4)'
+        : '1px solid var(--mantine-color-dark-4)';
 
   return (
     <Box
       onMouseDown={handleAuxClick}
-      onClick={() => onSelectColor(selectedColorId === color.id ? null : color.id)}
+      onClick={(e) => { e.stopPropagation(); onSelectColor(selectedColorId === color.id ? null : color.id); }}
+      onMouseEnter={() => onHoverColor(color.id)}
+      onMouseLeave={() => onHoverColor(null)}
       {...contextTrigger}
       style={{ border, borderRadius: 6, padding: 8, background: 'var(--mantine-color-dark-7)', cursor: 'pointer' }}
     >
@@ -104,11 +101,14 @@ export function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProp
                 <Menu.Item leftSection={<Plus size={12} />} onClick={() => { const id = crypto.randomUUID(); onAddGroup(id, `Group ${groups.length + 1}`); onSetColorGroup(color.id, id); }}>New group</Menu.Item>
               </Menu.Dropdown>
             </Menu>
-            <Tooltip label={color.highlighted ? 'Remove highlight' : 'Highlight in indexed view'}>
-              <ActionIcon size="sm" variant={color.highlighted ? 'filled' : 'subtle'} color={color.highlighted ? 'green' : 'gray'} onClick={() => onToggleHighlight(color.id)}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: color.highlighted ? '#fff' : 'currentColor' }} />
-              </ActionIcon>
-            </Tooltip>
+            {color.sample && (
+              <Tooltip label={hiddenPinIds.has(color.id) ? 'Show pin' : 'Hide pin'}>
+                <ActionIcon size="sm" variant="subtle" color="gray"
+                  onClick={(e) => { e.stopPropagation(); onTogglePinVisibility(color.id); }}>
+                  {hiddenPinIds.has(color.id) ? <EyeOff size={13} /> : <Eye size={13} />}
+                </ActionIcon>
+              </Tooltip>
+            )}
             <Tooltip label="Sample from image">
               <ActionIcon size="sm" variant="subtle" color="blue" onClick={() => onStartSampling(color.id)}><Crosshair size={13} /></ActionIcon>
             </Tooltip>

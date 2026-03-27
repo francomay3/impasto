@@ -9,6 +9,8 @@ import { rgbToHex } from '../utils/colorUtils';
 
 interface Props {
   children?: React.ReactNode;
+  /** Rendered outside the zoom/pan transform — won't scale or move with the canvas. */
+  overlayChildren?: React.ReactNode;
   variant?: 'filtered' | 'indexed';
 }
 
@@ -26,7 +28,7 @@ function getPixelHex(canvas: HTMLCanvasElement, clientX: number, clientY: number
 }
 
 export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
-  function CanvasViewport({ children, variant = 'filtered' }, ref) {
+  function CanvasViewport({ children, overlayChildren, variant = 'filtered' }, ref) {
     const { viewportTransform: t, onWheel, onMouseDown, onResetTransform, isDragging, isSampling, showLabels, onToggleLabels } = useCanvasContext();
     const { onAddColorAtPosition } = usePaletteContext();
     const { open: openMenu } = useContextMenu();
@@ -87,6 +89,7 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
               {children}
             </Box>
           </Box>
+          {overlayChildren}
         </Box>
       </Box>
     );

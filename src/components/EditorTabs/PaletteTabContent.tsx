@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo } from 'react';
-import { Box, Group, Text } from '@mantine/core';
+import { Box, Group, Loader, Text } from '@mantine/core';
 import chroma from 'chroma-js';
 import { useCanvasContext } from '../../context/CanvasContext';
 import { useFilterContext } from '../../context/FilterContext';
@@ -8,6 +8,7 @@ import { useFilteredImage } from '../../hooks/useFilteredImage';
 import { useIndexedImage } from '../../hooks/useIndexedImage';
 import { CanvasViewport } from '../CanvasViewport';
 import { SamplePinsOverlay } from '../SamplePinsOverlay';
+import { SamplerOverlay } from '../SamplerOverlay';
 
 const labelStyle: React.CSSProperties = {
   position: 'absolute',
@@ -21,7 +22,7 @@ const labelStyle: React.CSSProperties = {
 export function PaletteTabContent() {
   const { sourceImage } = useCanvasContext();
   const { filters, preIndexingBlur } = useFilterContext();
-  const { palette } = usePaletteContext();
+  const { palette, samplingColorId, isAddingColor, onSampleColor, onCancelSampleColor, onAddNewColor, onCancelAddingColor } = usePaletteContext();
   const filteredRef = useRef<HTMLCanvasElement>(null);
   const indexedRef = useRef<HTMLCanvasElement>(null);
 
@@ -35,7 +36,7 @@ export function PaletteTabContent() {
     [palette],
   );
 
-  const indexedData = useIndexedImage(filteredData, preIndexingBlur, labPalette);
+  const { data: indexedData, isLoading: isIndexedLoading } = useIndexedImage(filteredData, preIndexingBlur, labPalette);
 
   useEffect(() => {
     const canvas = filteredRef.current;
@@ -53,26 +54,32 @@ export function PaletteTabContent() {
     canvas.getContext('2d')!.putImageData(indexedData, 0, 0);
   }, [indexedData]);
 
-  if (!sourceImage) {
-    return (
-      <Box style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Text c="dimmed" size="sm">No image loaded</Text>
-      </Box>
-    );
-  }
-
   return (
     <Group gap={0} wrap="nowrap" style={{ height: '100%', overflow: 'hidden' }}>
       <Box style={{ flex: 1, minWidth: 0, position: 'relative', height: '100%', display: 'flex' }}>
-        <CanvasViewport ref={filteredRef} variant="filtered">
-          <SamplePinsOverlay />
-        </CanvasViewport>
+        <CanvasViewport
+          ref={filteredRef}
+          variant="filtered"
+          overlayChildren={
+            <>
+              {isAddingColor
+                ? <SamplerOverlay canvasRef={filteredRef} onSample={onAddNewColor} onCancel={onCancelAddingColor} />
+                : samplingColorId
+                ? <SamplerOverlay canvasRef={filteredRef} onSample={onSampleColor} onCancel={onCancelSampleColor} />
+                : null}
+              <SamplePinsOverlay canvasRef={filteredRef} />
+            </>
+          }
+        />
         <Text style={labelStyle} size="xs" c="dimmed">Filtered</Text>
       </Box>
       <Box style={{ width: 1, height: '100%', background: 'var(--mantine-color-dark-6)', flexShrink: 0 }} />
       <Box style={{ flex: 1, minWidth: 0, position: 'relative', height: '100%', display: 'flex' }}>
         <CanvasViewport ref={indexedRef} variant="indexed" />
         <Text style={labelStyle} size="xs" c="dimmed">Indexed</Text>
+        {isIndexedLoading && (
+          <Loader size="xs" style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 1 }} />
+        )}
       </Box>
     </Group>
   );

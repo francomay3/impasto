@@ -26,22 +26,22 @@ pub struct BlurParams {
     pub blur: f32,
 }
 
-pub fn brightness_contrast(pixels: &[u8], p: BrightnessContrastParams) -> Vec<u8> {
-    let mut out = pixels.to_vec();
+/// All filter functions operate in-place on RGBA pixel data using chunks_exact_mut(4).
+/// This avoids intermediate Vec<u8> allocations per filter step.
+
+pub fn brightness_contrast(pixels: &mut [u8], p: BrightnessContrastParams) {
     let cf = (259.0 * (p.contrast + 255.0)) / (255.0 * (259.0 - p.contrast));
-    for chunk in out.chunks_mut(4) {
+    for chunk in pixels.chunks_exact_mut(4) {
         for c in 0..3 {
             let v = cf * (chunk[c] as f32 + p.brightness - 128.0) + 128.0;
             chunk[c] = v.clamp(0.0, 255.0) as u8;
         }
     }
-    out
 }
 
-pub fn hue_saturation(pixels: &[u8], p: HueSaturationParams) -> Vec<u8> {
-    let mut out = pixels.to_vec();
+pub fn hue_saturation(pixels: &mut [u8], p: HueSaturationParams) {
     let sat = (p.saturation + 100.0) / 100.0;
-    for chunk in out.chunks_mut(4) {
+    for chunk in pixels.chunks_exact_mut(4) {
         let r = chunk[0] as f32 + p.temperature;
         let g = chunk[1] as f32 + p.tint;
         let b = chunk[2] as f32 - p.temperature;
@@ -50,17 +50,21 @@ pub fn hue_saturation(pixels: &[u8], p: HueSaturationParams) -> Vec<u8> {
         chunk[1] = (gray + sat * (g - gray)).clamp(0.0, 255.0) as u8;
         chunk[2] = (gray + sat * (b - gray)).clamp(0.0, 255.0) as u8;
     }
-    out
 }
 
-pub fn levels(pixels: &[u8], p: LevelsParams) -> Vec<u8> {
-    let mut out = pixels.to_vec();
+pub fn levels(pixels: &mut [u8], p: LevelsParams) {
     let range = (p.white_point - p.black_point).max(1.0);
-    for chunk in out.chunks_mut(4) {
+    for chunk in pixels.chunks_exact_mut(4) {
         for c in 0..3 {
             let v = (chunk[c] as f32 - p.black_point) / range * 255.0;
             chunk[c] = v.clamp(0.0, 255.0) as u8;
         }
     }
-    out
+}
+
+/// Blur allocates internally (fastblur constraint) but copies the result back
+/// in-place, so the caller's buffer is updated without extra JS-side copies.
+pub fn blur(pixels: &mut [u8], width: u32, height: u32, sigma: f32) {
+    let blurred = img_blur::gaussian_blur(pixels, width, height, sigma);
+    pixels.copy_from_slice(&blurred);
 }

@@ -1,6 +1,6 @@
 import { Box, Container, Loader, Center } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProjects } from '../hooks/useProjects';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { ProjectGrid } from '../components/dashboard/ProjectGrid';
@@ -14,6 +14,14 @@ export function DashboardPage() {
   const { projects, loading, create, remove, rename } = useProjects();
   const [search, setSearch] = useState('');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (!loading && projects.length === 0) {
+      setCreating(true);
+      create().then(id => navigate(`/project/${id}`, { replace: true }));
+    }
+  }, [loading, projects.length, create, navigate]);
 
   const handleCreate = async () => {
     if (projects.length >= FREE_PROJECT_LIMIT) {
@@ -33,7 +41,7 @@ export function DashboardPage() {
       <DashboardHeader search={search} onSearch={setSearch} />
 
       <Container size="xl" py="xl">
-        {loading ? (
+        {loading || creating ? (
           <Center h="50vh">
             <Loader color="primary" />
           </Center>

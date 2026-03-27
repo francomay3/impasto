@@ -10,11 +10,19 @@ export interface EditorContextValue {
   isLoading: boolean;
   selectedColorId: string | null;
   onSelectColor: (id: string | null) => void;
+  hoveredColorId: string | null;
+  onHoverColor: (id: string | null) => void;
   onExportClick: () => void;
   onReplaceImage: () => void;
+  onFileSelected: (file: File) => void;
   onRename: (name: string) => void;
   onUndo: () => void;
   onRedo: () => void;
+  activeTab: string;
+  onSetActiveTab: (tab: string) => void;
+  hiddenPinIds: Set<string>;
+  onTogglePinVisibility: (id: string) => void;
+  onSetGroupPinsVisible: (colorIds: string[], visible: boolean) => void;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);

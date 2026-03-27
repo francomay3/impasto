@@ -54,7 +54,7 @@ export function AppHeader() {
                 <Menu.Item disabled>New Project</Menu.Item>
                 <Menu.Item disabled>Open…</Menu.Item>
                 <Menu.Divider />
-                <Menu.Item disabled={!hasImage} onClick={hasImage ? onReplaceImage : undefined}>Import Image…</Menu.Item>
+                <Menu.Item onClick={onReplaceImage}>Import Image…</Menu.Item>
                 <Menu.Divider />
                 <Menu.Item disabled>Save</Menu.Item>
                 <Menu.Item disabled={!hasImage} onClick={hasImage ? onExportClick : undefined}>

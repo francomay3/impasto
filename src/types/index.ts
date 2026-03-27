@@ -17,7 +17,6 @@ export type Color = {
   ratio: number;
   mixRecipe: string;
   groupId?: string;
-  highlighted?: boolean;
   sample?: ColorSample;
 };
 

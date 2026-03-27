@@ -12,9 +12,11 @@ interface Params {
   onAddFilter: (type: FilterType) => void;
   onAddColor: () => void;
   onClearSelection: () => void;
+  onDeleteSelectedColor: () => void;
+  onPasteFile: (file: File) => void;
 }
 
-export function useEditorHotkeys({ onUndo, onRedo, onAddFilter, onAddColor, onClearSelection }: Params) {
+export function useEditorHotkeys({ onUndo, onRedo, onAddFilter, onAddColor, onClearSelection, onDeleteSelectedColor, onPasteFile }: Params) {
   const mousePos = useRef({ x: 0, y: 0 });
   const { open: openMenu } = useContextMenu();
 
@@ -24,13 +26,28 @@ export function useEditorHotkeys({ onUndo, onRedo, onAddFilter, onAddColor, onCl
     return () => window.removeEventListener('mousemove', track);
   }, []);
 
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+      const item = Array.from(e.clipboardData?.items ?? []).find(i => i.type.startsWith('image/'));
+      if (!item) return;
+      const file = item.getAsFile();
+      if (!file) return;
+      onPasteFile(file);
+    };
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [onPasteFile]);
+
   useHotkeys([
     [HOTKEYS.SAVE,       () => notifications.show({ message: 'Project saved', color: 'blue' })],
     [HOTKEYS.UNDO,       onUndo],
     [HOTKEYS.REDO,       onRedo],
     [HOTKEYS.REDO_ALT,   onRedo],
-    [HOTKEYS.CANCEL,     onClearSelection],
-    [HOTKEYS.ADD_FILTER, () => openMenu({ ...mousePos.current, items: buildFilterMenuItems(onAddFilter) })],
-    [HOTKEYS.ADD_COLOR,  onAddColor],
+    [HOTKEYS.CANCEL,        onClearSelection],
+    [HOTKEYS.ADD_FILTER,    () => openMenu({ ...mousePos.current, items: buildFilterMenuItems(onAddFilter) })],
+    [HOTKEYS.ADD_COLOR,     onAddColor],
+    [HOTKEYS.DELETE_COLOR,  onDeleteSelectedColor],
   ]);
 }

@@ -4,9 +4,10 @@ import { Upload } from 'lucide-react';
 
 interface Props {
   onFileSelected: (file: File) => void;
+  style?: React.CSSProperties;
 }
 
-export function ImageUploader({ onFileSelected }: Props) {
+export function ImageUploader({ onFileSelected, style }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
@@ -31,6 +32,7 @@ export function ImageUploader({ onFileSelected }: Props) {
         textAlign: 'center',
         cursor: 'pointer',
         background: 'var(--mantine-color-dark-7)',
+        ...style,
       }}
       onClick={() => inputRef.current?.click()}
     >

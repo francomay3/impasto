@@ -42,14 +42,6 @@ export function FiltersTabContent() {
     canvas.getContext('2d')!.putImageData(filteredData, 0, 0);
   }, [filteredData, filteredCanvasRef]);
 
-  if (!sourceImage) {
-    return (
-      <Box style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Text c="dimmed" size="sm">No image loaded</Text>
-      </Box>
-    );
-  }
-
   return (
     <Group gap={0} wrap="nowrap" style={{ height: '100%', overflow: 'hidden' }}>
       <Box style={{ flex: 1, minWidth: 0, position: 'relative', height: '100%', display: 'flex' }}>
@@ -58,11 +50,12 @@ export function FiltersTabContent() {
       </Box>
       <Box style={{ width: 1, height: '100%', background: 'var(--mantine-color-dark-6)', flexShrink: 0 }} />
       <Box style={{ flex: 1, minWidth: 0, position: 'relative', height: '100%', display: 'flex' }}>
-        <CanvasViewport ref={filteredCanvasRef}>
-          {samplingLevels && (
+        <CanvasViewport
+          ref={filteredCanvasRef}
+          overlayChildren={samplingLevels && (
             <SamplerOverlay onSample={onSampleLevels} onCancel={onCancelSamplingLevels} />
           )}
-        </CanvasViewport>
+        />
         <Text style={labelStyle} size="xs" c="dimmed">Filtered</Text>
       </Box>
     </Group>

@@ -88,10 +88,10 @@ export function useImageHandlers({
     const rawImage = pipeline.loadBitmap(bitmap);
     justLoadedImageRef.current = rawImage;
     setImage(rawImage);
-    const imageData = pipeline.applyFilterPipeline([]);
+    const imageData = pipeline.applyFilterPipeline(state.filters as FilterInstance[]);
     if (imageData) deriveAndRender(imageData);
     bitmap.close();
-  }, [pipeline, setImage, deriveAndRender, resetTransform]);
+  }, [pipeline, setImage, deriveAndRender, resetTransform, state.filters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAddColor = useCallback(() => {
     const id = crypto.randomUUID();
@@ -102,10 +102,11 @@ export function useImageHandlers({
     setSamplingColorId(id);
   }, [setPalette, renderPalette, state.palette, setSamplingColorId]);
 
-  const handleAddColorAtPosition = useCallback((sample: ColorSample, hex: string) => {
+  const handleAddColorAtPosition = useCallback((sample: ColorSample, hex: string): string => {
     const id = crypto.randomUUID();
     addSampledColor(id, sample, hex);
     renderPalette(undefined, [...state.palette, { id, hex, sample, locked: false, ratio: 0, mixRecipe: '' }]);
+    return id;
   }, [addSampledColor, renderPalette, state.palette]);
 
   const handleDeleteColor = useCallback((id: string) => {
@@ -113,12 +114,6 @@ export function useImageHandlers({
     renderPalette(undefined, state.palette.filter(c => c.id !== id));
     if (samplingColorId === id) setSamplingColorId(null);
   }, [removeColor, renderPalette, state.palette, samplingColorId, setSamplingColorId]);
-
-  const handleToggleHighlight = useCallback((id: string) => {
-    const highlighted = !state.palette.find(c => c.id === id)?.highlighted;
-    updateColor(id, { highlighted });
-    renderPalette(undefined, state.palette.map(c => c.id === id ? { ...c, highlighted } : c));
-  }, [updateColor, renderPalette, state.palette]);
 
   const handleCancelSample = useCallback(() => {
     if (samplingColorId && samplingColorId === pendingNewColorId.current) {
@@ -137,6 +132,20 @@ export function useImageHandlers({
     renderPalette(undefined, state.palette.map(c => c.id === samplingColorId ? { ...c, hex, sample } : c));
     notifications.show({ message: `Color sampled: ${hex}`, color: 'primary' });
   }, [samplingColorId, updateColor, renderPalette, state.palette, setSamplingColorId]);
+
+  const handlePinMoveEnd = useCallback((colorId: string, sample: ColorSample) => {
+    const imageData = lastImageDataRef.current;
+    if (!imageData) return;
+    updateColor(colorId, { sample });
+    const newPalette = state.palette.map(c => {
+      const s = c.id === colorId ? sample : c.sample;
+      if (!s) return c;
+      const [r, g, b] = sampleCircleAverage(imageData, s.x, s.y, s.radius);
+      return { ...c, hex: rgbToHex(r, g, b), ...(c.id === colorId ? { sample } : {}) };
+    });
+    setPalette(newPalette);
+    renderPalette(imageData, newPalette);
+  }, [updateColor, setPalette, renderPalette, state.palette]);
 
   const handleSampleLevels = useCallback((_sample: ColorSample, hex: string) => {
     if (!samplingLevels) return;
@@ -160,5 +169,5 @@ export function useImageHandlers({
     setSamplingLevels(null);
   }, [samplingLevels, state.filters, updateFilter, setSamplingLevels]);
 
-  return { handleImageLoadBitmap, handleAddColor, handleAddColorAtPosition, handleDeleteColor, handleToggleHighlight, handleSample, handleCancelSample, handleSampleLevels };
+  return { handleImageLoadBitmap, handleAddColor, handleAddColorAtPosition, handleDeleteColor, handleSample, handleCancelSample, handleSampleLevels, handlePinMoveEnd };
 }

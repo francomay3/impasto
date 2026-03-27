@@ -14,12 +14,7 @@ self.onmessage = (e: MessageEvent<{ data: Uint8ClampedArray; width: number; heig
       const d = Math.hypot(r - pr, g - pg, b - pb);
       if (d < bestDist) { bestDist = d; best = j; }
     }
-    const color = palette[best];
-    if (color.highlighted) {
-      out[i] = 0; out[i + 1] = 255; out[i + 2] = 0;
-    } else {
-      out[i] = rgbs[best][0]; out[i + 1] = rgbs[best][1]; out[i + 2] = rgbs[best][2];
-    }
+    out[i] = rgbs[best][0]; out[i + 1] = rgbs[best][1]; out[i + 2] = rgbs[best][2];
     out[i + 3] = data[i + 3];
   }
 

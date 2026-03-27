@@ -12,5 +12,6 @@ export const HOTKEYS = {
   CANCEL:     'Escape',
   ADD_FILTER:      'mod+F',
   ADD_COLOR:       'C',
+  DELETE_COLOR:    'X',
   SHOW_SHORTCUTS:  '?',
 } as const;

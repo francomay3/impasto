@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, type RefObject } from 'react';
 import { Box, Slider, Text, Stack, Button } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 import { sampleCircleAverage } from '../utils/imageProcessing';
@@ -10,10 +10,13 @@ import type { ColorSample } from '../types';
 interface Props {
   onSample: (sample: ColorSample, hex: string) => void;
   onCancel: () => void;
+  /** Canvas to read pixels from. Defaults to filteredCanvasRef from CanvasContext. */
+  canvasRef?: RefObject<HTMLCanvasElement | null>;
 }
 
-export function SamplerOverlay({ onSample, onCancel }: Props) {
+export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
   const { filteredCanvasRef, viewportTransform } = useCanvasContext();
+  const sourceCanvasRef = canvasRef ?? filteredCanvasRef;
   const viewportScale = viewportTransform.scale;
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const [radius, setRadius] = useState(30);
@@ -61,7 +64,7 @@ export function SamplerOverlay({ onSample, onCancel }: Props) {
   }, []);
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = filteredCanvasRef.current;
+    const canvas = sourceCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
     // Use the image canvas rect (not the overlay) so coordinates are relative to the actual image,
@@ -76,7 +79,7 @@ export function SamplerOverlay({ onSample, onCancel }: Props) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const [r, g, b] = sampleCircleAverage(imageData, cx, cy, radiusInImagePixels);
     onSample({ x: cx, y: cy, radius: radiusInImagePixels }, rgbToHex(r, g, b));
-  }, [filteredCanvasRef, radius, onSample]);
+  }, [sourceCanvasRef, radius, onSample]);
 
   return (
     <Box style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>

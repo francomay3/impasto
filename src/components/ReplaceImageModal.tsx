@@ -9,6 +9,7 @@ interface Props {
 
 export interface ReplaceImageModalRef {
   open: () => void;
+  openWithFile: (file: File) => void;
 }
 
 export const ReplaceImageModal = forwardRef<ReplaceImageModalRef, Props>(
@@ -16,18 +17,35 @@ export const ReplaceImageModal = forwardRef<ReplaceImageModalRef, Props>(
     const navigate = useNavigate();
     const [opened, setOpened] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const pendingFileRef = useRef<File | null>(null);
 
     useImperativeHandle(ref, () => ({
       open() {
+        pendingFileRef.current = null;
         if (hasSamples) setOpened(true);
         else inputRef.current?.click();
       },
-    }), [hasSamples]);
+      openWithFile(file: File) {
+        pendingFileRef.current = file;
+        if (hasSamples) setOpened(true);
+        else confirm(file);
+      },
+    }), [hasSamples]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const confirm = (file?: File) => {
+      setOpened(false);
+      const f = file ?? pendingFileRef.current;
+      if (f) {
+        onFileSelected(f);
+      } else {
+        inputRef.current?.click();
+      }
+      pendingFileRef.current = null;
+    };
 
     const handleFile = (file: File) => {
       if (!file.type.startsWith('image/')) return;
-      setOpened(false);
-      onFileSelected(file);
+      confirm(file);
     };
 
     return (
@@ -48,7 +66,7 @@ export const ReplaceImageModal = forwardRef<ReplaceImageModalRef, Props>(
             <Group justify="flex-end" gap="sm">
               <Button variant="subtle" onClick={() => setOpened(false)}>Cancel</Button>
               <Button variant="light" onClick={() => navigate('/')}>New Project</Button>
-              <Button color="red" variant="light" onClick={() => { setOpened(false); inputRef.current?.click(); }}>
+              <Button color="red" variant="light" onClick={() => confirm()}>
                 Replace Anyway
               </Button>
             </Group>

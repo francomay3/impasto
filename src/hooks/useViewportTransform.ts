@@ -31,6 +31,7 @@ export function useViewportTransform() {
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0 && e.button !== 1) return;
+    if ((e.target as HTMLElement).closest('[data-no-pan]')) return;
     (document.activeElement as HTMLElement)?.blur();
     e.preventDefault();
     const prev = transformRef.current;
