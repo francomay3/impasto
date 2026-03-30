@@ -23,6 +23,7 @@ export function ImageUploader({ onFileSelected, style }: Props) {
 
   return (
     <Box
+      data-testid="image-uploader"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
       style={{

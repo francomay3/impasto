@@ -9,6 +9,7 @@ export interface SamplingLevels {
 interface FilterContextValue {
   filters: FilterInstance[];
   preIndexingBlur: number;
+  setPreIndexingBlur: (value: number) => void;
   samplingLevels: SamplingLevels | null;
   onAddFilter: (type: FilterType) => void;
   onDuplicateFilter: (id: string) => void;

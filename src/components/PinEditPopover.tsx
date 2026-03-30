@@ -84,6 +84,7 @@ export function PinEditPopover({ colorId, position, onClose }: Props) {
         p="sm"
         withBorder
         data-no-pan
+        data-testid="pin-edit-popover"
         style={{ position: 'fixed', left, top, zIndex: 400, width: POPOVER_W }}
       >
         <Stack gap="xs">
@@ -118,7 +119,7 @@ export function PinEditPopover({ colorId, position, onClose }: Props) {
               value={newGroupName}
               onChange={e => setNewGroupName(e.currentTarget.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSave(); }}
-              leftSection={<ArrowLeft size={12} style={{ cursor: 'pointer' }} onClick={handleBackToSelect} />}
+              leftSection={<ArrowLeft size={12} data-testid="new-group-back" style={{ cursor: 'pointer' }} onClick={handleBackToSelect} />}
               autoFocus
             />
           )}

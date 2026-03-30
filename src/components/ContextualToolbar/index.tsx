@@ -1,6 +1,7 @@
 import { Group, Text } from '@mantine/core';
 import { ArrowUpDown, Download, RotateCcw, SplitSquareHorizontal } from 'lucide-react';
 import { useToolContext } from '../../context/ToolContext';
+import { useFilterContext } from '../../context/FilterContext';
 import { SlimNumberInput } from '../SlimNumberInput';
 import { SlimButton } from '../SlimButton';
 
@@ -40,6 +41,7 @@ function PaletteToolOptions() {
       <Group gap={6} align="center">
         <Text size="xs" c="dimmed">Sampling radius</Text>
         <SlimNumberInput
+          data-testid="sampling-radius-input"
           value={samplingRadius}
           onChange={(v) => typeof v === 'number' && setSamplingRadius(v)}
           min={1}
@@ -54,13 +56,31 @@ function PaletteToolOptions() {
   return null;
 }
 
+function PaletteBlurInput() {
+  const { preIndexingBlur, setPreIndexingBlur } = useFilterContext();
+  return (
+    <Group gap={6} align="center">
+      <Text size="xs" c="dimmed">Pre-index blur</Text>
+      <SlimNumberInput
+        data-testid="pre-index-blur-input"
+        value={preIndexingBlur}
+        onChange={(v) => typeof v === 'number' && setPreIndexingBlur(v)}
+        min={0}
+        max={50}
+        suffix="px"
+        w={72}
+      />
+    </Group>
+  );
+}
+
 interface Props {
   tab: 'filters' | 'palette';
 }
 
 export function ContextualToolbar({ tab }: Props) {
   return (
-    <div style={barStyle}>
+    <div style={barStyle} data-testid="contextual-toolbar">
       <Group gap={4}>
         {tab === 'palette' && <PaletteToolOptions />}
       </Group>
@@ -74,6 +94,7 @@ export function ContextualToolbar({ tab }: Props) {
         )}
         {tab === 'palette' && (
           <>
+            <PaletteBlurInput />
             <SlimButton leftSection={<ArrowUpDown size={12} />}>Sort</SlimButton>
             <SlimButton leftSection={<Download size={12} />}>Export</SlimButton>
           </>

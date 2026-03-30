@@ -59,13 +59,14 @@ function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: () => vo
     <Paper
       p="sm"
       shadow="md"
+      data-testid="selection-popover"
       style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 300, minWidth: 220 }}
       styles={{ root: { background: 'var(--mantine-color-dark-7)', border: '1px solid var(--mantine-color-dark-4)' } }}
     >
       <Stack gap="xs">
         <Group justify="space-between" align="center">
           <Text size="xs" fw={500} c="dimmed">{ids.length} colors selected</Text>
-          <ActionIcon variant="subtle" size="xs" onClick={close}><X size={12} /></ActionIcon>
+          <ActionIcon variant="subtle" size="xs" data-testid="selection-popover-close" onClick={close}><X size={12} /></ActionIcon>
         </Group>
         <Divider />
         <Select
@@ -100,7 +101,7 @@ function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: () => vo
           >
             {allHidden ? <Eye size={14} /> : <EyeOff size={14} />}
           </ActionIcon>
-          <ActionIcon variant="subtle" color="red" size="sm" onClick={handleDelete} title={`Delete ${ids.length} colors`}>
+          <ActionIcon variant="subtle" color="red" size="sm" data-testid="selection-popover-delete" onClick={handleDelete} title={`Delete ${ids.length} colors`}>
             <Trash2 size={14} />
           </ActionIcon>
         </Group>

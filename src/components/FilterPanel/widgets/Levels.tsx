@@ -22,13 +22,13 @@ function LevelPoint({ label, value, isDefault, isSampling, min, max, onUpdate, o
         <Box style={{ width: 16, height: 16, borderRadius: 3, background: `rgb(${shade},${shade},${shade})`, border: '1px solid var(--mantine-color-dark-3)', flexShrink: 0 }} />
         <Text size="xs" c="dimmed" style={{ flex: 1 }}>{label}: {value}</Text>
         <Tooltip label={`Sample ${label} from image`} transitionProps={{ duration: 0 }}>
-          <ActionIcon size="xs" variant={isSampling ? 'filled' : 'subtle'} color={isSampling ? 'cyan' : 'gray'} onClick={onSample}>
+          <ActionIcon size="xs" variant={isSampling ? 'filled' : 'subtle'} color={isSampling ? 'cyan' : 'gray'} aria-label={`Sample ${label} from image`} onClick={onSample}>
             <Pipette size={10} />
           </ActionIcon>
         </Tooltip>
         {!isDefault && (
           <Tooltip label={`Reset ${label}`} transitionProps={{ duration: 0 }}>
-            <ActionIcon size="xs" variant="subtle" color="gray" onClick={onReset}>
+            <ActionIcon size="xs" variant="subtle" color="gray" aria-label={`Reset ${label}`} onClick={onReset}>
               <RotateCcw size={10} />
             </ActionIcon>
           </Tooltip>

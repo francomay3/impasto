@@ -72,7 +72,7 @@ export function FilterItem({ filter }: { filter: FilterInstance }) {
           <GripVertical size={14} />
         </Box>
         <Text size="xs" fw={500} style={{ flex: 1 }}>{FILTER_LABELS[filter.type]}</Text>
-        <ActionIcon size="xs" variant="subtle" color="gray" onClick={() => setExpanded(v => !v)}>
+        <ActionIcon size="xs" variant="subtle" color="gray" data-testid="filter-toggle" onClick={() => setExpanded(v => !v)}>
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </ActionIcon>
         <Tooltip label="Remove filter" transitionProps={{ duration: 0 }}>

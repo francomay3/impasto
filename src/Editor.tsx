@@ -38,7 +38,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   const { status: saveStatus, save } = useSaveStatus(onSave);
   const handleStateChange = useCallback((s: ProjectState) => { historyPush(s); save(s); }, [historyPush, save]);
   const project = useProjectState({ initialState, onSave: handleStateChange });
-  const { state, restoreState, addFilter, duplicateFilter, removeFilter, updateFilter, updateFilterPreview, reorderFilters,
+  const { state, restoreState, addFilter, duplicateFilter, removeFilter, updateFilter, updateFilterPreview, reorderFilters, setPreIndexingBlur,
     addSampledColor, removeColor, addGroup, removeGroup, renameGroup, setColorGroup, reorderGroups,
     setPalette, updateDerivedPalette, setImage, updateColor, renameName } = project;
   const filteredCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -99,7 +99,7 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   };
 
   const filterValue = {
-    filters: state.filters, preIndexingBlur: state.preIndexingBlur, samplingLevels,
+    filters: state.filters, preIndexingBlur: state.preIndexingBlur, setPreIndexingBlur, samplingLevels,
     onAddFilter: addFilter, onDuplicateFilter: duplicateFilter, onRemoveFilter: removeFilter,
     onUpdateFilter: updateFilter, onPreviewFilter: updateFilterPreview, onReorderFilters: reorderFilters,
     onStartSamplingLevels: (filterId: string, point: 'black' | 'white') => { setSamplingColorId(null); setSamplingLevels({ filterId, point }); },

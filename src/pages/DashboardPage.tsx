@@ -7,7 +7,7 @@ import { ProjectGrid } from '../components/dashboard/ProjectGrid';
 import { UpgradeModal } from '../components/dashboard/UpgradeModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
-const FREE_PROJECT_LIMIT = 1;
+const FREE_PROJECT_LIMIT = 10;
 
 export function DashboardPage() {
   const navigate = useNavigate();

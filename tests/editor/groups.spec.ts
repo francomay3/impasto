@@ -60,4 +60,21 @@ test.describe('Color groups', () => {
     await page.keyboard.press('Escape')
     await expect(page.getByTestId('group-item')).toHaveCount(2)
   })
+
+  test('"Ungrouped" label is not shown when no groups exist', async ({ page }) => {
+    await expect(page.getByText('Ungrouped')).not.toBeAttached()
+  })
+
+  test('"Ungrouped" label appears once a group is added', async ({ page }) => {
+    await page.getByTestId('add-group').click()
+    await page.keyboard.press('Escape')
+    await expect(page.getByText('Ungrouped')).toBeVisible()
+  })
+
+  test('"Ungrouped" label disappears after the last group is deleted', async ({ page }) => {
+    await page.getByTestId('add-group').click()
+    await page.keyboard.press('Escape')
+    await page.getByTestId('group-delete').click()
+    await expect(page.getByText('Ungrouped')).not.toBeAttached()
+  })
 })

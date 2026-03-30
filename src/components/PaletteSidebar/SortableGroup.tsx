@@ -71,6 +71,7 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
             {colorCount > 0 && (
               <Box
                 onClick={onToggleCollapse}
+                data-testid="group-toggle"
                 style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'var(--mantine-color-dark-1)', flexShrink: 0 }}
               >
                 {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
@@ -90,6 +91,8 @@ export function SortableGroup({ group, children, collapsed, isDraggingColor, aut
           {!editing && sampleColorIds.length > 0 && (
             <Tooltip label={allPinsHidden ? 'Show group pins' : 'Hide group pins'}>
               <ActionIcon size="xs" variant="subtle" color="gray"
+                data-testid="group-pin-visibility-toggle"
+                data-hidden={allPinsHidden ? 'true' : undefined}
                 onClick={(e) => { e.stopPropagation(); onSetGroupPinsVisible(sampleColorIds, allPinsHidden); }}>
                 {allPinsHidden ? <EyeOff size={11} /> : <Eye size={11} />}
               </ActionIcon>

@@ -47,4 +47,12 @@ test.describe('Color selection', () => {
     await expect(page.getByTestId('color-item-0')).not.toHaveAttribute('data-selected', 'true')
     await expect(page.getByTestId('color-item-1')).toHaveAttribute('data-selected', 'true')
   })
+
+  test('clicking an already-selected sole color deselects it', async ({ page }) => {
+    await page.getByTestId('color-item-0').click()
+    await expect(page.getByTestId('color-item-0')).toHaveAttribute('data-selected', 'true')
+    // Clicking the same color when it is the only selected item should deselect
+    await page.getByTestId('color-item-0').click()
+    await expect(page.getByTestId('color-item-0')).not.toHaveAttribute('data-selected', 'true')
+  })
 })

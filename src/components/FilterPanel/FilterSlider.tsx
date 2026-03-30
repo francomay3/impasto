@@ -18,7 +18,7 @@ export function FilterSlider({ label, value, min, max, defaultValue, onChange, o
         <Text size="xs" c="dimmed">{label}: {value}</Text>
         {value !== defaultValue && (
           <Tooltip label={`Reset ${label}`} transitionProps={{ duration: 0 }}>
-            <ActionIcon size="xs" variant="subtle" color="gray" onClick={() => (onChangeEnd ?? onChange)(defaultValue)}>
+            <ActionIcon size="xs" variant="subtle" color="gray" aria-label={`Reset ${label}`} onClick={() => (onChangeEnd ?? onChange)(defaultValue)}>
               <RotateCcw size={10} />
             </ActionIcon>
           </Tooltip>

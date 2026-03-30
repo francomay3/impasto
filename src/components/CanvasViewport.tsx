@@ -78,6 +78,7 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(
         <Box
           ref={containerRef}
           data-canvas-viewport=""
+          data-testid={`canvas-viewport-${variant}`}
           style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', cursor }}
           onMouseDown={isSampling ? (e) => { if (e.button === 1) onMouseDown(e); } : onMouseDown}
           onDoubleClick={isSampling ? undefined : onResetTransform}

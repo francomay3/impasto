@@ -57,4 +57,13 @@ test.describe('Tool rail', () => {
     // Scope to tool buttons only — Mantine Tabs also uses data-active on the active tab
     await expect(page.locator('[data-testid^="tool-"][data-active="true"]')).toHaveCount(1)
   })
+
+  test('pressing s when marquee is already active returns to select tool', async ({ page }) => {
+    await page.keyboard.press('s')
+    await expect(page.getByTestId('tool-marquee')).toHaveAttribute('data-active', 'true')
+    // Press s again — should toggle back to select
+    await page.keyboard.press('s')
+    await expect(page.getByTestId('tool-select')).toHaveAttribute('data-active', 'true')
+    await expect(page.getByTestId('tool-marquee')).not.toHaveAttribute('data-active', 'true')
+  })
 })
