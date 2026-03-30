@@ -1,7 +1,7 @@
 import { Group, Text } from '@mantine/core';
 import { ArrowUpDown, Download, RotateCcw, SplitSquareHorizontal } from 'lucide-react';
 import { useToolContext } from '../../context/ToolContext';
-import { useFilterContext } from '../../context/FilterContext';
+import { useFilterContext } from '../../features/filters/FilterContext';
 import { SlimNumberInput } from '../SlimNumberInput';
 import { SlimButton } from '../SlimButton';
 

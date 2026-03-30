@@ -17,13 +17,13 @@ import { ExportModal } from './components/ExportModal';
 import { EditorTabs } from './components/EditorTabs';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PaletteContext } from './context/PaletteContext';
-import { FilterContext } from './context/FilterContext';
+import { FilterContext } from './features/filters/FilterContext';
 import { EditorContext } from './context/EditorContext';
 import { CanvasContext } from './context/CanvasContext';
 import { ToolContext } from './context/ToolContext';
 import { SelectionPopoverProvider } from './context/SelectionPopoverContext';
 import type { ToolId } from './tools';
-import type { SamplingLevels } from './context/FilterContext';
+import type { SamplingLevels } from './features/filters/FilterContext';
 import type { ProjectState } from './types';
 
 interface AppProps {

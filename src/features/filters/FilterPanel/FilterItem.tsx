@@ -3,15 +3,15 @@ import { Box, Group, ActionIcon, Text, Tooltip, Collapse } from '@mantine/core';
 import { GripVertical, ChevronDown, ChevronUp, Trash2, CopyPlus, ArrowUp, ArrowDown } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { FilterInstance, BrightnessContrastParams, HueSaturationParams, LevelsParams, BlurParams } from '../../types';
-import { FILTER_LABELS } from '../../types';
+import type { FilterInstance, BrightnessContrastParams, HueSaturationParams, LevelsParams, BlurParams } from '../../../types';
+import { FILTER_LABELS } from '../../../types';
 import { BrightnessContrast } from './widgets/BrightnessContrast';
 import { HueSaturation } from './widgets/HueSaturation';
 import { Levels } from './widgets/Levels';
 import { Blur } from './widgets/Blur';
-import { useFilterContext } from '../../context/FilterContext';
-import { useContextMenu } from '../../context/ContextMenuContext';
-import { useContextTrigger } from '../../hooks/useContextTrigger';
+import { useFilterContext } from '../FilterContext';
+import { useContextMenu } from '../../../context/ContextMenuContext';
+import { useContextTrigger } from '../../../hooks/useContextTrigger';
 
 interface FilterWidgetProps {
   filter: FilterInstance;

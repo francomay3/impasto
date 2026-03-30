@@ -5,10 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { EditableTitle } from './EditableTitle';
 import { UserMenu } from './UserMenu';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
-import { FilterMenuItems } from './FilterPanel/AddFilterMenu';
+import { FilterMenuItems } from '../features/filters/FilterPanel/AddFilterMenu';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 import { useEditorContext } from '../context/EditorContext';
-import { useFilterContext } from '../context/FilterContext';
+import { useFilterContext } from '../features/filters/FilterContext';
 import { usePaletteContext } from '../context/PaletteContext';
 import { HOTKEYS } from '../hotkeys';
 

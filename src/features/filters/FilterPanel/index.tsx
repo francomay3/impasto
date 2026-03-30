@@ -3,12 +3,12 @@ import { Stack, Box, Text } from '@mantine/core';
 import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import type { DragEndEvent } from '@dnd-kit/core';
-import { SmartMouseSensor } from '../../utils/dndSensor';
+import { SmartMouseSensor } from '../../../utils/dndSensor';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { FilterItem } from './FilterItem';
-import { AddItemButton } from '../AddItemButton';
-import { useFilterContext } from '../../context/FilterContext';
-import { useContextMenu } from '../../context/ContextMenuContext';
+import { AddItemButton } from '../../../components/AddItemButton';
+import { useFilterContext } from '../FilterContext';
+import { useContextMenu } from '../../../context/ContextMenuContext';
 import { buildFilterMenuItems } from './filterMenuData';
 
 export function FilterPanel() {

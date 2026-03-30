@@ -1,8 +1,8 @@
 import { useRef, useEffect } from 'react';
 import { Box, Group, Text } from '@mantine/core';
 import { useCanvasContext } from '../../context/CanvasContext';
-import { useFilterContext } from '../../context/FilterContext';
-import { useFilteredImage } from '../../hooks/useFilteredImage';
+import { useFilterContext } from '../../features/filters/FilterContext';
+import { useFilteredImage } from '../../features/filters/useFilteredImage';
 import { CanvasViewport } from '../CanvasViewport';
 import { SamplerOverlay } from '../SamplerOverlay';
 import type { RawImage } from '../../types';

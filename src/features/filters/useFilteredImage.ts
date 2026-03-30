@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FilterInstance, RawImage } from '../types';
-import { useWorkerBackpressure } from './useWorkerBackpressure';
-import ImgPipelineWorker from '../workers/img-pipeline.worker?worker';
+import type { FilterInstance, RawImage } from '../../types';
+import { useWorkerBackpressure } from '../../hooks/useWorkerBackpressure';
+import ImgPipelineWorker from '../../workers/img-pipeline.worker?worker';
 
 const WARN_PIXELS = 1920 * 1080;
 

@@ -4,7 +4,7 @@ import { ToolRail } from '../ToolRail';
 import type { ToolRailItem } from '../ToolRail';
 import { TOOLS } from '../../tools';
 import { useToolContext } from '../../context/ToolContext';
-import { FilterPanel } from '../FilterPanel';
+import { FilterPanel } from '../../features/filters/FilterPanel';
 import { PaletteSidebar } from '../PaletteSidebar';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { FiltersTabContent } from './FiltersTabContent';

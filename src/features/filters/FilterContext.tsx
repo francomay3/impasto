@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { FilterInstance, FilterType, ColorSample } from '../types';
+import type { FilterInstance, FilterType, ColorSample } from '../../types';
 
 export interface SamplingLevels {
   filterId: string;

@@ -5,7 +5,7 @@ import { HOTKEYS } from '../hotkeys';
 import type { FilterType } from '../types';
 import type { ToolId } from '../tools';
 import { useContextMenu } from '../context/ContextMenuContext';
-import { buildFilterMenuItems } from '../components/FilterPanel/filterMenuData';
+import { buildFilterMenuItems } from '../features/filters/FilterPanel/filterMenuData';
 
 interface Params {
   onUndo: () => void;
