@@ -3,7 +3,7 @@ import { Box, Group, Loader, Text } from '@mantine/core';
 import chroma from 'chroma-js';
 import { useCanvasContext } from '../../context/CanvasContext';
 import { useFilterContext } from '../../features/filters/FilterContext';
-import { usePaletteContext } from '../../context/PaletteContext';
+import { usePaletteContext } from '../../features/palette/PaletteContext';
 import { useFilteredImage } from '../../features/filters/useFilteredImage';
 import { useIndexedImage } from '../../hooks/useIndexedImage';
 import { CanvasViewport } from '../CanvasViewport';

@@ -3,12 +3,12 @@ import { Stack, Box, Text, Badge, ActionIcon, Tooltip, TextInput, Menu } from '@
 import { Crosshair, X, GripVertical, Folder, Plus, Eye, EyeOff } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { Color } from '../../types';
-import { usePaletteContext } from '../../context/PaletteContext';
-import { useEditorContext } from '../../context/EditorContext';
-import { useContextTrigger } from '../../hooks/useContextTrigger';
-import { useColorContextMenu } from '../../hooks/useColorContextMenu';
-import { useSelectionContextMenu } from '../../hooks/useSelectionContextMenu';
+import type { Color } from '../../../types';
+import { usePaletteContext } from '../PaletteContext';
+import { useEditorContext } from '../../../context/EditorContext';
+import { useContextTrigger } from '../../../hooks/useContextTrigger';
+import { useColorContextMenu } from '../useColorContextMenu';
+import { useSelectionContextMenu } from '../useSelectionContextMenu';
 import { PinEditPopover } from '../PinEditPopover';
 
 interface ColorItemProps {

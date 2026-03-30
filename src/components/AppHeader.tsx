@@ -9,7 +9,7 @@ import { FilterMenuItems } from '../features/filters/FilterPanel/AddFilterMenu';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 import { useEditorContext } from '../context/EditorContext';
 import { useFilterContext } from '../features/filters/FilterContext';
-import { usePaletteContext } from '../context/PaletteContext';
+import { usePaletteContext } from '../features/palette/PaletteContext';
 import { HOTKEYS } from '../hotkeys';
 
 function MenuButton({ label, children }: { label: string; children: React.ReactNode }) {

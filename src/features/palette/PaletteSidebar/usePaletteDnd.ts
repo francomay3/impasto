@@ -8,9 +8,9 @@ import {
   type DragStartEvent,
   type CollisionDetection,
 } from '@dnd-kit/core';
-import { SmartMouseSensor } from '../../utils/dndSensor';
+import { SmartMouseSensor } from '../../../utils/dndSensor';
 import { arrayMove } from '@dnd-kit/sortable';
-import type { Color, ColorGroup } from '../../types';
+import type { Color, ColorGroup } from '../../../types';
 import { movePaletteItemBefore, appendPaletteItemToGroup, reorderWithinGroup } from './paletteDndTransforms';
 
 interface Options {

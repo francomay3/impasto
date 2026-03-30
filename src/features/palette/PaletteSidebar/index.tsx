@@ -3,13 +3,13 @@ import { Stack, Text, Group, ActionIcon, Tooltip } from '@mantine/core';
 import { DndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { FolderPlus } from 'lucide-react';
-import { AddItemButton } from '../AddItemButton';
+import { AddItemButton } from '../../../components/AddItemButton';
 import { SortableColorItem } from './ColorItem';
 import { GroupDropZone } from './GroupDropZone';
 import { SortableGroup } from './SortableGroup';
 import { usePaletteDnd } from './usePaletteDnd';
-import { usePaletteContext } from '../../context/PaletteContext';
-import { useEditorContext } from '../../context/EditorContext';
+import { usePaletteContext } from '../PaletteContext';
+import { useEditorContext } from '../../../context/EditorContext';
 
 export function PaletteSidebar() {
   const {

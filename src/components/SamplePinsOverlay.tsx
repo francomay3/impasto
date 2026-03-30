@@ -1,13 +1,13 @@
 import { useRef, useState, useCallback, useEffect, type RefObject } from 'react';
 import { Tooltip } from '@mantine/core';
 import { useCanvasContext } from '../context/CanvasContext';
-import { usePaletteContext } from '../context/PaletteContext';
+import { usePaletteContext } from '../features/palette/PaletteContext';
 import { useEditorContext } from '../context/EditorContext';
 import { useToolContext } from '../context/ToolContext';
-import { useColorContextMenu } from '../hooks/useColorContextMenu';
-import { useSelectionContextMenu } from '../hooks/useSelectionContextMenu';
+import { useColorContextMenu } from '../features/palette/useColorContextMenu';
+import { useSelectionContextMenu } from '../features/palette/useSelectionContextMenu';
 import { useCanvasMeasure } from '../hooks/useCanvasMeasure';
-import { PinEditPopover } from './PinEditPopover';
+import { PinEditPopover } from '../features/palette/PinEditPopover';
 import type { ColorSample } from '../types';
 
 const DOT_R = 6;

@@ -5,7 +5,7 @@ import type { ToolRailItem } from '../ToolRail';
 import { TOOLS } from '../../tools';
 import { useToolContext } from '../../context/ToolContext';
 import { FilterPanel } from '../../features/filters/FilterPanel';
-import { PaletteSidebar } from '../PaletteSidebar';
+import { PaletteSidebar } from '../../features/palette/PaletteSidebar';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { FiltersTabContent } from './FiltersTabContent';
 import { PaletteTabContent } from './PaletteTabContent';

@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { Crosshair, Copy, PinOff, Trash2, Settings2 } from 'lucide-react';
-import { usePaletteContext } from '../context/PaletteContext';
-import { useContextMenu } from '../context/ContextMenuContext';
+import { usePaletteContext } from './PaletteContext';
+import { useContextMenu } from '../../context/ContextMenuContext';
 
 interface OpenOptions {
   onEditStart?: () => void;

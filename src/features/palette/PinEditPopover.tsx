@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Portal, Paper, TextInput, Select, Button, Group, Stack, Text } from '@mantine/core';
 import type { ComboboxItem } from '@mantine/core';
 import { ArrowLeft } from 'lucide-react';
-import { usePaletteContext } from '../context/PaletteContext';
+import { usePaletteContext } from './PaletteContext';
 
 const NEW_GROUP = '__new__';
 const POPOVER_W = 220;

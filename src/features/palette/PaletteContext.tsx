@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { Color, ColorGroup, ColorSample } from '../types';
+import type { Color, ColorGroup, ColorSample } from '../../types';
 
 interface PaletteContextValue {
   palette: Color[];

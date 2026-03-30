@@ -3,12 +3,12 @@ import { Box, Text, ActionIcon, Tooltip, TextInput } from '@mantine/core';
 import { X, GripVertical, ChevronDown, ChevronRight, Pencil, Eye, EyeOff } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import useConfirmDialog from '../useConfirmDialog';
-import type { ColorGroup } from '../../types';
+import useConfirmDialog from '../../../components/useConfirmDialog';
+import type { ColorGroup } from '../../../types';
 import { GroupDropZone } from './GroupDropZone';
-import { useContextMenu } from '../../context/ContextMenuContext';
-import { useContextTrigger } from '../../hooks/useContextTrigger';
-import { useEditorContext } from '../../context/EditorContext';
+import { useContextMenu } from '../../../context/ContextMenuContext';
+import { useContextTrigger } from '../../../hooks/useContextTrigger';
+import { useEditorContext } from '../../../context/EditorContext';
 
 interface Props {
   group: ColorGroup;

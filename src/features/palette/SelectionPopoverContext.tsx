@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Portal, Paper, Text, Select, TextInput, Button, Stack, Group, ActionIcon, Divider } from '@mantine/core';
 import { Eye, EyeOff, Trash2, X } from 'lucide-react';
-import { useEditorContext } from './EditorContext';
+import { useEditorContext } from '../../context/EditorContext';
 import { usePaletteContext } from './PaletteContext';
 
 interface PopoverPos { x: number; y: number; }

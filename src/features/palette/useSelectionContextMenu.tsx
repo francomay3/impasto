@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { useEditorContext } from '../context/EditorContext';
-import { useSelectionPopover } from '../context/SelectionPopoverContext';
+import { useEditorContext } from '../../context/EditorContext';
+import { useSelectionPopover } from './SelectionPopoverContext';
 
 export function useSelectionContextMenu() {
   const { selectedColorIds } = useEditorContext();
