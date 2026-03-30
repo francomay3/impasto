@@ -1,12 +1,12 @@
 import { useRef, useEffect, useState, useCallback, type RefObject } from 'react';
 import { Box } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
-import { sampleCircleAverage } from '../utils/imageProcessing';
-import { rgbToHex } from '../utils/colorUtils';
-import { useCanvasContext } from '../context/CanvasContext';
-import { useToolContext } from '../context/ToolContext';
-import { HOTKEYS } from '../hotkeys';
-import type { ColorSample } from '../types';
+import { sampleCircleAverage } from '../../utils/imageProcessing';
+import { rgbToHex } from '../../utils/colorUtils';
+import { useCanvasContext } from './CanvasContext';
+import { useToolContext } from './ToolContext';
+import { HOTKEYS } from '../../hotkeys';
+import type { ColorSample } from '../../types';
 
 interface Props {
   onSample: (sample: ColorSample, hex: string) => void;

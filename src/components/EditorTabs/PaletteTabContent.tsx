@@ -1,15 +1,15 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { Box, Group, Loader, Text } from '@mantine/core';
 import chroma from 'chroma-js';
-import { useCanvasContext } from '../../context/CanvasContext';
+import { useCanvasContext } from '../../features/canvas/CanvasContext';
 import { useFilterContext } from '../../features/filters/FilterContext';
 import { usePaletteContext } from '../../features/palette/PaletteContext';
 import { useFilteredImage } from '../../features/filters/useFilteredImage';
 import { useIndexedImage } from '../../hooks/useIndexedImage';
-import { CanvasViewport } from '../CanvasViewport';
-import { SamplePinsOverlay } from '../SamplePinsOverlay';
-import { SamplerOverlay } from '../SamplerOverlay';
-import { MarqueeSelectOverlay } from '../MarqueeSelectOverlay';
+import { CanvasViewport } from '../../features/canvas/CanvasViewport';
+import { SamplePinsOverlay } from '../../features/canvas/SamplePinsOverlay';
+import { SamplerOverlay } from '../../features/canvas/SamplerOverlay';
+import { MarqueeSelectOverlay } from '../../features/canvas/MarqueeSelectOverlay';
 
 const labelStyle: React.CSSProperties = {
   position: 'absolute',

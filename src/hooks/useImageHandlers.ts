@@ -2,7 +2,7 @@ import { useRef, useCallback, useEffect } from 'react';
 import { notifications } from '@mantine/notifications';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { FilterInstance, LevelsParams, ColorSample } from '../types';
-import type { useCanvasPipeline } from './useCanvasPipeline';
+import type { useCanvasPipeline } from '../features/canvas/useCanvasPipeline';
 import type { useProjectState } from './useProjectState';
 import { sampleCircleAverage } from '../utils/imageProcessing';
 import { rgbToHex } from '../utils/colorUtils';

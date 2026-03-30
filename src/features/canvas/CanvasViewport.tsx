@@ -2,10 +2,10 @@ import { forwardRef, useRef, useEffect, useCallback } from 'react';
 import { Box } from '@mantine/core';
 import { useMergedRef } from '@mantine/hooks';
 import { Plus, Maximize2, Tag } from 'lucide-react';
-import { useCanvasContext } from '../context/CanvasContext';
-import { usePaletteContext } from '../features/palette/PaletteContext';
-import { useContextMenu } from '../context/ContextMenuContext';
-import { rgbToHex } from '../utils/colorUtils';
+import { useCanvasContext } from './CanvasContext';
+import { usePaletteContext } from '../palette/PaletteContext';
+import { useContextMenu } from '../../context/ContextMenuContext';
+import { rgbToHex } from '../../utils/colorUtils';
 
 interface Props {
   children?: React.ReactNode;

@@ -1,6 +1,6 @@
 import { createContext, useContext, type RefObject } from 'react';
-import type { ViewportTransform } from '../hooks/useViewportTransform';
-import type { RawImage } from '../types';
+import type { ViewportTransform } from './useViewportTransform';
+import type { RawImage } from '../../types';
 
 interface CanvasContextValue {
   sourceImage: RawImage | null;

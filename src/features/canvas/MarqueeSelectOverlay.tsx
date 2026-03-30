@@ -1,14 +1,14 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import type { RefObject } from 'react';
 import { Box } from '@mantine/core';
-import { PinEditPopover } from '../features/palette/PinEditPopover';
-import { useCanvasContext } from '../context/CanvasContext';
-import { usePaletteContext } from '../features/palette/PaletteContext';
-import { useEditorContext } from '../context/EditorContext';
-import { useToolContext } from '../context/ToolContext';
-import { useCanvasMeasure } from '../hooks/useCanvasMeasure';
-import { useColorContextMenu } from '../features/palette/useColorContextMenu';
-import { useSelectionContextMenu } from '../features/palette/useSelectionContextMenu';
+import { PinEditPopover } from '../palette/PinEditPopover';
+import { useCanvasContext } from './CanvasContext';
+import { usePaletteContext } from '../palette/PaletteContext';
+import { useEditorContext } from '../../context/EditorContext';
+import { useToolContext } from './ToolContext';
+import { useCanvasMeasure } from './useCanvasMeasure';
+import { useColorContextMenu } from '../palette/useColorContextMenu';
+import { useSelectionContextMenu } from '../palette/useSelectionContextMenu';
 
 const HIT_R = 11;
 

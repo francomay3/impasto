@@ -5,7 +5,7 @@ import { notifications } from '@mantine/notifications';
 import { exportPdf } from '../services/PdfExport';
 import { DEFAULT_MIX_GRANULARITY, DEFAULT_DELTA_THRESHOLD, PIGMENTS } from '../services/ColorMixer';
 import type { ProjectState } from '../types';
-import { useCanvasContext } from '../context/CanvasContext';
+import { useCanvasContext } from '../features/canvas/CanvasContext';
 
 interface Props {
   opened: boolean;

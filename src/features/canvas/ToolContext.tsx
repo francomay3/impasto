@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { ToolId } from '../tools';
+import type { ToolId } from '../../tools';
 
 interface ToolContextValue {
   activeTool: ToolId;

@@ -1,18 +1,18 @@
 import { Box, Stack, Tabs, Text, Title } from '@mantine/core';
 import { Layers, Palette, BarChart2, Grid, Scaling, Brush, ImageUp } from 'lucide-react';
-import { ToolRail } from '../ToolRail';
-import type { ToolRailItem } from '../ToolRail';
+import { ToolRail } from '../../features/canvas/ToolRail';
+import type { ToolRailItem } from '../../features/canvas/ToolRail';
 import { TOOLS } from '../../tools';
-import { useToolContext } from '../../context/ToolContext';
+import { useToolContext } from '../../features/canvas/ToolContext';
 import { FilterPanel } from '../../features/filters/FilterPanel';
 import { PaletteSidebar } from '../../features/palette/PaletteSidebar';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { FiltersTabContent } from './FiltersTabContent';
 import { PaletteTabContent } from './PaletteTabContent';
-import { ImageUploader } from '../ImageUploader';
+import { ImageUploader } from '../../features/canvas/ImageUploader';
 import { useEditorContext } from '../../context/EditorContext';
-import { useCanvasContext } from '../../context/CanvasContext';
-import { ContextualToolbar } from '../ContextualToolbar';
+import { useCanvasContext } from '../../features/canvas/CanvasContext';
+import { ContextualToolbar } from '../../features/canvas/ContextualToolbar';
 
 const asideStyle: React.CSSProperties = {
   width: 260,

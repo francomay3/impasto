@@ -1,10 +1,10 @@
 import { useRef, useCallback, useEffect } from 'react';
-import type { FilterInstance, Color, RawImage } from '../types';
-import { createRawImage } from '../types';
-import { applyFilters, blurImageData } from '../utils/imageProcessing';
-import { quantizeImage } from '../utils/kMeansWrapper';
-import { findMixRecipe } from '../services/ColorMixer';
-import IndexedRendererWorker from '../workers/indexedRenderer.worker?worker';
+import type { FilterInstance, Color, RawImage } from '../../types';
+import { createRawImage } from '../../types';
+import { applyFilters, blurImageData } from '../../utils/imageProcessing';
+import { quantizeImage } from '../../utils/kMeansWrapper';
+import { findMixRecipe } from '../../services/ColorMixer';
+import IndexedRendererWorker from '../../workers/indexedRenderer.worker?worker';
 
 export function useCanvasPipeline(
   filteredCanvasRef: React.RefObject<HTMLCanvasElement | null>,

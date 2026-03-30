@@ -1,10 +1,10 @@
 import { useRef, useEffect } from 'react';
 import { Box, Group, Text } from '@mantine/core';
-import { useCanvasContext } from '../../context/CanvasContext';
+import { useCanvasContext } from '../../features/canvas/CanvasContext';
 import { useFilterContext } from '../../features/filters/FilterContext';
 import { useFilteredImage } from '../../features/filters/useFilteredImage';
-import { CanvasViewport } from '../CanvasViewport';
-import { SamplerOverlay } from '../SamplerOverlay';
+import { CanvasViewport } from '../../features/canvas/CanvasViewport';
+import { SamplerOverlay } from '../../features/canvas/SamplerOverlay';
 import type { RawImage } from '../../types';
 
 function drawRawImage(canvas: HTMLCanvasElement, source: RawImage) {
