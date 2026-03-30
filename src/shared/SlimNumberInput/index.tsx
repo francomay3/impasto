@@ -7,7 +7,7 @@ export function SlimNumberInput({ styles, ...props }: Props) {
   return (
     <NumberInput
       {...props}
-      size='xs'
+      size="xs"
       styles={{
         input: {
           height: 22,

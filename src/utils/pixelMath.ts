@@ -7,7 +7,7 @@ export function clamp255(v: number): number {
 export function brightnessContrastChannel(
   value: number,
   brightness: number,
-  contrast: number,
+  contrast: number
 ): number {
   const cf = (259 * (contrast + 255)) / (255 * (259 - contrast));
   return clamp255(cf * (value + brightness - 128) + 128);
@@ -20,7 +20,7 @@ export function hueSaturationPixel(
   b: number,
   saturation: number,
   temperature: number,
-  tint: number,
+  tint: number
 ): [number, number, number] {
   const sat = (saturation + 100) / 100;
   const tr = r + temperature;
@@ -35,11 +35,7 @@ export function hueSaturationPixel(
 }
 
 /** Apply levels adjustment to a single channel value. */
-export function levelsChannel(
-  value: number,
-  blackPoint: number,
-  whitePoint: number,
-): number {
+export function levelsChannel(value: number, blackPoint: number, whitePoint: number): number {
   const range = Math.max(1, whitePoint - blackPoint);
-  return clamp255((value - blackPoint) / range * 255);
+  return clamp255(((value - blackPoint) / range) * 255);
 }

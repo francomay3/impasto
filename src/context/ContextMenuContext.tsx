@@ -10,8 +10,13 @@ export interface ContextMenuItem {
   disabled?: boolean;
 }
 
-export interface ContextMenuDivider { type: 'divider' }
-export interface ContextMenuLabel   { type: 'label'; label: string }
+export interface ContextMenuDivider {
+  type: 'divider';
+}
+export interface ContextMenuLabel {
+  type: 'label';
+  label: string;
+}
 
 export type ContextMenuEntry = ContextMenuItem | ContextMenuDivider | ContextMenuLabel;
 
@@ -23,7 +28,7 @@ interface OpenMenuOptions {
 }
 
 interface ContextMenuContextValue {
-  open:  (opts: OpenMenuOptions) => void;
+  open: (opts: OpenMenuOptions) => void;
   close: () => void;
 }
 
@@ -46,7 +51,10 @@ function ContextMenuEntry({ entry, close }: { entry: ContextMenuEntry; close: ()
       leftSection={entry.icon}
       color={entry.color}
       disabled={entry.disabled}
-      onClick={() => { entry.onClick(); close(); }}
+      onClick={() => {
+        entry.onClick();
+        close();
+      }}
     >
       {entry.label}
     </Menu.Item>
@@ -56,7 +64,7 @@ function ContextMenuEntry({ entry, close }: { entry: ContextMenuEntry; close: ()
 export function ContextMenuProvider({ children }: { children: ReactNode }) {
   const [menu, setMenu] = useState<OpenMenuOptions | null>(null);
 
-  const open  = useCallback((opts: OpenMenuOptions) => setMenu(opts), []);
+  const open = useCallback((opts: OpenMenuOptions) => setMenu(opts), []);
   const close = useCallback(() => setMenu(null), []);
 
   return (
@@ -67,7 +75,10 @@ export function ContextMenuProvider({ children }: { children: ReactNode }) {
           <div
             style={{ position: 'fixed', inset: 0, zIndex: 299 }}
             onMouseDown={close}
-            onContextMenu={e => { e.preventDefault(); close(); }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              close();
+            }}
           />
           <Menu
             opened
@@ -82,7 +93,12 @@ export function ContextMenuProvider({ children }: { children: ReactNode }) {
             <Menu.Target>
               <div style={{ position: 'fixed', left: menu.x, top: menu.y, width: 0, height: 0 }} />
             </Menu.Target>
-            <Menu.Dropdown style={{ background: 'var(--mantine-color-dark-7)', border: '1px solid var(--mantine-color-dark-4)' }}>
+            <Menu.Dropdown
+              style={{
+                background: 'var(--mantine-color-dark-7)',
+                border: '1px solid var(--mantine-color-dark-4)',
+              }}
+            >
               {menu.items.map((entry, i) => (
                 <ContextMenuEntry key={i} entry={entry} close={close} />
               ))}

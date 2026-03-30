@@ -34,7 +34,9 @@ function labDelta(hex1: string, hex2: string): number {
 
 function mixSubtractive(hexes: string[], weights: number[]): string {
   // Approximate subtractive mixing via CMYK in linear light
-  let c = 0, m = 0, y = 0;
+  let c = 0,
+    m = 0,
+    y = 0;
   const total = weights.reduce((a, b) => a + b, 0);
   hexes.forEach((h, i) => {
     const w = weights[i] / total;
@@ -53,7 +55,7 @@ function computeBestMix(
   targetHex: string,
   granularity: number,
   deltaThreshold: number,
-  pigments: Pigment[],
+  pigments: Pigment[]
 ): PigmentMix {
   let bestDelta = Infinity;
   let bestMix: PigmentMix = [];
@@ -72,10 +74,7 @@ function computeBestMix(
   for (let i = 0; i < pigments.length; i++) {
     for (let j = i + 1; j < pigments.length; j++) {
       for (let a = 1; a < granularity; a++) {
-        const mixed = mixSubtractive(
-          [pigments[i].hex, pigments[j].hex],
-          [a, granularity - a]
-        );
+        const mixed = mixSubtractive([pigments[i].hex, pigments[j].hex], [a, granularity - a]);
         const d = labDelta(mixed, targetHex);
         if (d < bestDelta) {
           bestDelta = d;
@@ -122,13 +121,13 @@ export function findMixData(
   targetHex: string,
   granularity = DEFAULT_MIX_GRANULARITY,
   deltaThreshold = DEFAULT_DELTA_THRESHOLD,
-  pigments = PIGMENTS,
+  pigments = PIGMENTS
 ): MixEntry[] {
   const mix = computeBestMix(targetHex, granularity, deltaThreshold, pigments);
   const divisor = mix.reduce((acc, p) => gcd(acc, p.parts), mix[0]?.parts ?? 1);
-  return mix.map(p => ({
+  return mix.map((p) => ({
     name: p.name,
-    hex: pigments.find(pig => pig.name === p.name)?.hex ?? '#000000',
+    hex: pigments.find((pig) => pig.name === p.name)?.hex ?? '#000000',
     parts: p.parts / divisor,
   }));
 }
@@ -137,9 +136,9 @@ export function findMixRecipe(
   targetHex: string,
   granularity = DEFAULT_MIX_GRANULARITY,
   deltaThreshold = DEFAULT_DELTA_THRESHOLD,
-  pigments = PIGMENTS,
+  pigments = PIGMENTS
 ): string {
   return findMixData(targetHex, granularity, deltaThreshold, pigments)
-    .map(e => `${e.parts} part${e.parts !== 1 ? 's' : ''} ${e.name}`)
+    .map((e) => `${e.parts} part${e.parts !== 1 ? 's' : ''} ${e.name}`)
     .join(', ');
 }

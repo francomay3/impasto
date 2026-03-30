@@ -10,9 +10,13 @@ import type { RawImage } from '../../../types';
 function drawRawImage(canvas: HTMLCanvasElement, source: RawImage) {
   canvas.width = source.width;
   canvas.height = source.height;
-  canvas.getContext('2d')!.putImageData(
-    new ImageData(new Uint8ClampedArray(source.data), source.width, source.height), 0, 0,
-  );
+  canvas
+    .getContext('2d')!
+    .putImageData(
+      new ImageData(new Uint8ClampedArray(source.data), source.width, source.height),
+      0,
+      0
+    );
 }
 
 const labelStyle: React.CSSProperties = {
@@ -46,17 +50,30 @@ export function FiltersTabContent() {
     <Group gap={0} wrap="nowrap" style={{ height: '100%', overflow: 'hidden' }}>
       <Box style={{ flex: 1, minWidth: 0, position: 'relative', height: '100%', display: 'flex' }}>
         <CanvasViewport ref={originalRef} variant="indexed" />
-        <Text style={labelStyle} size="xs" c="dimmed">Original</Text>
+        <Text style={labelStyle} size="xs" c="dimmed">
+          Original
+        </Text>
       </Box>
-      <Box style={{ width: 1, height: '100%', background: 'var(--mantine-color-dark-6)', flexShrink: 0 }} />
+      <Box
+        style={{
+          width: 1,
+          height: '100%',
+          background: 'var(--mantine-color-dark-6)',
+          flexShrink: 0,
+        }}
+      />
       <Box style={{ flex: 1, minWidth: 0, position: 'relative', height: '100%', display: 'flex' }}>
         <CanvasViewport
           ref={filteredCanvasRef}
-          overlayChildren={samplingLevels && (
-            <SamplerOverlay onSample={onSampleLevels} onCancel={onCancelSamplingLevels} />
-          )}
+          overlayChildren={
+            samplingLevels && (
+              <SamplerOverlay onSample={onSampleLevels} onCancel={onCancelSamplingLevels} />
+            )
+          }
         />
-        <Text style={labelStyle} size="xs" c="dimmed">Filtered</Text>
+        <Text style={labelStyle} size="xs" c="dimmed">
+          Filtered
+        </Text>
       </Box>
     </Group>
   );

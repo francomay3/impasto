@@ -11,7 +11,7 @@ export function applyZoomStep(
   zoomIn: boolean,
   min = VIEWPORT_MIN_SCALE,
   max = VIEWPORT_MAX_SCALE,
-  factor = VIEWPORT_ZOOM_FACTOR,
+  factor = VIEWPORT_ZOOM_FACTOR
 ): number {
   const raw = zoomIn ? currentScale * factor : currentScale / factor;
   return Math.max(min, Math.min(max, raw));
@@ -33,7 +33,7 @@ export function panOnZoom(
   cursorInViewport: number,
   currentPan: number,
   oldScale: number,
-  newScale: number,
+  newScale: number
 ): number {
   return cursorInViewport - (cursorInViewport - currentPan) * (newScale / oldScale);
 }
@@ -41,10 +41,6 @@ export function panOnZoom(
 /**
  * Calculates the new pan offset after a mouse drag step.
  */
-export function panOnDrag(
-  startPan: number,
-  startCursor: number,
-  currentCursor: number,
-): number {
+export function panOnDrag(startPan: number, startCursor: number, currentCursor: number): number {
   return startPan + (currentCursor - startCursor);
 }

@@ -16,7 +16,7 @@ export function useProjects() {
 
   useEffect(() => {
     if (!user) return;
-    listFirestoreProjects(user.uid).then(p => {
+    listFirestoreProjects(user.uid).then((p) => {
       setProjects(p);
       setLoading(false);
     });
@@ -31,21 +31,27 @@ export function useProjects() {
       updatedAt: new Date().toISOString(),
     };
     const id = await createFirestoreProject(user.uid, blank);
-    setProjects(prev => [{ ...blank, id }, ...prev]);
+    setProjects((prev) => [{ ...blank, id }, ...prev]);
     return id;
   }, [user]);
 
-  const remove = useCallback(async (projectId: string) => {
-    if (!user) return;
-    await deleteFirestoreProject(user.uid, projectId);
-    setProjects(prev => prev.filter(p => p.id !== projectId));
-  }, [user]);
+  const remove = useCallback(
+    async (projectId: string) => {
+      if (!user) return;
+      await deleteFirestoreProject(user.uid, projectId);
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+    },
+    [user]
+  );
 
-  const rename = useCallback(async (projectId: string, name: string) => {
-    if (!user) return;
-    await renameFirestoreProject(user.uid, projectId, name);
-    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, name } : p));
-  }, [user]);
+  const rename = useCallback(
+    async (projectId: string, name: string) => {
+      if (!user) return;
+      await renameFirestoreProject(user.uid, projectId, name);
+      setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, name } : p)));
+    },
+    [user]
+  );
 
   return { projects, loading, create, remove, rename };
 }

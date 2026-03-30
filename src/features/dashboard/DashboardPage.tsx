@@ -20,7 +20,7 @@ export function DashboardPage() {
     if (!loading && projects.length === 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCreating(true);
-      create().then(id => navigate(`/project/${id}`, { replace: true }));
+      create().then((id) => navigate(`/project/${id}`, { replace: true }));
     }
   }, [loading, projects.length, create, navigate]);
 
@@ -34,7 +34,7 @@ export function DashboardPage() {
   };
 
   const filtered = search
-    ? projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    ? projects.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     : projects;
 
   return (
@@ -48,7 +48,12 @@ export function DashboardPage() {
           </Center>
         ) : (
           <ErrorBoundary label="Project grid" compact>
-            <ProjectGrid projects={filtered} onDelete={remove} onRename={rename} onCreate={handleCreate} />
+            <ProjectGrid
+              projects={filtered}
+              onDelete={remove}
+              onRename={rename}
+              onCreate={handleCreate}
+            />
           </ErrorBoundary>
         )}
       </Container>

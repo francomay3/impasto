@@ -15,8 +15,22 @@ export function AppRouter() {
             element={
               <AuthGuard>
                 <Routes>
-                  <Route path="/" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
-                  <Route path="/project/:id" element={<ErrorBoundary><ProjectPage /></ErrorBoundary>} />
+                  <Route
+                    path="/"
+                    element={
+                      <ErrorBoundary>
+                        <DashboardPage />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="/project/:id"
+                    element={
+                      <ErrorBoundary>
+                        <ProjectPage />
+                      </ErrorBoundary>
+                    }
+                  />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </AuthGuard>

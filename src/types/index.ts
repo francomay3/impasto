@@ -31,7 +31,11 @@ export type BrightnessContrastParams = { brightness: number; contrast: number };
 export type HueSaturationParams = { saturation: number; temperature: number; tint: number };
 export type LevelsParams = { blackPoint: number; whitePoint: number };
 export type BlurParams = { blur: number };
-export type FilterParams = BrightnessContrastParams | HueSaturationParams | LevelsParams | BlurParams;
+export type FilterParams =
+  | BrightnessContrastParams
+  | HueSaturationParams
+  | LevelsParams
+  | BlurParams;
 
 export type FilterInstance = {
   id: string;
@@ -42,15 +46,15 @@ export type FilterInstance = {
 export const DEFAULT_FILTER_PARAMS: Record<FilterType, FilterParams> = {
   'brightness-contrast': { brightness: 0, contrast: 0 },
   'hue-saturation': { saturation: 0, temperature: 0, tint: 0 },
-  'levels': { blackPoint: 0, whitePoint: 255 },
-  'blur': { blur: 0 },
+  levels: { blackPoint: 0, whitePoint: 255 },
+  blur: { blur: 0 },
 };
 
 export const FILTER_LABELS: Record<FilterType, string> = {
   'brightness-contrast': 'Brightness / Contrast',
   'hue-saturation': 'Hue / Saturation',
-  'levels': 'Levels',
-  'blur': 'Blur',
+  levels: 'Levels',
+  blur: 'Blur',
 };
 
 export type RawImage = {
@@ -61,9 +65,18 @@ export type RawImage = {
 
 // Creates a RawImage with `data` non-enumerable so React DevTools does not
 // try to walk the Uint8ClampedArray's 12M+ indexed properties on every commit.
-export function createRawImage(data: Uint8ClampedArray<ArrayBuffer>, width: number, height: number): RawImage {
+export function createRawImage(
+  data: Uint8ClampedArray<ArrayBuffer>,
+  width: number,
+  height: number
+): RawImage {
   const img = { width, height } as RawImage;
-  Object.defineProperty(img, 'data', { value: data, enumerable: false, writable: true, configurable: true });
+  Object.defineProperty(img, 'data', {
+    value: data,
+    enumerable: false,
+    writable: true,
+    configurable: true,
+  });
   return img;
 }
 

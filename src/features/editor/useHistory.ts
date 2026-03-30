@@ -17,7 +17,13 @@ export function useHistory(initialState: ProjectState) {
   const [canRedo, setCanRedo] = useState(false);
 
   function push(state: ProjectState) {
-    const snap = toSnapshot(state, store.current, order.current, past.current, present.current.imageId);
+    const snap = toSnapshot(
+      state,
+      store.current,
+      order.current,
+      past.current,
+      present.current.imageId
+    );
     const next = [...past.current, present.current];
     past.current = next.length > MAX_HISTORY ? next.slice(-MAX_HISTORY) : next;
     present.current = snap;

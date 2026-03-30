@@ -20,31 +20,45 @@ interface Params {
 }
 
 export function useEditorHandlers({
-  state, activeTool, samplingColorId,
-  handleAddColorAtPosition, handleSample, handleDeleteColor, handleImageLoadBitmap,
-  setActiveTool, setActiveTab, replaceRef, onNewImageFile,
+  state,
+  activeTool,
+  samplingColorId,
+  handleAddColorAtPosition,
+  handleSample,
+  handleDeleteColor,
+  handleImageLoadBitmap,
+  setActiveTool,
+  setActiveTab,
+  replaceRef,
+  onNewImageFile,
 }: Params) {
   const [selectedColorIds, setSelectedColorIds] = useState<Set<string>>(new Set());
 
   const handleSelectColor = useCallback((id: string | null) => {
-    if (!id) { setSelectedColorIds(new Set()); return; }
-    setSelectedColorIds(prev => (prev.size === 1 && prev.has(id)) ? new Set() : new Set([id]));
+    if (!id) {
+      setSelectedColorIds(new Set());
+      return;
+    }
+    setSelectedColorIds((prev) => (prev.size === 1 && prev.has(id) ? new Set() : new Set([id])));
   }, []);
 
   const handleToggleColorSelection = useCallback((id: string) => {
-    setSelectedColorIds(prev => {
+    setSelectedColorIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   }, []);
 
-  const handleFileSelected = useCallback((file: File) => {
-    prepareImage(file).then(({ bitmap, webpFile }) => {
-      handleImageLoadBitmap(bitmap);
-      if (onNewImageFile) onNewImageFile(webpFile);
-    });
-  }, [handleImageLoadBitmap, onNewImageFile]);
+  const handleFileSelected = useCallback(
+    (file: File) => {
+      prepareImage(file).then(({ bitmap, webpFile }) => {
+        handleImageLoadBitmap(bitmap);
+        if (onNewImageFile) onNewImageFile(webpFile);
+      });
+    },
+    [handleImageLoadBitmap, onNewImageFile]
+  );
 
   const handleEnterAddColorMode = useCallback(() => {
     setSelectedColorIds(new Set());
@@ -52,20 +66,29 @@ export function useEditorHandlers({
     setActiveTab('palette');
   }, [setActiveTool, setActiveTab]);
 
-  const handleAddNewColor = useCallback((sample: ColorSample, hex: string) => {
-    const id = handleAddColorAtPosition(sample, hex);
-    setSelectedColorIds(new Set([id]));
-    setActiveTool('select');
-  }, [handleAddColorAtPosition, setActiveTool]);
+  const handleAddNewColor = useCallback(
+    (sample: ColorSample, hex: string) => {
+      const id = handleAddColorAtPosition(sample, hex);
+      setSelectedColorIds(new Set([id]));
+      setActiveTool('select');
+    },
+    [handleAddColorAtPosition, setActiveTool]
+  );
 
-  const handleSampleWithSelect = useCallback((sample: ColorSample, hex: string) => {
-    const id = samplingColorId;
-    handleSample(sample, hex);
-    if (id) setSelectedColorIds(new Set([id]));
-  }, [samplingColorId, handleSample]);
+  const handleSampleWithSelect = useCallback(
+    (sample: ColorSample, hex: string) => {
+      const id = samplingColorId;
+      handleSample(sample, hex);
+      if (id) setSelectedColorIds(new Set([id]));
+    },
+    [samplingColorId, handleSample]
+  );
 
   const handleDeleteSelectedColors = useCallback(() => {
-    setSelectedColorIds(prev => { prev.forEach(id => handleDeleteColor(id)); return new Set(); });
+    setSelectedColorIds((prev) => {
+      prev.forEach((id) => handleDeleteColor(id));
+      return new Set();
+    });
   }, [handleDeleteColor]);
 
   const handleToggleSelectTool = useCallback(() => {
@@ -76,16 +99,26 @@ export function useEditorHandlers({
     setActiveTool(activeTool === 'marquee' ? 'select' : 'marquee');
   }, [activeTool, setActiveTool]);
 
-  const handlePasteFile = useCallback((file: File) => {
-    if (state.palette.some(c => c.sample)) replaceRef.current?.openWithFile(file);
-    else handleFileSelected(file);
-  }, [state.palette, replaceRef, handleFileSelected]);
+  const handlePasteFile = useCallback(
+    (file: File) => {
+      if (state.palette.some((c) => c.sample)) replaceRef.current?.openWithFile(file);
+      else handleFileSelected(file);
+    },
+    [state.palette, replaceRef, handleFileSelected]
+  );
 
   return {
-    selectedColorIds, setSelectedColorIds,
-    handleSelectColor, handleToggleColorSelection,
-    handleFileSelected, handleEnterAddColorMode, handleAddNewColor,
-    handleSampleWithSelect, handleDeleteSelectedColors,
-    handleToggleSelectTool, handleToggleMarqueeTool, handlePasteFile,
+    selectedColorIds,
+    setSelectedColorIds,
+    handleSelectColor,
+    handleToggleColorSelection,
+    handleFileSelected,
+    handleEnterAddColorMode,
+    handleAddNewColor,
+    handleSampleWithSelect,
+    handleDeleteSelectedColors,
+    handleToggleSelectTool,
+    handleToggleMarqueeTool,
+    handlePasteFile,
   };
 }

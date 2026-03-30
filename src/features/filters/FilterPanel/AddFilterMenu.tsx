@@ -14,7 +14,7 @@ export function FilterMenuItems({ onAdd }: FilterMenuItemsProps) {
         <div key={group.label}>
           {i > 0 && <Menu.Divider />}
           <Menu.Label>{group.label}</Menu.Label>
-          {group.filters.map(type => (
+          {group.filters.map((type) => (
             <Menu.Item key={type} leftSection={FILTER_ICONS[type]} onClick={() => onAdd(type)}>
               <Text size="sm">{FILTER_LABELS[type]}</Text>
             </Menu.Item>

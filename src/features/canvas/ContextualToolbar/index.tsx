@@ -39,7 +39,9 @@ function PaletteToolOptions() {
   if (activeTool === 'eyedropper') {
     return (
       <Group gap={6} align="center">
-        <Text size="xs" c="dimmed">Sampling radius</Text>
+        <Text size="xs" c="dimmed">
+          Sampling radius
+        </Text>
         <SlimNumberInput
           data-testid="sampling-radius-input"
           value={samplingRadius}
@@ -60,7 +62,9 @@ function PaletteBlurInput() {
   const { preIndexingBlur, setPreIndexingBlur } = useFilterContext();
   return (
     <Group gap={6} align="center">
-      <Text size="xs" c="dimmed">Pre-index blur</Text>
+      <Text size="xs" c="dimmed">
+        Pre-index blur
+      </Text>
       <SlimNumberInput
         data-testid="pre-index-blur-input"
         value={preIndexingBlur}
@@ -81,9 +85,7 @@ interface Props {
 export function ContextualToolbar({ tab }: Props) {
   return (
     <div style={barStyle} data-testid="contextual-toolbar">
-      <Group gap={4}>
-        {tab === 'palette' && <PaletteToolOptions />}
-      </Group>
+      <Group gap={4}>{tab === 'palette' && <PaletteToolOptions />}</Group>
 
       <Group gap={2}>
         {tab === 'filters' && (

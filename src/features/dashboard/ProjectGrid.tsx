@@ -14,7 +14,7 @@ export function ProjectGrid({ projects, onDelete, onRename, onCreate }: Props) {
   return (
     <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 5 }} spacing="md">
       <NewProjectCard onCreate={onCreate} />
-      {projects.map(p => (
+      {projects.map((p) => (
         <ProjectCard key={p.id} project={p} onDelete={onDelete} onRename={onRename} />
       ))}
     </SimpleGrid>

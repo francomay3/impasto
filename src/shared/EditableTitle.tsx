@@ -22,11 +22,14 @@ export function EditableTitle({ name, onRename }: Props) {
       <Box data-testid="project-title">
         <TextInput
           value={value}
-          onChange={e => setValue(e.currentTarget.value)}
+          onChange={(e) => setValue(e.currentTarget.value)}
           onBlur={commit}
-          onKeyDown={e => {
+          onKeyDown={(e) => {
             if (e.key === 'Enter') commit();
-            if (e.key === 'Escape') { setValue(name); setEditing(false); }
+            if (e.key === 'Escape') {
+              setValue(name);
+              setEditing(false);
+            }
           }}
           autoFocus
           size="xs"
@@ -42,7 +45,10 @@ export function EditableTitle({ name, onRename }: Props) {
       size="sm"
       fw={600}
       data-testid="project-title"
-      onClick={() => { setValue(name); setEditing(true); }}
+      onClick={() => {
+        setValue(name);
+        setEditing(true);
+      }}
       style={{
         cursor: 'text',
         padding: '2px 6px',

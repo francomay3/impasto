@@ -14,7 +14,19 @@ interface Tool {
 }
 
 export const TOOLS: Tool[] = [
-  { id: 'select',    icon: MousePointer2,   label: 'Select Mode',     shortcut: 'V', cursor: 'default' },
-  { id: 'marquee',   icon: RectangleSelect, label: 'Marquee Select',  shortcut: 'S', cursor: 'crosshair' },
-  { id: 'eyedropper', icon: EyedropperAdd,  label: 'Sample New Color', shortcut: 'E', cursor: 'crosshair' },
+  { id: 'select', icon: MousePointer2, label: 'Select Mode', shortcut: 'V', cursor: 'default' },
+  {
+    id: 'marquee',
+    icon: RectangleSelect,
+    label: 'Marquee Select',
+    shortcut: 'S',
+    cursor: 'crosshair',
+  },
+  {
+    id: 'eyedropper',
+    icon: EyedropperAdd,
+    label: 'Sample New Color',
+    shortcut: 'E',
+    cursor: 'crosshair',
+  },
 ];

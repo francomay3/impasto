@@ -3,7 +3,13 @@ import type { WasmExports } from '../wasm/img_ops/img_ops';
 import imgOpsWasmUrl from '../wasm/img_ops/img_ops_bg.wasm?url';
 
 type WasmMod = typeof import('../wasm/img_ops/img_ops.js');
-type Input = { pixels: Uint8Array; width: number; height: number; filters: FilterInstance[]; dirtyIndex: number };
+type Input = {
+  pixels: Uint8Array;
+  width: number;
+  height: number;
+  filters: FilterInstance[];
+  dirtyIndex: number;
+};
 
 let mod: WasmMod | null = null;
 let wasmExports: WasmExports | null = null;

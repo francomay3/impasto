@@ -1,6 +1,15 @@
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc,
-  getDocs, getDoc, query, orderBy, serverTimestamp, type Timestamp,
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  getDoc,
+  query,
+  orderBy,
+  serverTimestamp,
+  type Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Color, ProjectState } from '../types';
@@ -24,7 +33,7 @@ function toProjectState(id: string, data: StoredProject): ProjectState {
     id,
     sourceImage: null,
     palette: (data.palette as Array<StoredColor & { hex?: string }>)
-      .filter(c => c.sample)
+      .filter((c) => c.sample)
       .map(({ hex: _hex, ...c }) => ({ hex: '', ...c })),
     createdAt: data.createdAt.toDate().toISOString(),
     updatedAt: data.updatedAt.toDate().toISOString(),
@@ -55,7 +64,7 @@ export async function createFirestoreProject(userId: string, state: ProjectState
 export async function saveFirestoreProject(
   userId: string,
   projectId: string,
-  state: ProjectState,
+  state: ProjectState
 ): Promise<void> {
   await updateDoc(doc(projectsCol(userId), projectId), {
     ...toPayload(state),
@@ -66,12 +75,12 @@ export async function saveFirestoreProject(
 export async function listFirestoreProjects(userId: string): Promise<ProjectState[]> {
   const q = query(projectsCol(userId), orderBy('updatedAt', 'desc'));
   const snap = await getDocs(q);
-  return snap.docs.map(d => toProjectState(d.id, d.data() as StoredProject));
+  return snap.docs.map((d) => toProjectState(d.id, d.data() as StoredProject));
 }
 
 export async function getFirestoreProject(
   userId: string,
-  projectId: string,
+  projectId: string
 ): Promise<ProjectState | null> {
   const snap = await getDoc(doc(projectsCol(userId), projectId));
   if (!snap.exists()) return null;
@@ -81,7 +90,7 @@ export async function getFirestoreProject(
 export async function saveFirestoreImageUrl(
   userId: string,
   projectId: string,
-  imageStorageUrl: string,
+  imageStorageUrl: string
 ): Promise<void> {
   await updateDoc(doc(projectsCol(userId), projectId), { imageStorageUrl });
 }
@@ -89,7 +98,7 @@ export async function saveFirestoreImageUrl(
 export async function renameFirestoreProject(
   userId: string,
   projectId: string,
-  name: string,
+  name: string
 ): Promise<void> {
   await updateDoc(doc(projectsCol(userId), projectId), { name, updatedAt: serverTimestamp() });
 }

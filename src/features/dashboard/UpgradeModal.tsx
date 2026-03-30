@@ -22,20 +22,15 @@ export function UpgradeModal({ opened, onClose }: Props) {
         </ThemeIcon>
 
         <Stack align="center" gap={6}>
-          <Title order={3} c="white">Unlock more projects</Title>
+          <Title order={3} c="white">
+            Unlock more projects
+          </Title>
           <Text c="dimmed" size="sm" ta="center">
-            Free accounts are limited to 1 project.
-            Upgrade to create unlimited projects.
+            Free accounts are limited to 1 project. Upgrade to create unlimited projects.
           </Text>
         </Stack>
 
-        <Button
-          fullWidth
-          color="primary"
-          size="md"
-          disabled
-          title="Coming soon"
-        >
+        <Button fullWidth color="primary" size="md" disabled title="Coming soon">
           Upgrade — Coming Soon
         </Button>
 

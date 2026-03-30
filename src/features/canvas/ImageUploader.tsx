@@ -42,12 +42,19 @@ export function ImageUploader({ onFileSelected, style }: Props) {
         type="file"
         accept="image/*"
         style={{ display: 'none' }}
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+        }}
       />
       <Stack align="center" gap="xs">
         <Upload size={40} color="var(--mantine-color-dark-1)" />
-        <Text size="lg" c="dimmed">Drop an image here or click to upload</Text>
-        <Button variant="light" size="sm" color="tertiary">Choose File</Button>
+        <Text size="lg" c="dimmed">
+          Drop an image here or click to upload
+        </Text>
+        <Button variant="light" size="sm" color="tertiary">
+          Choose File
+        </Button>
       </Stack>
     </Box>
   );

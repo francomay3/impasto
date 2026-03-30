@@ -17,7 +17,13 @@ export const AddItemButton = forwardRef<HTMLButtonElement, Props>(
       color="gray"
       size="xs"
       leftSection={<Plus size={14} />}
-      rightSection={hint ? <Text size="xs" c="dimmed">{hint}</Text> : undefined}
+      rightSection={
+        hint ? (
+          <Text size="xs" c="dimmed">
+            {hint}
+          </Text>
+        ) : undefined
+      }
       fullWidth
       justify={hint ? 'space-between' : 'flex-start'}
       style={{ border: '1px dashed var(--mantine-color-dark-4)' }}

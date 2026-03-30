@@ -20,16 +20,26 @@ export function UserMenu() {
         {user && (
           <>
             <Menu.Label>
-              <Text size="xs" c="dimmed">{user.displayName ?? user.email}</Text>
+              <Text size="xs" c="dimmed">
+                {user.displayName ?? user.email}
+              </Text>
             </Menu.Label>
             <Menu.Divider />
           </>
         )}
-        <Menu.Item leftSection={<Settings size={14} />} disabled>Settings</Menu.Item>
-        <Menu.Item leftSection={<CreditCard size={14} />} disabled>Billing</Menu.Item>
-        <Menu.Item leftSection={<Bell size={14} />} disabled>Notifications</Menu.Item>
+        <Menu.Item leftSection={<Settings size={14} />} disabled>
+          Settings
+        </Menu.Item>
+        <Menu.Item leftSection={<CreditCard size={14} />} disabled>
+          Billing
+        </Menu.Item>
+        <Menu.Item leftSection={<Bell size={14} />} disabled>
+          Notifications
+        </Menu.Item>
         <Menu.Divider />
-        <Menu.Item leftSection={<FlaskConical size={14} />} disabled>My Pigments</Menu.Item>
+        <Menu.Item leftSection={<FlaskConical size={14} />} disabled>
+          My Pigments
+        </Menu.Item>
         <Menu.Divider />
         <Menu.Item leftSection={<LogOut size={14} />} color="red" onClick={() => signOut(auth)}>
           Sign out

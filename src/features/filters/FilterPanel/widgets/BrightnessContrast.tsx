@@ -11,10 +11,24 @@ interface Props {
 export function BrightnessContrast({ params, onUpdate, onPreview }: Props) {
   return (
     <Stack gap="xs">
-      <FilterSlider label="Brightness" value={params.brightness} min={-100} max={100} defaultValue={0}
-        onChange={(v) => onPreview({ brightness: v })} onChangeEnd={(v) => onUpdate({ brightness: v })} />
-      <FilterSlider label="Contrast" value={params.contrast} min={-100} max={100} defaultValue={0}
-        onChange={(v) => onPreview({ contrast: v })} onChangeEnd={(v) => onUpdate({ contrast: v })} />
+      <FilterSlider
+        label="Brightness"
+        value={params.brightness}
+        min={-100}
+        max={100}
+        defaultValue={0}
+        onChange={(v) => onPreview({ brightness: v })}
+        onChangeEnd={(v) => onUpdate({ brightness: v })}
+      />
+      <FilterSlider
+        label="Contrast"
+        value={params.contrast}
+        min={-100}
+        max={100}
+        defaultValue={0}
+        onChange={(v) => onPreview({ contrast: v })}
+        onChangeEnd={(v) => onUpdate({ contrast: v })}
+      />
     </Stack>
   );
 }

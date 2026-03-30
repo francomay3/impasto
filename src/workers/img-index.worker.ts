@@ -1,7 +1,19 @@
 import imgIndexWasmUrl from '../wasm/img_index/img_index_bg.wasm?url';
 
-type ApplyFn = (pixels: Uint8Array, width: number, height: number, sigma: number, paletteJson: string) => Uint8Array;
-type Input = { pixels: Uint8Array; width: number; height: number; sigma: number; paletteJson: string };
+type ApplyFn = (
+  pixels: Uint8Array,
+  width: number,
+  height: number,
+  sigma: number,
+  paletteJson: string
+) => Uint8Array;
+type Input = {
+  pixels: Uint8Array;
+  width: number;
+  height: number;
+  sigma: number;
+  paletteJson: string;
+};
 
 let applyIndex: ApplyFn | null = null;
 

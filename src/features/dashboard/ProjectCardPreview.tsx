@@ -3,7 +3,15 @@ import type { ProjectState } from '../../types';
 
 function normalizeHex(hex: string): string {
   const h = hex.replace('#', '');
-  return '#' + (h.length === 3 ? h.split('').map(c => c + c).join('') : h.padEnd(6, '0').slice(0, 6));
+  return (
+    '#' +
+    (h.length === 3
+      ? h
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : h.padEnd(6, '0').slice(0, 6))
+  );
 }
 
 function isUsable(hex: string) {
@@ -11,7 +19,8 @@ function isUsable(hex: string) {
   const r = ((v >> 16) & 0xff) / 255;
   const g = ((v >> 8) & 0xff) / 255;
   const b = (v & 0xff) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
   const l = (max + min) / 2;
   const s = max === min ? 0 : l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
   return l >= 0.1 && l <= 0.85 && s >= 0.15;
@@ -32,7 +41,7 @@ function PaletteThumbnail({ palette }: { palette: ProjectState['palette'] }) {
     ctx.fillStyle = '#1a1b1e';
     ctx.fillRect(0, 0, W, H);
 
-    const usable = palette.filter(c => isUsable(c.hex));
+    const usable = palette.filter((c) => isUsable(c.hex));
     const colors = usable.length > 0 ? usable : palette.length > 0 ? palette : [{ hex: '#444' }];
     const shuffled = [...colors].sort(() => Math.random() - 0.5);
 
@@ -59,7 +68,12 @@ function PaletteThumbnail({ palette }: { palette: ProjectState['palette'] }) {
       ref={canvasRef}
       width={200}
       height={200}
-      style={{ width: '100%', height: '100%', filter: 'blur(10px) saturate(1.5)', transform: 'scale(1.15)' }}
+      style={{
+        width: '100%',
+        height: '100%',
+        filter: 'blur(10px) saturate(1.5)',
+        transform: 'scale(1.15)',
+      }}
     />
   );
 }
@@ -75,7 +89,12 @@ export function ProjectCardPreview({ project }: { project: ProjectState }) {
           src={project.imageStorageUrl}
           alt={project.name}
           onLoad={() => setLoaded(true)}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: loaded ? 'block' : 'none' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: loaded ? 'block' : 'none',
+          }}
         />
       )}
     </>

@@ -8,7 +8,6 @@ interface Props {
 }
 
 export function DashboardHeader({ search, onSearch }: Props) {
-
   return (
     <Box
       component="header"
@@ -24,13 +23,15 @@ export function DashboardHeader({ search, onSearch }: Props) {
       <Group justify="space-between" w="100%">
         <Group gap="sm">
           <img src="/brush.svg" width={36} height={36} alt="Impasto" />
-          <Text fw={600} size="lg" style={{ letterSpacing: '-0.3px' }}>Impasto</Text>
+          <Text fw={600} size="lg" style={{ letterSpacing: '-0.3px' }}>
+            Impasto
+          </Text>
         </Group>
 
         <TextInput
           placeholder="Search projects..."
           value={search}
-          onChange={e => onSearch(e.currentTarget.value)}
+          onChange={(e) => onSearch(e.currentTarget.value)}
           leftSection={<Search size={16} />}
           style={{ width: 300 }}
           styles={{ input: { background: 'var(--mantine-color-dark-7)' } }}

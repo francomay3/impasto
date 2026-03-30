@@ -23,7 +23,12 @@ const asideStyle: React.CSSProperties = {
   scrollbarWidth: 'none',
 };
 
-function TabLayout({ children, aside, rail, toolbar }: {
+function TabLayout({
+  children,
+  aside,
+  rail,
+  toolbar,
+}: {
   children?: React.ReactNode;
   aside: React.ReactNode;
   rail?: React.ReactNode;
@@ -36,11 +41,12 @@ function TabLayout({ children, aside, rail, toolbar }: {
         {toolbar}
         <Box style={{ flex: 1, overflow: 'hidden' }}>{children}</Box>
       </Box>
-      <Box style={asideStyle} className="hide-scrollbar">{aside}</Box>
+      <Box style={asideStyle} className="hide-scrollbar">
+        {aside}
+      </Box>
     </Box>
   );
 }
-
 
 interface Props {
   height?: string | number;
@@ -51,7 +57,7 @@ export function EditorTabs({ height = '100%' }: Props) {
   const { sourceImage } = useCanvasContext();
   const { activeTool, setActiveTool } = useToolContext();
 
-  const toolRailItems: ToolRailItem[] = TOOLS.map(tool => ({
+  const toolRailItems: ToolRailItem[] = TOOLS.map((tool) => ({
     icon: <tool.icon size={16} />,
     label: `${tool.label} (${tool.shortcut})`,
     testId: `tool-${tool.id}`,
@@ -61,12 +67,24 @@ export function EditorTabs({ height = '100%' }: Props) {
 
   if (!sourceImage) {
     return (
-      <Box style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+      <Box
+        style={{
+          height,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 40,
+        }}
+      >
         <Stack align="center" gap="xl" style={{ width: '100%', maxWidth: 560 }}>
           <Stack align="center" gap="xs">
             <ImageUp size={48} color="var(--mantine-color-dark-3)" />
-            <Title order={3} c="dimmed" fw={400}>Start by loading an image</Title>
-            <Text size="sm" c="dimmed">Drop a photo here or click to browse</Text>
+            <Title order={3} c="dimmed" fw={400}>
+              Start by loading an image
+            </Title>
+            <Text size="sm" c="dimmed">
+              Drop a photo here or click to browse
+            </Text>
           </Stack>
           <ImageUploader
             onFileSelected={onFileSelected}
@@ -86,12 +104,24 @@ export function EditorTabs({ height = '100%' }: Props) {
       style={{ height, display: 'flex', flexDirection: 'column' }}
     >
       <Tabs.List>
-        <Tabs.Tab value="filters" leftSection={<Layers size={12} />}>Filters</Tabs.Tab>
-        <Tabs.Tab value="palette" leftSection={<Palette size={12} />}>Palette</Tabs.Tab>
-        <Tabs.Tab value="values" leftSection={<BarChart2 size={12} />} disabled>Values</Tabs.Tab>
-        <Tabs.Tab value="composition" leftSection={<Grid size={12} />} disabled>Composition</Tabs.Tab>
-        <Tabs.Tab value="color-study" leftSection={<Scaling size={12} />} disabled>Color Study</Tabs.Tab>
-        <Tabs.Tab value="paint" leftSection={<Brush size={12} />} disabled>Paint</Tabs.Tab>
+        <Tabs.Tab value="filters" leftSection={<Layers size={12} />}>
+          Filters
+        </Tabs.Tab>
+        <Tabs.Tab value="palette" leftSection={<Palette size={12} />}>
+          Palette
+        </Tabs.Tab>
+        <Tabs.Tab value="values" leftSection={<BarChart2 size={12} />} disabled>
+          Values
+        </Tabs.Tab>
+        <Tabs.Tab value="composition" leftSection={<Grid size={12} />} disabled>
+          Composition
+        </Tabs.Tab>
+        <Tabs.Tab value="color-study" leftSection={<Scaling size={12} />} disabled>
+          Color Study
+        </Tabs.Tab>
+        <Tabs.Tab value="paint" leftSection={<Brush size={12} />} disabled>
+          Paint
+        </Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel value="filters" style={{ flex: 1, overflow: 'hidden' }}>

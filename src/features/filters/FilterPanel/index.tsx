@@ -20,8 +20,8 @@ export function FilterPanel() {
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = filters.findIndex(f => f.id === active.id);
-    const newIndex = filters.findIndex(f => f.id === over.id);
+    const oldIndex = filters.findIndex((f) => f.id === active.id);
+    const newIndex = filters.findIndex((f) => f.id === over.id);
     onReorderFilters(arrayMove(filters, oldIndex, newIndex));
   }
 
@@ -33,17 +33,27 @@ export function FilterPanel() {
         hint="⌘F"
         onClick={() => {
           const rect = addButtonRef.current?.getBoundingClientRect();
-          if (rect) openMenu({ x: rect.left, y: rect.bottom, items: buildFilterMenuItems(onAddFilter) });
+          if (rect)
+            openMenu({ x: rect.left, y: rect.bottom, items: buildFilterMenuItems(onAddFilter) });
         }}
       />
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis, restrictToParentElement]}>
-        <SortableContext items={filters.map(f => f.id)} strategy={verticalListSortingStrategy}>
-          {filters.map(filter => <FilterItem key={filter.id} filter={filter} />)}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+        modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+      >
+        <SortableContext items={filters.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+          {filters.map((filter) => (
+            <FilterItem key={filter.id} filter={filter} />
+          ))}
         </SortableContext>
       </DndContext>
       {filters.length === 0 && (
         <Box ta="center" py="xl">
-          <Text size="xs" c="dimmed">No filters added yet</Text>
+          <Text size="xs" c="dimmed">
+            No filters added yet
+          </Text>
         </Box>
       )}
     </Stack>

@@ -10,7 +10,7 @@ export function addImage(
   store: Map<ImageId, RawImage>,
   order: ImageId[],
   past: Snapshot[],
-  image: RawImage,
+  image: RawImage
 ): ImageId {
   for (const [id, img] of store) if (img === image) return id;
   const id = crypto.randomUUID();
@@ -21,7 +21,10 @@ export function addImage(
     store.delete(evictId);
     let cut = -1;
     for (let i = past.length - 1; i >= 0; i--) {
-      if (past[i].imageId === evictId) { cut = i; break; }
+      if (past[i].imageId === evictId) {
+        cut = i;
+        break;
+      }
     }
     if (cut >= 0) past.splice(0, cut + 1);
   }
@@ -33,11 +36,12 @@ export function toSnapshot(
   store: Map<ImageId, RawImage>,
   order: ImageId[],
   past: Snapshot[],
-  prevImageId: ImageId | null,
+  prevImageId: ImageId | null
 ): Snapshot {
   const { sourceImage, ...rest } = state;
   if (!sourceImage) return { ...rest, imageId: null };
-  if (prevImageId && store.get(prevImageId) === sourceImage) return { ...rest, imageId: prevImageId };
+  if (prevImageId && store.get(prevImageId) === sourceImage)
+    return { ...rest, imageId: prevImageId };
   return { ...rest, imageId: addImage(store, order, past, sourceImage) };
 }
 

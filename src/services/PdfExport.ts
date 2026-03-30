@@ -9,7 +9,7 @@ export function exportPdf(
   granularity: number,
   deltaThreshold: number,
   pigments: Pigment[],
-  title: string = state.name,
+  title: string = state.name
 ): void {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageW = 210;
@@ -29,13 +29,24 @@ export function exportPdf(
     doc.addImage(filteredCanvas.toDataURL('image/jpeg', 0.8), 'JPEG', margin, 35, imgW, imgH);
     doc.setFontSize(8);
     doc.text('Filtered Original', margin, 35 + imgH + 4);
-  } catch { /* skip if tainted */ }
+  } catch {
+    /* skip if tainted */
+  }
 
   try {
-    doc.addImage(indexedCanvas.toDataURL('image/jpeg', 0.8), 'JPEG', margin * 2 + imgW, 35, imgW, imgH);
+    doc.addImage(
+      indexedCanvas.toDataURL('image/jpeg', 0.8),
+      'JPEG',
+      margin * 2 + imgW,
+      35,
+      imgW,
+      imgH
+    );
     doc.setFontSize(8);
     doc.text('Indexed Result', margin * 2 + imgW, 35 + imgH + 4);
-  } catch { /* skip if tainted */ }
+  } catch {
+    /* skip if tainted */
+  }
 
   let y = 35 + imgH + 15;
   doc.setFontSize(12);
@@ -51,10 +62,13 @@ export function exportPdf(
   }
 
   for (const group of groups) {
-    const groupColors = state.palette.filter(c => c.groupId === group.id);
+    const groupColors = state.palette.filter((c) => c.groupId === group.id);
     if (groupColors.length === 0) continue;
 
-    if (y > 260) { doc.addPage(); y = 20; }
+    if (y > 260) {
+      doc.addPage();
+      y = 20;
+    }
 
     doc.setFontSize(10);
     doc.setTextColor(80);
@@ -67,9 +81,14 @@ export function exportPdf(
     y += 6;
   }
 
-  const ungrouped = state.palette.filter(c => !c.groupId || !groups.find(g => g.id === c.groupId));
+  const ungrouped = state.palette.filter(
+    (c) => !c.groupId || !groups.find((g) => g.id === c.groupId)
+  );
   if (ungrouped.length > 0) {
-    if (y > 260) { doc.addPage(); y = 20; }
+    if (y > 260) {
+      doc.addPage();
+      y = 20;
+    }
     doc.setFontSize(10);
     doc.setTextColor(80);
     doc.text('Ungrouped', margin, y);

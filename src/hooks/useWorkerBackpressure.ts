@@ -12,7 +12,11 @@ type Options<TOutput> = {
  * - If a new schedule() arrives while busy, it is queued and fired on completion.
  * - The caller sets fireRef.current each render to the function that builds and posts the message.
  */
-export function useWorkerBackpressure<TOutput>({ createWorker, onMessage, errorLabel = 'worker' }: Options<TOutput>) {
+export function useWorkerBackpressure<TOutput>({
+  createWorker,
+  onMessage,
+  errorLabel = 'worker',
+}: Options<TOutput>) {
   const workerRef = useRef<Worker | null>(null);
   const busyRef = useRef(false);
   const pendingRef = useRef(false);

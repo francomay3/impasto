@@ -26,7 +26,9 @@ export function useFilteredImage(sourceImage: RawImage | null, filters: FilterIn
         cacheRef.current[dirtyIndex + 1 + i] = new Uint8Array(steps[i]);
       }
       cacheRef.current.length = currentFilters.length + 1;
-      setDisplayData(new ImageData(new Uint8ClampedArray(steps[steps.length - 1]), source.width, source.height));
+      setDisplayData(
+        new ImageData(new Uint8ClampedArray(steps[steps.length - 1]), source.width, source.height)
+      );
       prevFiltersRef.current = sentFiltersRef.current;
     },
     errorLabel: 'img_pipeline worker',
@@ -38,7 +40,9 @@ export function useFilteredImage(sourceImage: RawImage | null, filters: FilterIn
     if (!source) return;
 
     if (currentFilters.length === 0) {
-      setDisplayData(new ImageData(new Uint8ClampedArray(source.data), source.width, source.height));
+      setDisplayData(
+        new ImageData(new Uint8ClampedArray(source.data), source.width, source.height)
+      );
       prevFiltersRef.current = [];
       return;
     }
@@ -47,8 +51,10 @@ export function useFilteredImage(sourceImage: RawImage | null, filters: FilterIn
     const prev = prevFiltersRef.current;
     let dirtyIndex = Math.min(prev.length, currentFilters.length);
     for (let i = 0; i < dirtyIndex; i++) {
-      if (prev[i].type !== currentFilters[i].type ||
-          JSON.stringify(prev[i].params) !== JSON.stringify(currentFilters[i].params)) {
+      if (
+        prev[i].type !== currentFilters[i].type ||
+        JSON.stringify(prev[i].params) !== JSON.stringify(currentFilters[i].params)
+      ) {
         dirtyIndex = i;
         break;
       }
@@ -71,8 +77,14 @@ export function useFilteredImage(sourceImage: RawImage | null, filters: FilterIn
     busyRef.current = true;
     sentFiltersRef.current = [...currentFilters];
     workerRef.current!.postMessage(
-      { pixels: pixelsCopy, width: source.width, height: source.height, filters: filtersToApply, dirtyIndex },
-      [pixelsCopy.buffer],
+      {
+        pixels: pixelsCopy,
+        width: source.width,
+        height: source.height,
+        filters: filtersToApply,
+        dirtyIndex,
+      },
+      [pixelsCopy.buffer]
     );
   };
 
@@ -82,7 +94,7 @@ export function useFilteredImage(sourceImage: RawImage | null, filters: FilterIn
     if (px > WARN_PIXELS) {
       console.warn(
         `[useFilteredImage] Source is ${sourceImage.width}×${sourceImage.height} ` +
-        `(${(px / 1e6).toFixed(1)}MP). Keep images under 2MP (~1920×1080) for best performance.`
+          `(${(px / 1e6).toFixed(1)}MP). Keep images under 2MP (~1920×1080) for best performance.`
       );
     }
     cacheRef.current = [new Uint8Array(sourceImage.data)];
@@ -91,7 +103,7 @@ export function useFilteredImage(sourceImage: RawImage | null, filters: FilterIn
   }, [sourceImage, schedule]);
 
   // Deep-compare filters so reference changes don't cause unnecessary work.
-  const filtersKey = JSON.stringify(filters.map(f => ({ type: f.type, params: f.params })));
+  const filtersKey = JSON.stringify(filters.map((f) => ({ type: f.type, params: f.params })));
   useEffect(() => {
     if (!sourceImage) return;
     schedule();

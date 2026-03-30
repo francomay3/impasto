@@ -6,13 +6,19 @@ interface ShortcutRow {
 }
 
 const SHORTCUTS: ShortcutRow[] = [
-  { action: 'Save',                  keys: [['⌘', 'S']] },
-  { action: 'Undo',                  keys: [['⌘', 'Z']] },
-  { action: 'Redo',                  keys: [['⌘', '⇧', 'Z'], ['⌘', 'Y']] },
-  { action: 'Add Filter',            keys: [['⌘', 'F']] },
-  { action: 'Add Color to Palette',  keys: [['C']] },
-  { action: 'Keyboard Shortcuts',    keys: [['?']] },
-  { action: 'Cancel / Close',        keys: [['Esc']] },
+  { action: 'Save', keys: [['⌘', 'S']] },
+  { action: 'Undo', keys: [['⌘', 'Z']] },
+  {
+    action: 'Redo',
+    keys: [
+      ['⌘', '⇧', 'Z'],
+      ['⌘', 'Y'],
+    ],
+  },
+  { action: 'Add Filter', keys: [['⌘', 'F']] },
+  { action: 'Add Color to Palette', keys: [['C']] },
+  { action: 'Keyboard Shortcuts', keys: [['?']] },
+  { action: 'Cancel / Close', keys: [['Esc']] },
 ];
 
 function KeyCombo({ keys }: { keys: string[] }) {
@@ -21,7 +27,11 @@ function KeyCombo({ keys }: { keys: string[] }) {
       {keys.map((k, i) => (
         <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <Kbd size="xs">{k}</Kbd>
-          {i < keys.length - 1 && <Text size="xs" c="dimmed">+</Text>}
+          {i < keys.length - 1 && (
+            <Text size="xs" c="dimmed">
+              +
+            </Text>
+          )}
         </span>
       ))}
     </Group>
@@ -40,13 +50,19 @@ export function KeyboardShortcutsModal({ opened, onClose }: Props) {
         <Table.Tbody>
           {SHORTCUTS.map(({ action, keys }) => (
             <Table.Tr key={action}>
-              <Table.Td><Text size="sm">{action}</Text></Table.Td>
+              <Table.Td>
+                <Text size="sm">{action}</Text>
+              </Table.Td>
               <Table.Td>
                 <Group gap="xs" justify="flex-end" wrap="nowrap">
                   {keys.map((combo, i) => (
                     <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <KeyCombo keys={combo} />
-                      {i < keys.length - 1 && <Text size="xs" c="dimmed">/</Text>}
+                      {i < keys.length - 1 && (
+                        <Text size="xs" c="dimmed">
+                          /
+                        </Text>
+                      )}
                     </span>
                   ))}
                 </Group>

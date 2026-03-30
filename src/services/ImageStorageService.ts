@@ -20,12 +20,15 @@ function compressToWebP(file: File | Blob): Promise<Blob> {
       canvas.height = Math.round(img.height * scale);
       canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
       canvas.toBlob(
-        (blob) => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')),
+        (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
         'image/webp',
-        WEBP_QUALITY,
+        WEBP_QUALITY
       );
     };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Image load failed'));
+    };
     img.src = url;
   });
 }
@@ -33,7 +36,7 @@ function compressToWebP(file: File | Blob): Promise<Blob> {
 export async function uploadProjectImage(
   userId: string,
   projectId: string,
-  file: File | Blob,
+  file: File | Blob
 ): Promise<string> {
   const compressed = await compressToWebP(file);
   const r = imageRef(userId, projectId);

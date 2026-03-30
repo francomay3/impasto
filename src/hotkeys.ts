@@ -5,16 +5,16 @@
  */
 
 export const HOTKEYS = {
-  SAVE:       'mod+S',
-  UNDO:       'mod+Z',
-  REDO:       'mod+shift+Z',
-  REDO_ALT:   'mod+Y',
-  CANCEL:     'Escape',
-  ADD_FILTER:      'mod+F',
-  ADD_COLOR:       'C',
-  DELETE_COLOR:    'X',
-  SHOW_SHORTCUTS:  '?',
+  SAVE: 'mod+S',
+  UNDO: 'mod+Z',
+  REDO: 'mod+shift+Z',
+  REDO_ALT: 'mod+Y',
+  CANCEL: 'Escape',
+  ADD_FILTER: 'mod+F',
+  ADD_COLOR: 'C',
+  DELETE_COLOR: 'X',
+  SHOW_SHORTCUTS: '?',
   TOOL_EYEDROPPER: 'E',
-  TOOL_SELECT:     'V',
-  TOOL_MARQUEE:    'S',
+  TOOL_SELECT: 'V',
+  TOOL_MARQUEE: 'S',
 } as const;

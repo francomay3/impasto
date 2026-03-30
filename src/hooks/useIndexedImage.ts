@@ -38,8 +38,14 @@ export function useIndexedImage(sourceImage: RawImage | null, sigma: number, pal
     const pixelsCopy = new Uint8Array(source.data);
     busyRef.current = true;
     workerRef.current!.postMessage(
-      { pixels: pixelsCopy, width: source.width, height: source.height, sigma: sigmaRef.current, paletteJson: JSON.stringify(paletteRef.current) },
-      [pixelsCopy.buffer],
+      {
+        pixels: pixelsCopy,
+        width: source.width,
+        height: source.height,
+        sigma: sigmaRef.current,
+        paletteJson: JSON.stringify(paletteRef.current),
+      },
+      [pixelsCopy.buffer]
     );
   };
 

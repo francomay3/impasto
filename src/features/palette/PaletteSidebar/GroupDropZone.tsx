@@ -19,7 +19,9 @@ export function GroupDropZone({ groupId, isDraggingColor }: Props) {
         height: 28,
         borderRadius: 4,
         border: `1px dashed ${isOver ? 'var(--mantine-color-blue-4)' : 'var(--mantine-color-dark-3)'}`,
-        background: isOver ? 'color-mix(in srgb, var(--mantine-color-blue-4) 8%, transparent)' : 'transparent',
+        background: isOver
+          ? 'color-mix(in srgb, var(--mantine-color-blue-4) 8%, transparent)'
+          : 'transparent',
         transition: 'all 0.15s',
       }}
     />

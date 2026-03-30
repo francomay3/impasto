@@ -23,20 +23,37 @@ const labelStyle: React.CSSProperties = {
 export function PaletteTabContent() {
   const { sourceImage, indexedCanvasRef } = useCanvasContext();
   const { filters, preIndexingBlur } = useFilterContext();
-  const { palette, samplingColorId, isAddingColor, onSampleColor, onCancelSampleColor, onAddNewColor, onCancelAddingColor } = usePaletteContext();
+  const {
+    palette,
+    samplingColorId,
+    isAddingColor,
+    onSampleColor,
+    onCancelSampleColor,
+    onAddNewColor,
+    onCancelAddingColor,
+  } = usePaletteContext();
   const filteredRef = useRef<HTMLCanvasElement>(null);
 
   const filteredData = useFilteredImage(sourceImage, filters);
 
   const labPalette = useMemo(
-    () => palette.flatMap(c => {
-      try { const [l, a, b] = chroma(c.hex).lab(); return [{ l, a, b }]; }
-      catch { return []; }
-    }),
-    [palette],
+    () =>
+      palette.flatMap((c) => {
+        try {
+          const [l, a, b] = chroma(c.hex).lab();
+          return [{ l, a, b }];
+        } catch {
+          return [];
+        }
+      }),
+    [palette]
   );
 
-  const { data: indexedData, isLoading: isIndexedLoading } = useIndexedImage(filteredData, preIndexingBlur, labPalette);
+  const { data: indexedData, isLoading: isIndexedLoading } = useIndexedImage(
+    filteredData,
+    preIndexingBlur,
+    labPalette
+  );
 
   useEffect(() => {
     const canvas = filteredRef.current;
@@ -62,23 +79,42 @@ export function PaletteTabContent() {
           variant="filtered"
           overlayChildren={
             <>
-              {isAddingColor
-                ? <SamplerOverlay canvasRef={filteredRef} onSample={onAddNewColor} onCancel={onCancelAddingColor} />
-                : samplingColorId
-                ? <SamplerOverlay canvasRef={filteredRef} onSample={onSampleColor} onCancel={onCancelSampleColor} />
-                : null}
+              {isAddingColor ? (
+                <SamplerOverlay
+                  canvasRef={filteredRef}
+                  onSample={onAddNewColor}
+                  onCancel={onCancelAddingColor}
+                />
+              ) : samplingColorId ? (
+                <SamplerOverlay
+                  canvasRef={filteredRef}
+                  onSample={onSampleColor}
+                  onCancel={onCancelSampleColor}
+                />
+              ) : null}
               <SamplePinsOverlay canvasRef={filteredRef} />
               <MarqueeSelectOverlay canvasRef={filteredRef} />
             </>
           }
         />
-        <Text style={labelStyle} size="xs" c="dimmed">Filtered</Text>
+        <Text style={labelStyle} size="xs" c="dimmed">
+          Filtered
+        </Text>
       </Box>
-      <Box style={{ width: 1, height: '100%', background: 'var(--mantine-color-dark-6)', flexShrink: 0 }} />
+      <Box
+        style={{
+          width: 1,
+          height: '100%',
+          background: 'var(--mantine-color-dark-6)',
+          flexShrink: 0,
+        }}
+      />
       <Box style={{ flex: 1, minWidth: 0, position: 'relative', height: '100%', display: 'flex' }}>
         <CanvasViewport ref={indexedCanvasRef} variant="indexed" />
         <Group style={{ ...labelStyle, gap: 6 }}>
-          <Text size="xs" c="dimmed">Indexed colors</Text>
+          <Text size="xs" c="dimmed">
+            Indexed colors
+          </Text>
           {isIndexedLoading && <Loader size="xs" />}
         </Group>
       </Box>

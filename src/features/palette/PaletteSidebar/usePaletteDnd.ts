@@ -11,7 +11,11 @@ import {
 import { SmartMouseSensor } from '../../../utils/dndSensor';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { Color, ColorGroup } from '../../../types';
-import { movePaletteItemBefore, appendPaletteItemToGroup, reorderWithinGroup } from './paletteDndTransforms';
+import {
+  movePaletteItemBefore,
+  appendPaletteItemToGroup,
+  reorderWithinGroup,
+} from './paletteDndTransforms';
 
 interface Options {
   palette: Color[];
@@ -31,7 +35,12 @@ interface Return {
   handleDragCancel: () => void;
 }
 
-export function usePaletteDnd({ palette, groups, onReorderGroups, onReorderPalette }: Options): Return {
+export function usePaletteDnd({
+  palette,
+  groups,
+  onReorderGroups,
+  onReorderPalette,
+}: Options): Return {
   const [draggingType, setDraggingType] = useState<'group' | 'color' | null>(null);
   const [dragPalette, setDragPalette] = useState<Color[] | null>(null);
   const sensors = useSensors(useSensor(SmartMouseSensor));
@@ -41,9 +50,17 @@ export function usePaletteDnd({ palette, groups, onReorderGroups, onReorderPalet
   const collisionDetection: CollisionDetection = useCallback((args) => {
     const type = args.active.data.current?.type;
     if (type === 'group') {
-      return closestCenter({ ...args, droppableContainers: args.droppableContainers.filter(c => c.data.current?.type === 'group') });
+      return closestCenter({
+        ...args,
+        droppableContainers: args.droppableContainers.filter(
+          (c) => c.data.current?.type === 'group'
+        ),
+      });
     }
-    return closestCenter({ ...args, droppableContainers: args.droppableContainers.filter(c => c.data.current?.type !== 'group') });
+    return closestCenter({
+      ...args,
+      droppableContainers: args.droppableContainers.filter((c) => c.data.current?.type !== 'group'),
+    });
   }, []);
 
   function handleDragStart(event: DragStartEvent) {
@@ -60,7 +77,9 @@ export function usePaletteDnd({ palette, groups, onReorderGroups, onReorderPalet
     if (active.data.current?.type !== 'color') return;
     if (over.data.current?.type !== 'color') return;
 
-    setDragPalette(current => movePaletteItemBefore(current!, String(active.id), String(over.id)));
+    setDragPalette((current) =>
+      movePaletteItemBefore(current!, String(active.id), String(over.id))
+    );
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -78,8 +97,8 @@ export function usePaletteDnd({ palette, groups, onReorderGroups, onReorderPalet
     const overData = over.data.current;
 
     if (activeData?.type === 'group' && overData?.type === 'group') {
-      const oldIdx = groups.findIndex(g => g.id === active.id);
-      const newIdx = groups.findIndex(g => g.id === over.id);
+      const oldIdx = groups.findIndex((g) => g.id === active.id);
+      const newIdx = groups.findIndex((g) => g.id === over.id);
       if (oldIdx !== -1 && newIdx !== -1) onReorderGroups(arrayMove(groups, oldIdx, newIdx));
       return;
     }
@@ -113,5 +132,14 @@ export function usePaletteDnd({ palette, groups, onReorderGroups, onReorderPalet
     setDragPalette(null);
   }
 
-  return { sensors, collisionDetection, displayPalette, draggingType, handleDragStart, handleDragOver, handleDragEnd, handleDragCancel };
+  return {
+    sensors,
+    collisionDetection,
+    displayPalette,
+    draggingType,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    handleDragCancel,
+  };
 }

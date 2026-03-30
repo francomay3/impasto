@@ -5,7 +5,7 @@ function toBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promi
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
       type,
-      quality,
+      quality
     );
   });
 }
