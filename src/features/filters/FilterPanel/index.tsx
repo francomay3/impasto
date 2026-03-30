@@ -6,7 +6,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SmartMouseSensor } from '../../../utils/dndSensor';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { FilterItem } from './FilterItem';
-import { AddItemButton } from '../../../components/AddItemButton';
+import { AddItemButton } from '../../../shared/AddItemButton';
 import { useFilterContext } from '../FilterContext';
 import { useContextMenu } from '../../../context/ContextMenuContext';
 import { buildFilterMenuItems } from './filterMenuData';

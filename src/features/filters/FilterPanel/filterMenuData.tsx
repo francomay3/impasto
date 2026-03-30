@@ -1,7 +1,7 @@
 import { SlidersHorizontal, Palette, Layers, Droplets } from 'lucide-react';
-import type { FilterType } from '../../types';
-import { FILTER_LABELS } from '../../types';
-import type { ContextMenuEntry } from '../../context/ContextMenuContext';
+import type { FilterType } from '../../../types';
+import { FILTER_LABELS } from '../../../types';
+import type { ContextMenuEntry } from '../../../context/ContextMenuContext';
 
 export const FILTER_ICONS: Record<FilterType, React.ReactNode> = {
   'brightness-contrast': <SlidersHorizontal size={14} />,

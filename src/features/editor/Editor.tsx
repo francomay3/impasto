@@ -15,7 +15,7 @@ import { ReplaceImageModal, type ReplaceImageModalRef } from './ReplaceImageModa
 import { AppHeader } from './AppHeader';
 import { ExportModal } from './ExportModal';
 import { EditorTabs } from './EditorTabs';
-import { ErrorBoundary } from '../../components/ErrorBoundary';
+import { ErrorBoundary } from '../../shared/ErrorBoundary';
 import { PaletteContext } from '../palette/PaletteContext';
 import { FilterContext } from '../filters/FilterContext';
 import { EditorContext } from './EditorContext';

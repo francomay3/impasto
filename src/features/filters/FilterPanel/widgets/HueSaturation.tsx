@@ -1,5 +1,5 @@
 import { Stack } from '@mantine/core';
-import type { HueSaturationParams } from '../../../types';
+import type { HueSaturationParams } from '../../../../types';
 import { FilterSlider } from '../FilterSlider';
 
 interface Props {

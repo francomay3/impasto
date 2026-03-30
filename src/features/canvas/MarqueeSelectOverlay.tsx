@@ -4,7 +4,7 @@ import { Box } from '@mantine/core';
 import { PinEditPopover } from '../palette/PinEditPopover';
 import { useCanvasContext } from './CanvasContext';
 import { usePaletteContext } from '../palette/PaletteContext';
-import { useEditorContext } from '../../editor/EditorContext';
+import { useEditorContext } from '../editor/EditorContext';
 import { useToolContext } from './ToolContext';
 import { useCanvasMeasure } from './useCanvasMeasure';
 import { useColorContextMenu } from '../palette/useColorContextMenu';

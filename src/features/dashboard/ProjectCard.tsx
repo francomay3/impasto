@@ -3,7 +3,7 @@ import { MoreHorizontal, FolderOpen, ExternalLink, Pencil, Trash2 } from 'lucide
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ProjectState } from '../../types';
-import useConfirmDialog from '../useConfirmDialog';
+import useConfirmDialog from '../../shared/useConfirmDialog';
 import { ProjectCardPreview } from './ProjectCardPreview';
 import { useContextMenu } from '../../context/ContextMenuContext';
 

@@ -5,7 +5,7 @@ import { useProjects } from './useProjects';
 import { DashboardHeader } from './DashboardHeader';
 import { ProjectGrid } from './ProjectGrid';
 import { UpgradeModal } from './UpgradeModal';
-import { ErrorBoundary } from '../../components/ErrorBoundary';
+import { ErrorBoundary } from '../../shared/ErrorBoundary';
 
 const FREE_PROJECT_LIMIT = 10;
 

@@ -3,7 +3,7 @@ import { AuthGuard } from '../features/auth/AuthGuard';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { ProjectPage } from '../features/editor/ProjectPage';
 import { ContextMenuProvider } from '../context/ContextMenuContext';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ErrorBoundary } from '../shared/ErrorBoundary';
 
 export function AppRouter() {
   return (

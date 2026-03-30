@@ -6,7 +6,7 @@ import { TOOLS } from '../../../tools';
 import { useToolContext } from '../../canvas/ToolContext';
 import { FilterPanel } from '../../filters/FilterPanel';
 import { PaletteSidebar } from '../../palette/PaletteSidebar';
-import { ErrorBoundary } from '../../../components/ErrorBoundary';
+import { ErrorBoundary } from '../../../shared/ErrorBoundary';
 import { FiltersTabContent } from './FiltersTabContent';
 import { PaletteTabContent } from './PaletteTabContent';
 import { ImageUploader } from '../../canvas/ImageUploader';

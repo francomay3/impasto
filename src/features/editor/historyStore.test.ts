@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { addImage, toSnapshot, fromSnapshot, MAX_HISTORY, MAX_IMAGES, type Snapshot, type ImageId } from './historyStore'
-import type { ProjectState, RawImage } from '../types'
+import type { ProjectState, RawImage } from '../../types'
 
 function makeImage(tag: string): RawImage {
   return {

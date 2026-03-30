@@ -1,7 +1,7 @@
 import type React from 'react';
 import { MousePointer2 } from 'lucide-react';
-import { RectangleSelect } from './components/icons/RectangleSelect';
-import { EyedropperAdd } from './components/icons/EyedropperAdd';
+import { RectangleSelect } from './shared/icons/RectangleSelect';
+import { EyedropperAdd } from './shared/icons/EyedropperAdd';
 
 export type ToolId = 'select' | 'marquee' | 'eyedropper';
 

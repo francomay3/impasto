@@ -1,5 +1,5 @@
 import { Stack } from '@mantine/core';
-import type { BlurParams } from '../../../types';
+import type { BlurParams } from '../../../../types';
 import { FilterSlider } from '../FilterSlider';
 
 interface Props {

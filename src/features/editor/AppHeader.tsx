@@ -2,8 +2,8 @@ import { AppShell, Group, Menu, Skeleton, Stack, Text, UnstyledButton } from '@m
 import { useDisclosure, useHotkeys } from '@mantine/hooks';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { EditableTitle } from '../../components/EditableTitle';
-import { UserMenu } from '../../components/UserMenu';
+import { EditableTitle } from '../../shared/EditableTitle';
+import { UserMenu } from '../../shared/UserMenu';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
 import { FilterMenuItems } from '../filters/FilterPanel/AddFilterMenu';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';

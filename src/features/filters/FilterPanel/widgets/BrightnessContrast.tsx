@@ -1,5 +1,5 @@
 import { Stack } from '@mantine/core';
-import type { BrightnessContrastParams } from '../../../types';
+import type { BrightnessContrastParams } from '../../../../types';
 import { FilterSlider } from '../FilterSlider';
 
 interface Props {

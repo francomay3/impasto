@@ -3,7 +3,7 @@ import { Box, Text, ActionIcon, Tooltip, TextInput } from '@mantine/core';
 import { X, GripVertical, ChevronDown, ChevronRight, Pencil, Eye, EyeOff } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import useConfirmDialog from '../../../components/useConfirmDialog';
+import useConfirmDialog from '../../../shared/useConfirmDialog';
 import type { ColorGroup } from '../../../types';
 import { GroupDropZone } from './GroupDropZone';
 import { useContextMenu } from '../../../context/ContextMenuContext';

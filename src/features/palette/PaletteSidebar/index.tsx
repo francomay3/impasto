@@ -3,7 +3,7 @@ import { Stack, Text, Group, ActionIcon, Tooltip } from '@mantine/core';
 import { DndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { FolderPlus } from 'lucide-react';
-import { AddItemButton } from '../../../components/AddItemButton';
+import { AddItemButton } from '../../../shared/AddItemButton';
 import { SortableColorItem } from './ColorItem';
 import { GroupDropZone } from './GroupDropZone';
 import { SortableGroup } from './SortableGroup';

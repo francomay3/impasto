@@ -6,7 +6,7 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AppRouter } from './routes/AppRouter';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorBoundary } from './shared/ErrorBoundary';
 
 // Custom dark palette matching the app's design tokens.
 // Use var(--mantine-color-dark-N) in components instead of hardcoded hex values.

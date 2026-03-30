@@ -1,6 +1,6 @@
 import { Stack, Group, Text, Box, ActionIcon, Tooltip, Slider } from '@mantine/core';
 import { Pipette, RotateCcw } from 'lucide-react';
-import type { LevelsParams } from '../../../types';
+import type { LevelsParams } from '../../../../types';
 
 interface LevelPointProps {
   label: string;

@@ -1,6 +1,6 @@
 import { Menu, Text } from '@mantine/core';
-import type { FilterType } from '../../types';
-import { FILTER_LABELS } from '../../types';
+import type { FilterType } from '../../../types';
+import { FILTER_LABELS } from '../../../types';
 import { FILTER_ICONS, FILTER_GROUPS } from './filterMenuData';
 
 interface FilterMenuItemsProps {

@@ -2,8 +2,8 @@ import { Group, Text } from '@mantine/core';
 import { ArrowUpDown, Download, RotateCcw, SplitSquareHorizontal } from 'lucide-react';
 import { useToolContext } from '../ToolContext';
 import { useFilterContext } from '../../filters/FilterContext';
-import { SlimNumberInput } from '../../../components/SlimNumberInput';
-import { SlimButton } from '../../../components/SlimButton';
+import { SlimNumberInput } from '../../../shared/SlimNumberInput';
+import { SlimButton } from '../../../shared/SlimButton';
 
 const barStyle: React.CSSProperties = {
   flexShrink: 0,

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { movePaletteItemBefore, appendPaletteItemToGroup, reorderWithinGroup } from './paletteDndTransforms'
-import type { Color } from '../../types'
+import type { Color } from '../../../types'
 
 function color(id: string, groupId?: string): Color {
   return { id, hex: '#000000', locked: false, ratio: 0, mixRecipe: '', groupId }

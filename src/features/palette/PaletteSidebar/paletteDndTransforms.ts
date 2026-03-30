@@ -1,5 +1,5 @@
 import { arrayMove } from '@dnd-kit/sortable';
-import type { Color } from '../../types';
+import type { Color } from '../../../types';
 
 /**
  * Moves a color from its current position to just before `overId`,
