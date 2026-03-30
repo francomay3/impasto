@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { ProjectState } from '../types';
-import { DEFAULT_PROJECT_STATE } from '../types';
+import type { ProjectState } from '../../types';
+import { DEFAULT_PROJECT_STATE } from '../../types';
 import {
   listFirestoreProjects,
   createFirestoreProject,
   deleteFirestoreProject,
   renameFirestoreProject,
-} from '../services/FirestoreService';
-import { useAuth } from '../features/auth/AuthContext';
+} from '../../services/FirestoreService';
+import { useAuth } from '../auth/AuthContext';
 
 export function useProjects() {
   const { user } = useAuth();

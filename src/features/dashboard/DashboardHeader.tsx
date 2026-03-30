@@ -1,6 +1,6 @@
 import { Group, TextInput, Text, Box } from '@mantine/core';
 import { Search } from 'lucide-react';
-import { UserMenu } from '../UserMenu';
+import { UserMenu } from '../../components/UserMenu';
 
 interface Props {
   search: string;

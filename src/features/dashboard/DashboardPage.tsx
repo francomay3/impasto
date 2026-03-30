@@ -1,11 +1,11 @@
 import { Box, Container, Loader, Center } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useProjects } from '../hooks/useProjects';
-import { DashboardHeader } from '../components/dashboard/DashboardHeader';
-import { ProjectGrid } from '../components/dashboard/ProjectGrid';
-import { UpgradeModal } from '../components/dashboard/UpgradeModal';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { useProjects } from './useProjects';
+import { DashboardHeader } from './DashboardHeader';
+import { ProjectGrid } from './ProjectGrid';
+import { UpgradeModal } from './UpgradeModal';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 
 const FREE_PROJECT_LIMIT = 10;
 

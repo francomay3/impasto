@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthGuard } from '../features/auth/AuthGuard';
-import { DashboardPage } from '../pages/DashboardPage';
+import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { ProjectPage } from '../pages/ProjectPage';
 import { ContextMenuProvider } from '../context/ContextMenuContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
