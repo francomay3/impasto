@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthGuard } from './AuthGuard';
+import { AuthGuard } from '../features/auth/AuthGuard';
 import { DashboardPage } from '../pages/DashboardPage';
 import { ProjectPage } from '../pages/ProjectPage';
 import { ContextMenuProvider } from '../context/ContextMenuContext';

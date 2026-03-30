@@ -7,7 +7,7 @@ import {
   deleteFirestoreProject,
   renameFirestoreProject,
 } from '../services/FirestoreService';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../features/auth/AuthContext';
 
 export function useProjects() {
   const { user } = useAuth();

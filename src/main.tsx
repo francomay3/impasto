@@ -4,7 +4,7 @@ import { MantineProvider, createTheme, DEFAULT_THEME, type MantineColorsTuple } 
 import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './features/auth/AuthContext';
 import { AppRouter } from './routes/AppRouter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
