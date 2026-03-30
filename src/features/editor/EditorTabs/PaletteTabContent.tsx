@@ -1,15 +1,15 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { Box, Group, Loader, Text } from '@mantine/core';
 import chroma from 'chroma-js';
-import { useCanvasContext } from '../../features/canvas/CanvasContext';
-import { useFilterContext } from '../../features/filters/FilterContext';
-import { usePaletteContext } from '../../features/palette/PaletteContext';
-import { useFilteredImage } from '../../features/filters/useFilteredImage';
-import { useIndexedImage } from '../../hooks/useIndexedImage';
-import { CanvasViewport } from '../../features/canvas/CanvasViewport';
-import { SamplePinsOverlay } from '../../features/canvas/SamplePinsOverlay';
-import { SamplerOverlay } from '../../features/canvas/SamplerOverlay';
-import { MarqueeSelectOverlay } from '../../features/canvas/MarqueeSelectOverlay';
+import { useCanvasContext } from '../../canvas/CanvasContext';
+import { useFilterContext } from '../../filters/FilterContext';
+import { usePaletteContext } from '../../palette/PaletteContext';
+import { useFilteredImage } from '../../filters/useFilteredImage';
+import { useIndexedImage } from '../../../hooks/useIndexedImage';
+import { CanvasViewport } from '../../canvas/CanvasViewport';
+import { SamplePinsOverlay } from '../../canvas/SamplePinsOverlay';
+import { SamplerOverlay } from '../../canvas/SamplerOverlay';
+import { MarqueeSelectOverlay } from '../../canvas/MarqueeSelectOverlay';
 
 const labelStyle: React.CSSProperties = {
   position: 'absolute',

@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import type { RefObject } from 'react';
-import type { ToolId } from '../tools';
-import type { ColorSample, ProjectState } from '../types';
-import { prepareImage } from '../utils/imageResize';
-import type { ReplaceImageModalRef } from '../components/ReplaceImageModal';
+import type { ToolId } from '../../tools';
+import type { ColorSample, ProjectState } from '../../types';
+import { prepareImage } from '../../utils/imageResize';
+import type { ReplaceImageModalRef } from './ReplaceImageModal';
 
 interface Params {
   state: ProjectState;

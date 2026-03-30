@@ -9,7 +9,7 @@ import { GroupDropZone } from './GroupDropZone';
 import { SortableGroup } from './SortableGroup';
 import { usePaletteDnd } from './usePaletteDnd';
 import { usePaletteContext } from '../PaletteContext';
-import { useEditorContext } from '../../../context/EditorContext';
+import { useEditorContext } from '../../editor/EditorContext';
 
 export function PaletteSidebar() {
   const {

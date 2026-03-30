@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect, type RefObject } from 'react'
 import { Tooltip } from '@mantine/core';
 import { useCanvasContext } from './CanvasContext';
 import { usePaletteContext } from '../palette/PaletteContext';
-import { useEditorContext } from '../../context/EditorContext';
+import { useEditorContext } from '../../editor/EditorContext';
 import { useToolContext } from './ToolContext';
 import { useColorContextMenu } from '../palette/useColorContextMenu';
 import { useSelectionContextMenu } from '../palette/useSelectionContextMenu';

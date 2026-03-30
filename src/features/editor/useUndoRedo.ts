@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
-import type { ProjectState } from '../types';
+import type { ProjectState } from '../../types';
 
 interface Options {
   historyUndo: () => ProjectState | null;

@@ -1,4 +1,4 @@
-import type { ProjectState, RawImage } from '../types';
+import type { ProjectState, RawImage } from '../../types';
 
 export type ImageId = string;
 export type Snapshot = Omit<ProjectState, 'sourceImage'> & { imageId: ImageId | null };

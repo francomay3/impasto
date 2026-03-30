@@ -1,18 +1,18 @@
 import { Box, Stack, Tabs, Text, Title } from '@mantine/core';
 import { Layers, Palette, BarChart2, Grid, Scaling, Brush, ImageUp } from 'lucide-react';
-import { ToolRail } from '../../features/canvas/ToolRail';
-import type { ToolRailItem } from '../../features/canvas/ToolRail';
-import { TOOLS } from '../../tools';
-import { useToolContext } from '../../features/canvas/ToolContext';
-import { FilterPanel } from '../../features/filters/FilterPanel';
-import { PaletteSidebar } from '../../features/palette/PaletteSidebar';
-import { ErrorBoundary } from '../ErrorBoundary';
+import { ToolRail } from '../../canvas/ToolRail';
+import type { ToolRailItem } from '../../canvas/ToolRail';
+import { TOOLS } from '../../../tools';
+import { useToolContext } from '../../canvas/ToolContext';
+import { FilterPanel } from '../../filters/FilterPanel';
+import { PaletteSidebar } from '../../palette/PaletteSidebar';
+import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import { FiltersTabContent } from './FiltersTabContent';
 import { PaletteTabContent } from './PaletteTabContent';
-import { ImageUploader } from '../../features/canvas/ImageUploader';
-import { useEditorContext } from '../../context/EditorContext';
-import { useCanvasContext } from '../../features/canvas/CanvasContext';
-import { ContextualToolbar } from '../../features/canvas/ContextualToolbar';
+import { ImageUploader } from '../../canvas/ImageUploader';
+import { useEditorContext } from '../EditorContext';
+import { useCanvasContext } from '../../canvas/CanvasContext';
+import { ContextualToolbar } from '../../canvas/ContextualToolbar';
 
 const asideStyle: React.CSSProperties = {
   width: 260,

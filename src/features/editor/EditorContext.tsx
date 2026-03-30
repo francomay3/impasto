@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { SaveStatus } from '../hooks/useSaveStatus';
+import type { SaveStatus } from './useSaveStatus';
 
 interface EditorContextValue {
   projectName: string;

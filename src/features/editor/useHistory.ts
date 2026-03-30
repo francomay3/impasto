@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
-import type { ProjectState } from '../types';
+import type { ProjectState } from '../../types';
 import { type Snapshot, MAX_HISTORY, toSnapshot, fromSnapshot } from './historyStore';
 import type { ImageId } from './historyStore';
-import type { RawImage } from '../types';
+import type { RawImage } from '../../types';
 
 export function useHistory(initialState: ProjectState) {
   const initStore = new Map<ImageId, RawImage>();

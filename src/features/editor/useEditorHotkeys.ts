@@ -1,11 +1,11 @@
 import { useRef, useEffect } from 'react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { HOTKEYS } from '../hotkeys';
-import type { FilterType } from '../types';
-import type { ToolId } from '../tools';
-import { useContextMenu } from '../context/ContextMenuContext';
-import { buildFilterMenuItems } from '../features/filters/FilterPanel/filterMenuData';
+import { HOTKEYS } from '../../hotkeys';
+import type { FilterType } from '../../types';
+import type { ToolId } from '../../tools';
+import { useContextMenu } from '../../context/ContextMenuContext';
+import { buildFilterMenuItems } from '../filters/FilterPanel/filterMenuData';
 
 interface Params {
   onUndo: () => void;

@@ -8,7 +8,7 @@ import type { ColorGroup } from '../../../types';
 import { GroupDropZone } from './GroupDropZone';
 import { useContextMenu } from '../../../context/ContextMenuContext';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
-import { useEditorContext } from '../../../context/EditorContext';
+import { useEditorContext } from '../../editor/EditorContext';
 
 interface Props {
   group: ColorGroup;

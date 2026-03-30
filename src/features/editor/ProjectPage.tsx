@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { useAuth } from '../features/auth/AuthContext';
-import { getFirestoreProject, saveFirestoreProject, saveFirestoreImageUrl } from '../services/FirestoreService';
-import { uploadProjectImage } from '../services/ImageStorageService';
-import Editor from '../Editor';
-import { DEFAULT_PROJECT_STATE, createRawImage } from '../types';
-import type { ProjectState } from '../types';
+import { useAuth } from '../auth/AuthContext';
+import { getFirestoreProject, saveFirestoreProject, saveFirestoreImageUrl } from '../../services/FirestoreService';
+import { uploadProjectImage } from '../../services/ImageStorageService';
+import Editor from './Editor';
+import { DEFAULT_PROJECT_STATE, createRawImage } from '../../types';
+import type { ProjectState } from '../../types';
 
 type LoadState = ProjectState | 'loading' | 'not-found';
 

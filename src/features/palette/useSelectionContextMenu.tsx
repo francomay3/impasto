@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useEditorContext } from '../../context/EditorContext';
+import { useEditorContext } from '../editor/EditorContext';
 import { useSelectionPopover } from './SelectionPopoverContext';
 
 export function useSelectionContextMenu() {

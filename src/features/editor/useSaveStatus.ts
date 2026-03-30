@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import type { ProjectState } from '../types';
+import type { ProjectState } from '../../types';
 
 export type SaveStatus = 'saving' | 'saved';
 

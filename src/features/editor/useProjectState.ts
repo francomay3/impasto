@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import type { ProjectState, RawImage, Color, ColorGroup, FilterInstance, FilterType, FilterParams } from '../types';
-import { DEFAULT_FILTER_PARAMS } from '../types';
+import type { ProjectState, RawImage, Color, ColorGroup, FilterInstance, FilterType, FilterParams } from '../../types';
+import { DEFAULT_FILTER_PARAMS } from '../../types';
 
 interface ProjectStateOptions {
   initialState: ProjectState;

@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Modal, Stack, TextInput, Text, NumberInput, SimpleGrid, Checkbox, Group, Button, Box } from '@mantine/core';
 import { Download } from 'lucide-react';
 import { notifications } from '@mantine/notifications';
-import { exportPdf } from '../services/PdfExport';
-import { DEFAULT_MIX_GRANULARITY, DEFAULT_DELTA_THRESHOLD, PIGMENTS } from '../services/ColorMixer';
-import type { ProjectState } from '../types';
-import { useCanvasContext } from '../features/canvas/CanvasContext';
+import { exportPdf } from '../../services/PdfExport';
+import { DEFAULT_MIX_GRANULARITY, DEFAULT_DELTA_THRESHOLD, PIGMENTS } from '../../services/ColorMixer';
+import type { ProjectState } from '../../types';
+import { useCanvasContext } from '../canvas/CanvasContext';
 
 interface Props {
   opened: boolean;

@@ -1,6 +1,6 @@
 import { Group, Loader, Text } from '@mantine/core';
 import { Check } from 'lucide-react';
-import type { SaveStatus } from '../hooks/useSaveStatus';
+import type { SaveStatus } from './useSaveStatus';
 
 interface Props {
   status: SaveStatus;

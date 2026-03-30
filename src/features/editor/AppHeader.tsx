@@ -2,15 +2,15 @@ import { AppShell, Group, Menu, Skeleton, Stack, Text, UnstyledButton } from '@m
 import { useDisclosure, useHotkeys } from '@mantine/hooks';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { EditableTitle } from './EditableTitle';
-import { UserMenu } from './UserMenu';
+import { EditableTitle } from '../../components/EditableTitle';
+import { UserMenu } from '../../components/UserMenu';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
-import { FilterMenuItems } from '../features/filters/FilterPanel/AddFilterMenu';
+import { FilterMenuItems } from '../filters/FilterPanel/AddFilterMenu';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
-import { useEditorContext } from '../context/EditorContext';
-import { useFilterContext } from '../features/filters/FilterContext';
-import { usePaletteContext } from '../features/palette/PaletteContext';
-import { HOTKEYS } from '../hotkeys';
+import { useEditorContext } from './EditorContext';
+import { useFilterContext } from '../filters/FilterContext';
+import { usePaletteContext } from '../palette/PaletteContext';
+import { HOTKEYS } from '../../hotkeys';
 
 function MenuButton({ label, children }: { label: string; children: React.ReactNode }) {
   return (

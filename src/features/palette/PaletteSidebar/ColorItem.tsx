@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Color } from '../../../types';
 import { usePaletteContext } from '../PaletteContext';
-import { useEditorContext } from '../../../context/EditorContext';
+import { useEditorContext } from '../../editor/EditorContext';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
 import { useColorContextMenu } from '../useColorContextMenu';
 import { useSelectionContextMenu } from '../useSelectionContextMenu';
