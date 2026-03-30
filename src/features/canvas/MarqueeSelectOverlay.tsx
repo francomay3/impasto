@@ -35,24 +35,30 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
   useEffect(() => { measure(); }, [viewportTransform, measure]);
 
   const visiblePins = palette.filter(c => c.sample && !hiddenPinIds.has(c.id));
+  const visiblePinsRef = useRef(visiblePins);
+  visiblePinsRef.current = visiblePins;
+  const sourceImageRef = useRef(sourceImage);
+  sourceImageRef.current = sourceImage;
 
   // Returns canvas bounding rect in client (absolute) coordinates
   const getClientCanvasRect = useCallback(() => {
     return canvasRef.current?.getBoundingClientRect() ?? null;
   }, [canvasRef]);
 
+  // Stable across renders — reads latest data from refs
   const findPinAt = useCallback((cx: number, cy: number): string | null => {
-    if (!sourceImage) return null;
+    if (!sourceImageRef.current) return null;
     const cr = getClientCanvasRect();
     if (!cr) return null;
-    for (const c of visiblePins) {
+    const { width, height } = sourceImageRef.current;
+    for (const c of visiblePinsRef.current) {
       if (!c.sample) continue;
-      const sx = cr.left + (c.sample.x / sourceImage.width) * cr.width;
-      const sy = cr.top + (c.sample.y / sourceImage.height) * cr.height;
+      const sx = cr.left + (c.sample.x / width) * cr.width;
+      const sy = cr.top + (c.sample.y / height) * cr.height;
       if (Math.hypot(cx - sx, cy - sy) <= HIT_R) return c.id;
     }
     return null;
-  }, [getClientCanvasRect, sourceImage, visiblePins]);
+  }, [getClientCanvasRect]);
 
   const getPinsInRect = useCallback((rect: DragRect): Set<string> => {
     if (!sourceImage) return new Set();
@@ -81,12 +87,25 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
     const startY = e.clientY;
     hasDraggedRef.current = false;
 
+    let rafPending = false;
+    let latestEv: MouseEvent | null = null;
+
     const handleMove = (ev: MouseEvent) => {
       if (!hasDraggedRef.current && Math.hypot(ev.clientX - startX, ev.clientY - startY) > 4) hasDraggedRef.current = true;
-      if (hasDraggedRef.current) setDrag({ startX, startY, endX: ev.clientX, endY: ev.clientY });
+      if (!hasDraggedRef.current) return;
+      latestEv = ev;
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        if (!latestEv) return;
+        setDrag({ startX, startY, endX: latestEv.clientX, endY: latestEv.clientY });
+        latestEv = null;
+      });
     };
 
     const handleUp = (ev: MouseEvent) => {
+      latestEv = null;
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('mouseup', handleUp);
       setDrag(null);
@@ -113,8 +132,12 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
     }
   }, [findPinAt, onSelectColor, onToggleColorSelection]);
 
+  const hoveredPinRef = useRef<string | null>(null);
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    onHoverColor(findPinAt(e.clientX, e.clientY));
+    const pinId = findPinAt(e.clientX, e.clientY);
+    if (pinId === hoveredPinRef.current) return;
+    hoveredPinRef.current = pinId;
+    onHoverColor(pinId);
   }, [findPinAt, onHoverColor]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {

@@ -40,17 +40,28 @@ export function useViewportTransform() {
     dragRef.current = { startX: e.clientX, startY: e.clientY, startPanX: prev.panX, startPanY: prev.panY };
     setIsDragging(true);
 
+    let rafPending = false;
+    let latestEv: MouseEvent | null = null;
+
     const handleGlobalMove = (ev: MouseEvent) => {
-      if (!dragRef.current) return;
-      applyTransform({
-        ...transformRef.current,
-        panX: panOnDrag(dragRef.current.startPanX, dragRef.current.startX, ev.clientX),
-        panY: panOnDrag(dragRef.current.startPanY, dragRef.current.startY, ev.clientY),
+      latestEv = ev;
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        if (!dragRef.current || !latestEv) return;
+        applyTransform({
+          ...transformRef.current,
+          panX: panOnDrag(dragRef.current.startPanX, dragRef.current.startX, latestEv.clientX),
+          panY: panOnDrag(dragRef.current.startPanY, dragRef.current.startY, latestEv.clientY),
+        });
+        latestEv = null;
       });
     };
 
     const handleGlobalUp = () => {
       dragRef.current = null;
+      latestEv = null;
       setIsDragging(false);
       window.removeEventListener('mousemove', handleGlobalMove);
       window.removeEventListener('mouseup', handleGlobalUp);

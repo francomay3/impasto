@@ -1,6 +1,6 @@
 [
   {
-    "origin": ["http://localhost:5173", "https://impasto-a327c.web.app", "https://impasto-a327c.firebaseapp.com"],
+    "origin": ["http://localhost:5173", "http://localhost:5174", "https://impasto-a327c.web.app", "https://impasto-a327c.firebaseapp.com"],
     "method": ["GET"],
     "maxAgeSeconds": 3600
   }

@@ -12,7 +12,12 @@ export function useCanvasMeasure(canvasRef: RefObject<HTMLCanvasElement | null>)
     if (!container) return;
     const cb = canvas.getBoundingClientRect();
     const vb = container.getBoundingClientRect();
-    setCanvasRect({ left: cb.left - vb.left, top: cb.top - vb.top, width: cb.width, height: cb.height });
+    const next = { left: cb.left - vb.left, top: cb.top - vb.top, width: cb.width, height: cb.height };
+    setCanvasRect(prev =>
+      prev && prev.left === next.left && prev.top === next.top && prev.width === next.width && prev.height === next.height
+        ? prev
+        : next
+    );
   }, [canvasRef]);
 
   useEffect(() => {
