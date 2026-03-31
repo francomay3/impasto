@@ -6,6 +6,9 @@ import { useFilterContext } from '../../filters/FilterContext';
 import { usePaletteContext } from '../../palette/PaletteContext';
 import { useFilteredImage } from '../../filters/useFilteredImage';
 import { useIndexedImage } from '../../../hooks/useIndexedImage';
+import { useMixedPalette } from '../../../hooks/useMixedPalette';
+import { useEditorStore } from '../editorStore';
+import { useExportSettings } from '../useExportSettings';
 import { CanvasViewport } from '../../canvas/CanvasViewport';
 import { SamplePinsOverlay } from '../../canvas/SamplePinsOverlay';
 import { SamplerOverlay } from '../../canvas/SamplerOverlay';
@@ -32,27 +35,32 @@ export function PaletteTabContent() {
     onAddNewColor,
     onCancelAddingColor,
   } = usePaletteContext();
+  const showMixedColors = useEditorStore((s) => s.showMixedColors);
+  const { pigments, minPaintPercent, delta } = useExportSettings();
   const filteredRef = useRef<HTMLCanvasElement>(null);
 
   const filteredData = useFilteredImage(sourceImage, filters);
 
-  const labPalette = useMemo(
-    () =>
-      palette.flatMap((c) => {
-        try {
-          const [l, a, b] = chroma(c.hex).lab();
-          return [{ l, a, b }];
-        } catch {
-          return [];
-        }
-      }),
+  const paletteHexes = useMemo(
+    () => palette.flatMap((c) => { try { chroma(c.hex); return [c.hex]; } catch { return []; } }),
     [palette]
   );
+
+  const labPalette = useMemo(
+    () => paletteHexes.map((hex) => { const [l, a, b] = chroma(hex).lab(); return { l, a, b }; }),
+    [paletteHexes]
+  );
+
+  const { data: mixedLabPalette, isLoading: isMixLoading } = useMixedPalette(
+    paletteHexes, pigments, minPaintPercent, delta, showMixedColors
+  );
+
+  const activePalette = showMixedColors && mixedLabPalette ? mixedLabPalette : labPalette;
 
   const { data: indexedData, isLoading: isIndexedLoading } = useIndexedImage(
     filteredData,
     preIndexingBlur,
-    labPalette
+    activePalette
   );
 
   useEffect(() => {
@@ -78,15 +86,17 @@ export function PaletteTabContent() {
           ref={filteredRef}
           variant="filtered"
           overlayChildren={
-            isAddingColor ? (
-              <SamplerOverlay canvasRef={filteredRef} onSample={onAddNewColor} onCancel={onCancelAddingColor} />
-            ) : samplingColorId ? (
-              <SamplerOverlay canvasRef={filteredRef} onSample={onSampleColor} onCancel={onCancelSampleColor} />
-            ) : null
+            <>
+              <MarqueeSelectOverlay canvasRef={filteredRef} />
+              {isAddingColor ? (
+                <SamplerOverlay canvasRef={filteredRef} onSample={onAddNewColor} onCancel={onCancelAddingColor} />
+              ) : samplingColorId ? (
+                <SamplerOverlay canvasRef={filteredRef} onSample={onSampleColor} onCancel={onCancelSampleColor} />
+              ) : null}
+            </>
           }
         >
           <SamplePinsOverlay canvasRef={filteredRef} />
-          <MarqueeSelectOverlay canvasRef={filteredRef} />
         </CanvasViewport>
         <Text style={labelStyle} size="xs" c="dimmed">
           Filtered
@@ -104,9 +114,9 @@ export function PaletteTabContent() {
         <CanvasViewport ref={indexedCanvasRef} variant="indexed" />
         <Group style={{ ...labelStyle, gap: 6 }}>
           <Text size="xs" c="dimmed">
-            Indexed colors
+            {showMixedColors ? 'Mixed preview' : 'Indexed colors'}
           </Text>
-          {isIndexedLoading && <Loader size="xs" />}
+          {(isIndexedLoading || (showMixedColors && isMixLoading)) && <Loader size="xs" />}
         </Group>
       </Box>
     </Group>

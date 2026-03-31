@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Modal,
   Stack,
@@ -10,17 +10,19 @@ import {
   Group,
   Button,
   Box,
+  Skeleton,
 } from '@mantine/core';
 import { Download } from 'lucide-react';
 import { notifications } from '@mantine/notifications';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { exportPdf } from '../../services/PdfExport';
-import {
-  DEFAULT_MIX_GRANULARITY,
-  DEFAULT_DELTA_THRESHOLD,
-  PIGMENTS,
-} from '../../services/ColorMixer';
+import { PIGMENTS } from '../../services/ColorMixer';
+import { DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD } from '../../services/ColorMixer';
 import type { ProjectState } from '../../types';
 import { useCanvasContext } from '../canvas/CanvasContext';
+import { useAuthStore } from '../auth/authStore';
+import { loadExportSettings, saveExportSettings } from '../../services/FirestoreService';
+import { queryKeys } from '../../lib/queryKeys';
 
 interface Props {
   opened: boolean;
@@ -28,28 +30,88 @@ interface Props {
   onClose: () => void;
 }
 
+const ALL_PIGMENT_NAMES = PIGMENTS.map((p) => p.name);
+
 export function ExportModal({ opened, state, onClose }: Props) {
   const { filteredCanvasRef, indexedCanvasRef } = useCanvasContext();
-  const [title, setTitle] = useState(state.name);
-  const [granularity, setGranularity] = useState(DEFAULT_MIX_GRANULARITY);
-  const [delta, setDelta] = useState(DEFAULT_DELTA_THRESHOLD);
-  const [pigments, setPigments] = useState<Set<string>>(() => new Set(PIGMENTS.map((p) => p.name)));
+  const user = useAuthStore((s) => s.user);
+  const queryClient = useQueryClient();
 
-  const handleExport = () => {
+  const { data: savedSettings, isLoading: settingsLoading } = useQuery({
+    queryKey: queryKeys.exportSettings(user?.uid ?? ''),
+    queryFn: () => loadExportSettings(user!.uid),
+    enabled: !!user && opened,
+    staleTime: Infinity,
+  });
+
+  const [minPaintPercent, setMinPaintPercent] = useState(DEFAULT_MIN_PAINT_PERCENT);
+  const [delta, setDelta] = useState(DEFAULT_DELTA_THRESHOLD);
+  const [selectedPigmentNames, setSelectedPigmentNames] = useState<string[]>(ALL_PIGMENT_NAMES);
+  const [title, setTitle] = useState(state.name);
+
+  // Sync local state from query result when it arrives
+  const resolved = savedSettings ?? null;
+  const effectiveMin = resolved?.minPaintPercent ?? minPaintPercent;
+  const effectiveDelta = resolved?.delta ?? delta;
+  const effectivePigmentNames = resolved?.selectedPigmentNames ?? selectedPigmentNames;
+  const pigments = useMemo(() => new Set(effectivePigmentNames), [effectivePigmentNames]);
+
+  const saveMutation = useMutation({
+    mutationFn: (settings: { minPaintPercent: number; delta: number; selectedPigmentNames: string[] }) =>
+      saveExportSettings(user!.uid, settings),
+    onSuccess: (_, settings) => {
+      queryClient.setQueryData(queryKeys.exportSettings(user!.uid), settings);
+    },
+    onError: () => {
+      notifications.show({ message: 'Failed to save export settings', color: 'red' });
+    },
+  });
+
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
     if (!filteredCanvasRef.current || !indexedCanvasRef.current) return;
-    const selectedPigments = PIGMENTS.filter((p) => pigments.has(p.name));
-    exportPdf(
-      state,
-      filteredCanvasRef.current,
-      indexedCanvasRef.current,
-      granularity,
-      delta,
-      selectedPigments,
-      title || state.name
-    );
-    onClose();
-    notifications.show({ message: 'Export complete', color: 'green' });
+    setExporting(true);
+    try {
+      const selectedPigments = PIGMENTS.filter((p) => pigments.has(p.name));
+      await exportPdf(
+        state,
+        filteredCanvasRef.current,
+        indexedCanvasRef.current,
+        effectiveMin,
+        effectiveDelta,
+        selectedPigments,
+        title || state.name
+      );
+      if (user) {
+        saveMutation.mutate({ minPaintPercent: effectiveMin, delta: effectiveDelta, selectedPigmentNames: effectivePigmentNames });
+      }
+      onClose();
+      notifications.show({ message: 'Export complete', color: 'green' });
+    } finally {
+      setExporting(false);
+    }
   };
+
+  function handleMinChange(v: number | string) {
+    const n = Number(v);
+    setMinPaintPercent(n || effectiveMin);
+    if (resolved) queryClient.setQueryData(queryKeys.exportSettings(user!.uid), { ...resolved, minPaintPercent: n || effectiveMin });
+  }
+
+  function handleDeltaChange(v: number | string) {
+    const n = Number(v);
+    setDelta(n || effectiveDelta);
+    if (resolved) queryClient.setQueryData(queryKeys.exportSettings(user!.uid), { ...resolved, delta: n || effectiveDelta });
+  }
+
+  function handlePigmentToggle(name: string, checked: boolean) {
+    const next = new Set(pigments);
+    if (checked) next.add(name); else next.delete(name);
+    const names = [...next];
+    setSelectedPigmentNames(names);
+    if (resolved) queryClient.setQueryData(queryKeys.exportSettings(user!.uid), { ...resolved, selectedPigmentNames: names });
+  }
 
   return (
     <Modal opened={opened} onClose={onClose} title="Export PDF" size="lg">
@@ -59,20 +121,22 @@ export function ExportModal({ opened, state, onClose }: Props) {
           value={title}
           onChange={(e) => setTitle(e.currentTarget.value)}
         />
+        <Skeleton visible={settingsLoading}>
         <Stack gap={4}>
           <Text size="sm" fw={500}>
-            Mix granularity
+            Minimum paint percentage
           </Text>
           <Text size="xs" c="dimmed">
-            How many equal parts the palette is divided into when calculating paint ratios. Higher
-            values give more precise proportions but take longer to compute. 12 is a good balance.
+            Pigments contributing less than this percentage to a mix are dropped. Higher values
+            produce simpler recipes; lower values allow more precise matches.
           </Text>
           <NumberInput
-            value={granularity}
-            onChange={(v) => setGranularity(Number(v))}
-            min={4}
-            max={24}
+            value={effectiveMin}
+            onChange={handleMinChange}
+            min={1}
+            max={20}
             step={1}
+            suffix="%"
             size="sm"
           />
         </Stack>
@@ -82,11 +146,11 @@ export function ExportModal({ opened, state, onClose }: Props) {
           </Text>
           <Text size="xs" c="dimmed">
             How close a mixed color needs to be before the search stops. Lower values demand a
-            tighter match. A value of 6 is a practical threshold.
+            tighter match. A value of 4 is a practical threshold.
           </Text>
           <NumberInput
-            value={delta}
-            onChange={(v) => setDelta(Number(v))}
+            value={effectiveDelta}
+            onChange={handleDeltaChange}
             min={1}
             max={30}
             step={1}
@@ -106,15 +170,7 @@ export function ExportModal({ opened, state, onClose }: Props) {
                 key={p.name}
                 size="xs"
                 checked={pigments.has(p.name)}
-                onChange={(e) => {
-                  const checked = e.currentTarget.checked;
-                  setPigments((prev) => {
-                    const next = new Set(prev);
-                    if (checked) next.add(p.name);
-                    else next.delete(p.name);
-                    return next;
-                  });
-                }}
+                onChange={(e) => handlePigmentToggle(p.name, e.currentTarget.checked)}
                 label={
                   <Group gap={6} wrap="nowrap">
                     <Box
@@ -134,11 +190,12 @@ export function ExportModal({ opened, state, onClose }: Props) {
             ))}
           </SimpleGrid>
         </Stack>
+        </Skeleton>
         <Group justify="flex-end" gap="xs">
           <Button variant="subtle" color="gray" onClick={onClose}>
             Cancel
           </Button>
-          <Button leftSection={<Download size={14} />} onClick={handleExport}>
+          <Button leftSection={<Download size={14} />} onClick={handleExport} loading={exporting}>
             Export
           </Button>
         </Group>

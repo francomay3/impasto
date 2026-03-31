@@ -4,7 +4,7 @@ import { ToolRail } from '../../canvas/ToolRail';
 import type { ToolRailItem } from '../../canvas/ToolRail';
 import { TOOLS } from '../../../tools';
 import { FilterPanel } from '../../filters/FilterPanel';
-import { PaletteSidebar } from '../../palette/PaletteSidebar';
+import { PaletteAside } from '../../palette/PaletteAside';
 import { ErrorBoundary } from '../../../shared/ErrorBoundary';
 import { FiltersTabContent } from './FiltersTabContent';
 import { PaletteTabContent } from './PaletteTabContent';
@@ -14,7 +14,7 @@ import { useCanvasContext } from '../../canvas/CanvasContext';
 import { ContextualToolbar } from '../../canvas/ContextualToolbar';
 
 const asideStyle: React.CSSProperties = {
-  width: 260,
+  width: 292,
   flexShrink: 0,
   borderLeft: '1px solid var(--mantine-color-dark-6)',
   background: 'var(--mantine-color-dark-8)',
@@ -143,7 +143,7 @@ export function EditorTabs({ height = '100%' }: Props) {
           rail={<ToolRail items={toolRailItems} />}
           aside={
             <ErrorBoundary label="Palette sidebar" compact>
-              <PaletteSidebar />
+              <PaletteAside />
             </ErrorBoundary>
           }
         >

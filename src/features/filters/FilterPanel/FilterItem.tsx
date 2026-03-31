@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { FilterInstance } from '../../../types';
 import { useFilterContext } from '../FilterContext';
-import { useContextMenuStore } from '../../../context/contextMenuStore';
+import { useContextMenuStore } from '../../../shared/contextMenuStore';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
 import { FilterWidget } from './FilterWidget';
 import { FilterItemHeader } from './FilterItemHeader';

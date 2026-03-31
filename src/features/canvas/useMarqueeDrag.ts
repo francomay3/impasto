@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import type { MutableRefObject } from 'react';
+import type { SelectionMode } from '../../tools';
 
 interface DragRect {
   startX: number;
@@ -14,6 +15,14 @@ interface Options {
   selectedColorIdsRef: MutableRefObject<Set<string>>;
   panMouseDown: (e: React.MouseEvent) => void;
   isMarqueeMode: boolean;
+  selectionMode: SelectionMode;
+}
+
+function applyMode(current: Set<string>, incoming: Set<string>, mode: SelectionMode): Set<string> {
+  if (mode === 'add') return new Set([...current, ...incoming]);
+  if (mode === 'subtract') return new Set([...current].filter(id => !incoming.has(id)));
+  if (mode === 'intersect') return new Set([...current].filter(id => incoming.has(id)));
+  return incoming;
 }
 
 export function useMarqueeDrag({
@@ -22,6 +31,7 @@ export function useMarqueeDrag({
   selectedColorIdsRef,
   panMouseDown,
   isMarqueeMode,
+  selectionMode,
 }: Options) {
   const [drag, setDrag] = useState<DragRect | null>(null);
   const hasDraggedRef = useRef(false);
@@ -63,14 +73,15 @@ export function useMarqueeDrag({
         if (!hasDraggedRef.current) return;
         const rect = { startX, startY, endX: ev.clientX, endY: ev.clientY };
         const ids = getPinsInRect(rect);
-        const additive = ev.metaKey || ev.shiftKey;
-        onSetSelection(additive ? new Set([...selectedColorIdsRef.current, ...ids]) : ids);
+        const effectiveMode: SelectionMode =
+          ev.shiftKey ? 'add' : ev.altKey ? 'subtract' : selectionMode;
+        onSetSelection(applyMode(selectedColorIdsRef.current, ids, effectiveMode));
       };
 
       window.addEventListener('mousemove', handleMove);
       window.addEventListener('mouseup', handleUp);
     },
-    [isMarqueeMode, panMouseDown, getPinsInRect, onSetSelection, selectedColorIdsRef]
+    [isMarqueeMode, panMouseDown, getPinsInRect, onSetSelection, selectedColorIdsRef, selectionMode]
   );
 
   return { drag, handleMouseDown, hasDraggedRef };

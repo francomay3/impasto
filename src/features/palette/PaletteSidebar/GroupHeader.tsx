@@ -3,7 +3,7 @@ import { Box, Text, ActionIcon, Tooltip, TextInput } from '@mantine/core';
 import { X, GripVertical, ChevronDown, ChevronRight, Pencil, Eye, EyeOff } from 'lucide-react';
 import useConfirmDialog from '../../../shared/useConfirmDialog';
 import type { ColorGroup } from '../../../types';
-import { useContextMenuStore } from '../../../context/contextMenuStore';
+import { useContextMenuStore } from '../../../shared/contextMenuStore';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
 import { useEditorStore } from '../../editor/editorStore';
 

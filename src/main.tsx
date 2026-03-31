@@ -7,11 +7,14 @@ import {
   type MantineColorsTuple,
 } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import { AuthInit } from './features/auth/AuthInit';
 import { AppRouter } from './routes/AppRouter';
 import { ErrorBoundary } from './shared/ErrorBoundary';
+
+const queryClient = new QueryClient();
 
 // Custom dark palette matching the app's design tokens.
 // Use var(--mantine-color-dark-N) in components instead of hardcoded hex values.
@@ -41,12 +44,14 @@ const theme = createTheme({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider theme={theme} defaultColorScheme="dark">
-      <Notifications />
-      <ErrorBoundary>
-        <AuthInit />
-        <AppRouter />
-      </ErrorBoundary>
-    </MantineProvider>
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <Notifications />
+        <ErrorBoundary>
+          <AuthInit />
+          <AppRouter />
+        </ErrorBoundary>
+      </MantineProvider>
+    </QueryClientProvider>
   </StrictMode>
 );

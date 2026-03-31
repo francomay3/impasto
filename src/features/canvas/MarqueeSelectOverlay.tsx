@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import type { RefObject } from 'react';
 import { Box } from '@mantine/core';
 import { PinEditPopover } from '../palette/PinEditPopover';
@@ -15,7 +16,7 @@ interface Props {
 }
 
 export function MarqueeSelectOverlay({ canvasRef }: Props) {
-  const { sourceImage, activeTool, onMouseDown: panMouseDown } = useCanvasContext();
+  const { sourceImage, activeTool, selectionMode, onMouseDown: panMouseDown } = useCanvasContext();
   const { palette } = usePaletteContext();
   const selectedColorIds = useEditorStore(s => s.selectedColorIds);
   const hiddenPinIds = useEditorStore(s => s.hiddenPinIds);
@@ -49,6 +50,7 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
     selectedColorIdsRef,
     panMouseDown,
     isMarqueeMode: activeTool === 'marquee',
+    selectionMode,
   });
 
   const handleClick = useCallback(
@@ -125,7 +127,7 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
         onMouseLeave={() => setHoveredColorId(null)}
         onContextMenu={handleContextMenu}
       />
-      {rectStyle && <Box style={rectStyle} />}
+      {rectStyle && createPortal(<Box style={rectStyle} />, document.body)}
       {editPin && (
         <PinEditPopover
           colorId={editPin.colorId}

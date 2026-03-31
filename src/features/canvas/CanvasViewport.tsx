@@ -4,7 +4,7 @@ import { useMergedRef } from '@mantine/hooks';
 import { Plus, Maximize2, Tag } from 'lucide-react';
 import { useCanvasContext } from './CanvasContext';
 import { usePaletteContext } from '../palette/PaletteContext';
-import { useContextMenuStore } from '../../context/contextMenuStore';
+import { useContextMenuStore } from '../../shared/contextMenuStore';
 import { getPixelHex } from '../../utils/colorUtils';
 
 interface Props {

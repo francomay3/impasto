@@ -4,6 +4,7 @@ interface EditorStore {
   selectedColorIds: Set<string>;
   hoveredColorId: string | null;
   hiddenPinIds: Set<string>;
+  showMixedColors: boolean;
   // Selection actions
   selectColor: (id: string | null) => void;
   toggleColorSelection: (id: string) => void;
@@ -13,12 +14,15 @@ interface EditorStore {
   // Pin visibility actions
   toggleHiddenPin: (id: string) => void;
   setGroupPinsVisible: (colorIds: string[], visible: boolean) => void;
+  // Display actions
+  setShowMixedColors: (show: boolean) => void;
 }
 
 export const useEditorStore = create<EditorStore>((set) => ({
   selectedColorIds: new Set(),
   hoveredColorId: null,
   hiddenPinIds: new Set(),
+  showMixedColors: false,
 
   selectColor: (id) =>
     set((s) => {
@@ -53,4 +57,6 @@ export const useEditorStore = create<EditorStore>((set) => ({
       colorIds.forEach((id) => (visible ? next.delete(id) : next.add(id)));
       return { hiddenPinIds: next };
     }),
+
+  setShowMixedColors: (show) => set({ showMixedColors: show }),
 }));

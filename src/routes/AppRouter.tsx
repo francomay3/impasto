@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthGuard } from '../features/auth/AuthGuard';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { ProjectPage } from '../features/editor/ProjectPage';
-import { ContextMenuPortal } from '../context/ContextMenuPortal';
+import { ContextMenuPortal } from '../shared/ContextMenuPortal';
 import { ErrorBoundary } from '../shared/ErrorBoundary';
 
 export function AppRouter() {

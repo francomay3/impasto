@@ -1,9 +1,19 @@
-import { Group, Text } from '@mantine/core';
-import { RotateCcw, SplitSquareHorizontal } from 'lucide-react';
+import { Group, Switch, Text, Tooltip } from '@mantine/core';
+import { RotateCcw, SplitSquareHorizontal, Square, SquarePlus, SquareMinus, SquareDashed } from 'lucide-react';
 import { useCanvasContext } from '../CanvasContext';
 import { useFilterContext } from '../../filters/FilterContext';
+import { useEditorStore } from '../../editor/editorStore';
 import { SlimNumberInput } from '../../../shared/SlimNumberInput';
 import { SlimButton } from '../../../shared/SlimButton';
+import { SlimIconButton } from '../../../shared/SlimIconButton';
+import type { SelectionMode } from '../../../tools';
+
+const SELECTION_MODES: { mode: SelectionMode; icon: React.ReactNode; label: string }[] = [
+  { mode: 'new',       icon: <Square size={12} />,       label: 'New selection' },
+  { mode: 'add',       icon: <SquarePlus size={12} />,   label: 'Add to selection (Shift)' },
+  { mode: 'subtract',  icon: <SquareMinus size={12} />,  label: 'Subtract from selection (Alt)' },
+  { mode: 'intersect', icon: <SquareDashed size={12} />, label: 'Intersect with selection' },
+];
 
 const barStyle: React.CSSProperties = {
   flexShrink: 0,
@@ -16,7 +26,7 @@ const barStyle: React.CSSProperties = {
 };
 
 function PaletteToolOptions() {
-  const { activeTool, samplingRadius, setSamplingRadius } = useCanvasContext();
+  const { activeTool, samplingRadius, setSamplingRadius, selectionMode, setSelectionMode } = useCanvasContext();
 
   if (activeTool === 'select') {
     return (
@@ -29,9 +39,18 @@ function PaletteToolOptions() {
 
   if (activeTool === 'marquee') {
     return (
-      <Group gap={2}>
-        <SlimButton>Add to Selection</SlimButton>
-        <SlimButton>Subtract</SlimButton>
+      <Group gap={0}>
+        {SELECTION_MODES.map(({ mode, icon, label }) => (
+          <Tooltip key={mode} label={label} withArrow fz="xs">
+            <SlimIconButton
+              variant={selectionMode === mode ? 'light' : 'subtle'}
+              color={selectionMode === mode ? 'primary' : 'gray'}
+              onClick={(e) => { e.stopPropagation(); setSelectionMode(mode); }}
+            >
+              {icon}
+            </SlimIconButton>
+          </Tooltip>
+        ))}
       </Group>
     );
   }
@@ -56,6 +75,19 @@ function PaletteToolOptions() {
   }
 
   return null;
+}
+
+function PaletteMixToggle() {
+  const showMixedColors = useEditorStore((s) => s.showMixedColors);
+  const setShowMixedColors = useEditorStore((s) => s.setShowMixedColors);
+  return (
+    <Switch
+      size="xs"
+      label={<Text size="xs" c="dimmed">Show mixes</Text>}
+      checked={showMixedColors}
+      onChange={(e) => setShowMixedColors(e.currentTarget.checked)}
+    />
+  );
 }
 
 function PaletteBlurInput() {
@@ -94,7 +126,12 @@ export function ContextualToolbar({ tab }: Props) {
             <SlimButton leftSection={<RotateCcw size={12} />}>Reset</SlimButton>
           </>
         )}
-        {tab === 'palette' && <PaletteBlurInput />}
+        {tab === 'palette' && (
+          <Group gap={12}>
+            <PaletteMixToggle />
+            <PaletteBlurInput />
+          </Group>
+        )}
       </Group>
     </div>
   );

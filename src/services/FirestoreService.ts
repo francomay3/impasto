@@ -6,6 +6,7 @@ import {
   deleteDoc,
   getDocs,
   getDoc,
+  setDoc,
   query,
   orderBy,
   serverTimestamp,
@@ -105,4 +106,24 @@ export async function renameFirestoreProject(
 
 export async function deleteFirestoreProject(userId: string, projectId: string): Promise<void> {
   await deleteDoc(doc(projectsCol(userId), projectId));
+}
+
+export interface ExportSettings {
+  minPaintPercent: number;
+  delta: number;
+  selectedPigmentNames: string[];
+}
+
+function userDoc(userId: string) {
+  return doc(db, 'users', userId);
+}
+
+export async function loadExportSettings(userId: string): Promise<ExportSettings | null> {
+  const snap = await getDoc(userDoc(userId));
+  const data = snap.data();
+  return (data?.exportSettings as ExportSettings) ?? null;
+}
+
+export async function saveExportSettings(userId: string, settings: ExportSettings): Promise<void> {
+  await setDoc(userDoc(userId), { exportSettings: settings }, { merge: true });
 }

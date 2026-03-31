@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { Crosshair, Copy, PinOff, Trash2, Settings2 } from 'lucide-react';
 import { usePaletteContext } from './PaletteContext';
-import { useContextMenuStore } from '../../context/contextMenuStore';
+import { useContextMenuStore } from '../../shared/contextMenuStore';
 
 interface OpenOptions {
   onEditStart?: () => void;

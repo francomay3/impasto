@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useCallback, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { notifications } from '@mantine/notifications';
 import { useAuthStore } from '../auth/authStore';
 import {
   getFirestoreProject,
@@ -10,15 +12,11 @@ import { uploadProjectImage } from '../../services/ImageStorageService';
 import Editor from './Editor';
 import { DEFAULT_PROJECT_STATE, createRawImage } from '../../types';
 import type { ProjectState } from '../../types';
+import { queryKeys } from '../../lib/queryKeys';
 
-type LoadState = ProjectState | 'loading' | 'not-found';
-
-async function resolveInitialState(
-  userId: string,
-  projectId: string
-): Promise<ProjectState | 'not-found'> {
+async function resolveProject(userId: string, projectId: string) {
   const project = await getFirestoreProject(userId, projectId);
-  if (!project) return 'not-found';
+  if (!project) return null;
 
   if (project.imageStorageUrl) {
     const res = await fetch(project.imageStorageUrl);
@@ -39,16 +37,23 @@ async function resolveInitialState(
 
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
-  const user = useAuthStore(s => s.user);
+  const user = useAuthStore((s) => s.user);
+  const navigate = useNavigate();
   const isTestMode = import.meta.env.VITE_E2E_TEST_MODE === 'true';
-  const [loadState, setLoadState] = useState<LoadState>(
-    isTestMode ? DEFAULT_PROJECT_STATE : 'loading'
-  );
+
+  const { data: project, isLoading, isError } = useQuery({
+    queryKey: queryKeys.project(user?.uid ?? '', id ?? ''),
+    queryFn: () => resolveProject(user!.uid, id!),
+    enabled: !isTestMode && !!user && !!id,
+    staleTime: Infinity,
+  });
 
   useEffect(() => {
-    if (isTestMode || !user || !id) return;
-    resolveInitialState(user.uid, id).then(setLoadState);
-  }, [user, id, isTestMode]);
+    if (isError || project === null) {
+      notifications.show({ message: 'Project not found', color: 'red' });
+      navigate('/', { replace: true });
+    }
+  }, [isError, project, navigate]);
 
   const onSave = useCallback(
     async (state: ProjectState) => {
@@ -67,14 +72,14 @@ export function ProjectPage() {
     [user, id]
   );
 
-  if (loadState === 'not-found') return <Navigate to="/" replace />;
+  const isLoading_ = !isTestMode && isLoading;
+  const initialState = isTestMode ? DEFAULT_PROJECT_STATE : (project ?? DEFAULT_PROJECT_STATE);
 
-  const isLoading = loadState === 'loading';
   return (
     <Editor
-      key={isLoading ? 'loading' : 'loaded'}
-      initialState={isLoading ? DEFAULT_PROJECT_STATE : loadState}
-      isLoading={isLoading}
+      key={isLoading_ ? 'loading' : 'loaded'}
+      initialState={initialState}
+      isLoading={isLoading_}
       onSave={onSave}
       onNewImageFile={onNewImageFile}
     />

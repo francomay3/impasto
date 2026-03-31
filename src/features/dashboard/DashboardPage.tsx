@@ -11,15 +11,12 @@ const FREE_PROJECT_LIMIT = 10;
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { projects, loading, create, remove, rename } = useProjects();
+  const { projects, loading, isCreating, create, remove, rename } = useProjects();
   const [search, setSearch] = useState('');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (!loading && projects.length === 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCreating(true);
       create().then((id) => navigate(`/project/${id}`, { replace: true }));
     }
   }, [loading, projects.length, create, navigate]);
@@ -42,7 +39,7 @@ export function DashboardPage() {
       <DashboardHeader search={search} onSearch={setSearch} />
 
       <Container size="xl" py="xl">
-        {loading || creating ? (
+        {loading || isCreating ? (
           <Center h="50vh">
             <Loader color="primary" />
           </Center>

@@ -4,6 +4,7 @@ import { RectangleSelect } from './shared/icons/RectangleSelect';
 import { EyedropperAdd } from './shared/icons/EyedropperAdd';
 
 export type ToolId = 'select' | 'marquee' | 'eyedropper';
+export type SelectionMode = 'new' | 'add' | 'subtract' | 'intersect';
 
 interface Tool {
   id: ToolId;

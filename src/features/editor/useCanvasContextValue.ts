@@ -1,8 +1,8 @@
-import { useCallback, useMemo, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
 import type { useProjectState } from './useProjectState';
 import type { useViewportTransform } from '../canvas/useViewportTransform';
 import type { InteractionAPI } from '../canvas/useInteraction';
-import type { ToolId } from '../../tools';
+import type { ToolId, SelectionMode } from '../../tools';
 
 type Project = ReturnType<typeof useProjectState>;
 type Viewport = ReturnType<typeof useViewportTransform>;
@@ -29,6 +29,12 @@ export function useCanvasContextValue({
   const { activateEyedropper, selectTool, isSampling, activeTool, samplingRadius, setSamplingRadius } = interaction;
   const { transform, isDragging, handleWheel, handleMouseDown, resetTransform, subscribeToTransform } = viewport;
 
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>('new');
+
+  useEffect(() => {
+    if (activeTool !== 'marquee') setSelectionMode('new');
+  }, [activeTool]);
+
   const setActiveTool = useCallback(
     (id: ToolId) => {
       if (id === 'eyedropper') activateEyedropper();
@@ -49,6 +55,8 @@ export function useCanvasContextValue({
       isSampling,
       activeTool,
       setActiveTool,
+      selectionMode,
+      setSelectionMode,
       samplingRadius,
       setSamplingRadius,
       showLabels,
@@ -67,6 +75,8 @@ export function useCanvasContextValue({
       isSampling,
       activeTool,
       setActiveTool,
+      selectionMode,
+      setSelectionMode,
       samplingRadius,
       setSamplingRadius,
       showLabels,

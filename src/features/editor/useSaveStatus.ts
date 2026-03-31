@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import type { ProjectState } from '../../types';
 
-export type SaveStatus = 'saving' | 'saved';
+export type SaveStatus = 'saving' | 'saved' | 'error';
 
 const DEBOUNCE_MS = 300;
 
@@ -20,8 +20,9 @@ export function useSaveStatus(onSave: (state: ProjectState) => void | Promise<vo
         const gen = ++genRef.current;
         try {
           await onSave(latestRef.current!);
-        } finally {
           if (genRef.current === gen) setStatus('saved');
+        } catch {
+          if (genRef.current === gen) setStatus('error');
         }
       }, DEBOUNCE_MS);
     },

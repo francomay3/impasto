@@ -1,7 +1,7 @@
 import { createContext, useContext, type RefObject } from 'react';
 import type { ViewportTransform } from './useViewportTransform';
 import type { RawImage } from '../../types';
-import type { ToolId } from '../../tools';
+import type { ToolId, SelectionMode } from '../../tools';
 
 interface CanvasContextValue {
   sourceImage: RawImage | null;
@@ -12,6 +12,8 @@ interface CanvasContextValue {
   isSampling: boolean;
   activeTool: ToolId;
   setActiveTool: (id: ToolId) => void;
+  selectionMode: SelectionMode;
+  setSelectionMode: (m: SelectionMode) => void;
   samplingRadius: number;
   setSamplingRadius: (r: number) => void;
   showLabels: boolean;

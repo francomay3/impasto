@@ -3,7 +3,7 @@ import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { HOTKEYS } from '../../hotkeys';
 import type { FilterType } from '../../types';
-import { useContextMenuStore } from '../../context/contextMenuStore';
+import { useContextMenuStore } from '../../shared/contextMenuStore';
 import { buildFilterMenuItems } from '../filters/FilterPanel/filterMenuData';
 import type { InteractionAPI } from '../canvas/useInteraction';
 

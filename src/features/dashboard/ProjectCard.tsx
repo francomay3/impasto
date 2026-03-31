@@ -6,7 +6,7 @@ import type { ProjectState } from '../../types';
 import useConfirmDialog from '../../shared/useConfirmDialog';
 import { ProjectCardPreview } from './ProjectCardPreview';
 import { RenameProjectModal } from './RenameProjectModal';
-import { useContextMenuStore } from '../../context/contextMenuStore';
+import { useContextMenuStore } from '../../shared/contextMenuStore';
 
 interface Props {
   project: ProjectState;

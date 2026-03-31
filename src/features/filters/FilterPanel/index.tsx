@@ -8,7 +8,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import { FilterItem } from './FilterItem';
 import { AddItemButton } from '../../../shared/AddItemButton';
 import { useFilterContext } from '../FilterContext';
-import { useContextMenuStore } from '../../../context/contextMenuStore';
+import { useContextMenuStore } from '../../../shared/contextMenuStore';
 import { buildFilterMenuItems } from './filterMenuData';
 
 export function FilterPanel() {

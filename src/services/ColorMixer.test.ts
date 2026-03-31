@@ -3,7 +3,7 @@ import {
   findMixRecipe,
   findMixData,
   PIGMENTS,
-  DEFAULT_MIX_GRANULARITY,
+  DEFAULT_MIN_PAINT_PERCENT,
   DEFAULT_DELTA_THRESHOLD,
 } from './ColorMixer';
 
@@ -27,7 +27,7 @@ describe('findMixData', () => {
   it('returns a single-pigment result for an exact pigment match', () => {
     // Titanium White is in the pigment list — exact match should return 1 entry
     const white = PIGMENTS.find((p) => p.name === 'Titanium White')!;
-    const result = findMixData(white.hex, DEFAULT_MIX_GRANULARITY, DEFAULT_DELTA_THRESHOLD);
+    const result = findMixData(white.hex, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD);
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe('Titanium White');
     expect(result[0].parts).toBe(1);
@@ -75,7 +75,7 @@ describe('findMixRecipe', () => {
 
   it('returns "100% Name" for a single-pigment match', () => {
     const white = PIGMENTS.find((p) => p.name === 'Titanium White')!;
-    const recipe = findMixRecipe(white.hex, DEFAULT_MIX_GRANULARITY, DEFAULT_DELTA_THRESHOLD);
+    const recipe = findMixRecipe(white.hex, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD);
     expect(recipe).toBe('100% Titanium White');
   });
 
@@ -88,7 +88,7 @@ describe('findMixRecipe', () => {
     ];
     const recipe = findMixRecipe(
       '#800080',
-      DEFAULT_MIX_GRANULARITY,
+      DEFAULT_MIN_PAINT_PERCENT,
       DEFAULT_DELTA_THRESHOLD,
       custom
     );
