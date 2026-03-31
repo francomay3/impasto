@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  addDoc,
   updateDoc,
   deleteDoc,
   getDocs,
@@ -22,6 +21,7 @@ type StoredProject = Omit<ProjectState, 'sourceImage' | 'createdAt' | 'updatedAt
   createdAt: Timestamp;
   updatedAt: Timestamp;
   imageStorageUrl?: string;
+  thumbnailColors?: string[];
 };
 
 function projectsCol(userId: string) {
@@ -36,6 +36,7 @@ function toProjectState(id: string, data: StoredProject): ProjectState {
     palette: (data.palette as Array<StoredColor & { hex?: string }>)
       .filter((c) => c.sample)
       .map(({ hex: _hex, ...c }) => ({ hex: '', ...c })),
+    thumbnailColors: data.thumbnailColors,
     createdAt: data.createdAt.toDate().toISOString(),
     updatedAt: data.updatedAt.toDate().toISOString(),
   };
@@ -50,16 +51,24 @@ function toPayload(state: ProjectState) {
     filters: state.filters,
     preIndexingBlur: state.preIndexingBlur,
     ...(state.imageStorageUrl ? { imageStorageUrl: state.imageStorageUrl } : {}),
+    ...(state.thumbnailColors ? { thumbnailColors: state.thumbnailColors } : {}),
   };
 }
 
-export async function createFirestoreProject(userId: string, state: ProjectState): Promise<string> {
-  const ref = await addDoc(projectsCol(userId), {
+export function newProjectRef(userId: string) {
+  return doc(projectsCol(userId));
+}
+
+export async function createFirestoreProject(
+  userId: string,
+  projectId: string,
+  state: ProjectState
+): Promise<void> {
+  await setDoc(doc(projectsCol(userId), projectId), {
     ...toPayload(state),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-  return ref.id;
 }
 
 export async function saveFirestoreProject(
@@ -106,6 +115,15 @@ export async function renameFirestoreProject(
 
 export async function deleteFirestoreProject(userId: string, projectId: string): Promise<void> {
   await deleteDoc(doc(projectsCol(userId), projectId));
+}
+
+// Saves cached thumbnail colors without touching updatedAt, so dashboard sort order is unaffected.
+export async function saveFirestoreThumbnailColors(
+  userId: string,
+  projectId: string,
+  thumbnailColors: string[]
+): Promise<void> {
+  await updateDoc(doc(projectsCol(userId), projectId), { thumbnailColors });
 }
 
 export interface ExportSettings {

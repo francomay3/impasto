@@ -47,4 +47,19 @@ test.describe('Header Edit menu', () => {
     await page.getByRole('menuitem', { name: 'Keyboard Shortcuts' }).click()
     await expect(page.getByRole('dialog', { name: 'Keyboard Shortcuts' })).toBeVisible()
   })
+
+  test('File menu closes when clicking the canvas viewport on the Palette tab', async ({ page }) => {
+    await page.getByRole('tab', { name: /Palette/ }).click()
+    await page.getByTestId('canvas-viewport-filtered').waitFor()
+
+    await page.getByText('File').click()
+    await expect(page.getByRole('menu')).toBeVisible()
+
+    const viewport = page.getByTestId('canvas-viewport-filtered')
+    const box = await viewport.boundingBox()
+    if (!box) throw new Error('canvas-viewport-filtered not found')
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+
+    await expect(page.getByRole('menu')).not.toBeVisible()
+  })
 })

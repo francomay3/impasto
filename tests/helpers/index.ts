@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import type { ProjectState } from '../../src/types'
 
 /**
  * Navigate to the editor and wait for it to mount.
@@ -53,4 +54,30 @@ export async function openEditorWithImage(page: Page): Promise<void> {
  */
 export async function activateTool(page: Page, toolId: string): Promise<void> {
   await page.getByTestId(`tool-${toolId}`).click()
+}
+
+const MOCK_PROJECT_BASE: Omit<ProjectState, 'id' | 'name' | 'createdAt' | 'updatedAt'> = {
+  sourceImage: null,
+  palette: [],
+  groups: [],
+  paletteSize: 8,
+  filters: [],
+  preIndexingBlur: 3,
+};
+
+export const MOCK_PROJECTS: ProjectState[] = [
+  { ...MOCK_PROJECT_BASE, id: 'proj-1', name: 'Alpha Project', createdAt: '2024-01-02T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
+  { ...MOCK_PROJECT_BASE, id: 'proj-2', name: 'Beta Project', createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-01T00:00:00.000Z' },
+];
+
+/**
+ * Seed mock projects and navigate to the dashboard.
+ * Must be called before any navigation so addInitScript takes effect on first load.
+ */
+export async function openDashboard(page: Page, projects: ProjectState[] = MOCK_PROJECTS): Promise<void> {
+  await page.addInitScript((ps) => {
+    (window as any).__e2e_projects = ps;
+  }, projects);
+  await page.goto('/');
+  await page.getByTestId('project-card').first().waitFor({ timeout: 5000 });
 }

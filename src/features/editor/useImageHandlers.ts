@@ -21,22 +21,23 @@ interface Options {
   removeColor: ProjectActions['removeColor'];
   updateFilter: ProjectActions['updateFilter'];
   samplingColorId: string | null;
-  startSamplingColor: (id: string) => void;
   completeSample: () => void;
   cancelSample: () => void;
   samplingLevels: SamplingLevels | null;
   resetTransform?: () => void;
+  saveThumbnailColors?: (colors: string[]) => void;
 }
 
 export function useImageHandlers({
   state, pipeline, setImage, updateColor, setPalette, addSampledColor,
-  removeColor, updateFilter, samplingColorId, startSamplingColor,
-  completeSample, cancelSample, samplingLevels, resetTransform,
+  removeColor, updateFilter, samplingColorId,
+  completeSample, cancelSample, samplingLevels, resetTransform, saveThumbnailColors,
 }: Options) {
   const lastImageDataRef = useRef<ImageData | null>(null);
-  const pendingNewColorIdRef = useRef<string | null>(null);
   const justLoadedImageRef = useRef<object | null>(null);
   const [debouncedFilters] = useDebouncedValue(state.filters, 300);
+  const saveThumbnailColorsRef = useRef(saveThumbnailColors);
+  saveThumbnailColorsRef.current = saveThumbnailColors;
 
   // Refs so effects and callbacks can access fresh values without extra deps.
   const pipelineRef = useRef(pipeline);
@@ -61,6 +62,7 @@ export function useImageHandlers({
         return { ...c, hex: rgbToHex(r, g, b) };
       });
       setPalette(newPalette);
+      saveThumbnailColorsRef.current?.(newPalette.map((c) => c.hex).filter(Boolean));
     },
     [state.palette, setPalette]
   );
@@ -99,14 +101,6 @@ export function useImageHandlers({
     [setImage]
   );
 
-  const handleAddColor = useCallback(() => {
-    const id = crypto.randomUUID();
-    pendingNewColorIdRef.current = id;
-    const pending = { id, hex: '#000000', locked: false, ratio: 0, mixRecipe: '' } as const;
-    setPalette([...state.palette, pending]);
-    startSamplingColor(id);
-  }, [setPalette, state.palette, startSamplingColor]);
-
   const handleAddColorAtPosition = useCallback(
     (sample: ColorSample, hex: string): string => {
       const id = crypto.randomUUID();
@@ -125,16 +119,15 @@ export function useImageHandlers({
   );
 
   const samplingHandlers = useColorSamplingHandlers({
-    pendingNewColorIdRef, lastImageDataRef,
+    lastImageDataRef,
     samplingColorId, samplingLevels,
     completeSample, cancelSample,
     palette: state.palette, filters: state.filters,
-    updateColor, updateFilter, removeColor, setPalette,
+    updateColor, updateFilter, setPalette,
   });
 
   return {
     handleImageLoadBitmap,
-    handleAddColor,
     handleAddColorAtPosition,
     handleDeleteColor,
     ...samplingHandlers,

@@ -90,6 +90,8 @@ export type ProjectState = {
   paletteSize: number;
   filters: FilterInstance[];
   preIndexingBlur: number;
+  // Cached hex colors for dashboard thumbnail generation only — not for use elsewhere.
+  thumbnailColors?: string[];
   createdAt: string;
   updatedAt: string;
 };

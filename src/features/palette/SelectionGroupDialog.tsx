@@ -10,7 +10,8 @@ import {
   ActionIcon,
   Divider,
 } from '@mantine/core';
-import { Eye, EyeOff, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, Merge, Trash2, X } from 'lucide-react';
+import { useMergePins } from './useMergePins';
 import { useEditorStore } from '../editor/editorStore';
 import { usePaletteContext } from './PaletteContext';
 
@@ -26,8 +27,10 @@ export function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: (
   const setGroupPinsVisible = useEditorStore(s => s.setGroupPinsVisible);
   const { palette, groups, onDeleteColor, onSetColorGroup, onAddGroup } = usePaletteContext();
   const [newGroupName, setNewGroupName] = useState('');
+  const mergePins = useMergePins();
 
   const ids = [...selectedColorIds];
+  const canMerge = ids.length === 2 && ids.every((id) => palette.find((c) => c.id === id)?.sample);
   const allHidden = ids.every((id) => hiddenPinIds.has(id));
   const groupIds = [...new Set(ids.map((id) => palette.find((c) => c.id === id)?.groupId))];
   const currentGroupId = groupIds.length === 1 ? (groupIds[0] ?? '__none__') : null;
@@ -104,14 +107,27 @@ export function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: (
         </Group>
         <Divider />
         <Group justify="space-between">
-          <ActionIcon
-            variant="subtle"
-            size="sm"
-            onClick={() => { setGroupPinsVisible(ids, !allHidden); close(); }}
-            title={allHidden ? 'Show pins' : 'Hide pins'}
-          >
-            {allHidden ? <Eye size={14} /> : <EyeOff size={14} />}
-          </ActionIcon>
+          <Group gap={4}>
+            <ActionIcon
+              variant="subtle"
+              size="sm"
+              onClick={() => { setGroupPinsVisible(ids, !allHidden); close(); }}
+              title={allHidden ? 'Show pins' : 'Hide pins'}
+            >
+              {allHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+            </ActionIcon>
+            {canMerge && (
+              <ActionIcon
+                variant="subtle"
+                size="sm"
+                data-testid="selection-popover-merge"
+                onClick={() => { mergePins(ids[0], ids[1]); selectColor(null); close(); }}
+                title="Merge pins — place a new pin at the LAB midpoint color"
+              >
+                <Merge size={14} />
+              </ActionIcon>
+            )}
+          </Group>
           <ActionIcon
             variant="subtle"
             color="red"

@@ -67,49 +67,51 @@ export function ProjectCard({ project, onDelete, onRename }: Props) {
   const menuHandlers = { onOpen: open, onOpenNewTab: openInNewTab, onRename: () => setRenameOpen(true), onDelete: confirm };
 
   return (
-    <Card
-      radius="md"
-      padding="sm"
-      style={{
-        background: 'var(--mantine-color-dark-7)',
-        border: `1px solid ${hovered ? 'var(--mantine-color-primary-6)' : 'var(--mantine-color-dark-5)'}`,
-        cursor: 'pointer',
-        transition: 'border-color 150ms ease',
-      }}
-      onClick={open}
-      onContextMenu={handleContextMenu}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <Card.Section style={{ height: 200, display: 'flex', overflow: 'hidden' }}>
-        <ProjectCardPreview project={project} />
-      </Card.Section>
-
-      {project.palette.length > 0 && (
-        <Card.Section style={{ display: 'flex', height: 8 }}>
-          {project.palette.map((c) => (
-            <Box key={c.id} style={{ flex: 1, background: c.hex }} />
-          ))}
+    <>
+      <Card
+        data-testid="project-card"
+        radius="md"
+        padding="sm"
+        style={{
+          background: 'var(--mantine-color-dark-7)',
+          border: `1px solid ${hovered ? 'var(--mantine-color-primary-6)' : 'var(--mantine-color-dark-5)'}`,
+          cursor: 'pointer',
+          transition: 'border-color 150ms ease',
+        }}
+        onClick={open}
+        onContextMenu={handleContextMenu}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <Card.Section style={{ height: 200, display: 'flex', overflow: 'hidden' }}>
+          <ProjectCardPreview project={project} />
         </Card.Section>
-      )}
 
-      <Group justify="space-between" mt="xs" wrap="nowrap">
-        <Stack gap={0} style={{ minWidth: 0 }}>
-          <Text size="sm" fw={500} c="white" lineClamp={1}>{project.name}</Text>
-          <Text size="xs" c="dimmed">{date}</Text>
-        </Stack>
-        <Menu withinPortal>
-          <Menu.Target>
-            <ActionIcon variant="subtle" color="gray" onClick={(e) => e.stopPropagation()}>
-              <MoreHorizontal size={16} />
-            </ActionIcon>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <CardMenuItems {...menuHandlers} />
-          </Menu.Dropdown>
-        </Menu>
-      </Group>
+        {project.palette.length > 0 && (
+          <Card.Section style={{ display: 'flex', height: 8 }}>
+            {project.palette.map((c) => (
+              <Box key={c.id} style={{ flex: 1, background: c.hex }} />
+            ))}
+          </Card.Section>
+        )}
 
+        <Group justify="space-between" mt="xs" wrap="nowrap">
+          <Stack gap={0} style={{ minWidth: 0 }}>
+            <Text size="sm" fw={500} c="white" lineClamp={1}>{project.name}</Text>
+            <Text size="xs" c="dimmed">{date}</Text>
+          </Stack>
+          <Menu withinPortal>
+            <Menu.Target>
+              <ActionIcon data-testid="project-card-menu" variant="subtle" color="gray" onClick={(e) => e.stopPropagation()}>
+                <MoreHorizontal size={16} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
+              <CardMenuItems {...menuHandlers} />
+            </Menu.Dropdown>
+          </Menu>
+        </Group>
+      </Card>
       {confirmDialog}
       <RenameProjectModal
         key={renameOpen ? project.name : 'closed'}
@@ -118,6 +120,6 @@ export function ProjectCard({ project, onDelete, onRename }: Props) {
         onClose={() => setRenameOpen(false)}
         onConfirm={(name) => onRename(project.id, name)}
       />
-    </Card>
+    </>
   );
 }

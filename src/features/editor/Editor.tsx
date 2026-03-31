@@ -33,9 +33,10 @@ interface AppProps {
   isLoading?: boolean;
   onSave: (state: ProjectState) => void | Promise<void>;
   onNewImageFile?: (file: File) => void;
+  onThumbnailColors?: (colors: string[]) => void;
 }
 
-export default function Editor({ initialState, isLoading, onSave, onNewImageFile }: AppProps) {
+export default function Editor({ initialState, isLoading, onSave, onNewImageFile, onThumbnailColors }: AppProps) {
   const history = useHistory(initialState);
   const { status: saveStatus, save } = useSaveStatus(onSave);
   const onStateChange = useCallback(
@@ -60,11 +61,11 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
     setPalette: project.updateDerivedPalette, addSampledColor: project.addSampledColor,
     removeColor: project.removeColor, updateFilter: project.updateFilter,
     samplingColorId: interaction.samplingColorId,
-    startSamplingColor: interaction.startSamplingColor,
     completeSample: interaction.completeSample,
     cancelSample: interaction.cancel,
     samplingLevels: interaction.samplingLevels,
     resetTransform: viewport.resetTransform,
+    saveThumbnailColors: onThumbnailColors,
   });
 
   const { handleUndo, handleRedo } = useUndoRedo({

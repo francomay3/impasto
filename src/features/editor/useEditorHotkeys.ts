@@ -58,12 +58,34 @@ export function useEditorHotkeys({
     return () => document.removeEventListener('paste', handlePaste);
   }, [onPasteFile]);
 
+  // Escape must use a capture-phase listener because some React components call
+  // e.stopPropagation() (which in React 18 also calls nativeEvent.stopPropagation()),
+  // preventing the event from reaching document.documentElement where useHotkeys listens.
+  const escapeRef = useRef({ onClearSelection, cancel: interaction.cancel });
+  useEffect(() => { escapeRef.current = { onClearSelection, cancel: interaction.cancel }; });
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      ) return;
+      escapeRef.current.onClearSelection();
+      escapeRef.current.cancel();
+    };
+    document.addEventListener('keydown', handler, true);
+    return () => document.removeEventListener('keydown', handler, true);
+  }, []);
+
   useHotkeys([
     [HOTKEYS.SAVE, () => notifications.show({ message: 'Project saved', color: 'blue' })],
     [HOTKEYS.UNDO, onUndo],
     [HOTKEYS.REDO, onRedo],
     [HOTKEYS.REDO_ALT, onRedo],
-    [HOTKEYS.CANCEL, () => { onClearSelection(); interaction.cancel(); }],
     [HOTKEYS.ADD_FILTER, () => openMenu({ ...mousePos.current, items: buildFilterMenuItems(onAddFilter) })],
     [HOTKEYS.ADD_COLOR, onAddColor],
     [HOTKEYS.DELETE_COLOR, onDeleteSelectedColor],

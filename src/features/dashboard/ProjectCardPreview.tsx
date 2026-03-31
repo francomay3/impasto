@@ -26,7 +26,7 @@ function isUsable(hex: string) {
   return l >= 0.1 && l <= 0.85 && s >= 0.15;
 }
 
-function PaletteThumbnail({ palette }: { palette: ProjectState['palette'] }) {
+function PaletteThumbnail({ thumbnailColors }: { thumbnailColors: string[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -41,11 +41,11 @@ function PaletteThumbnail({ palette }: { palette: ProjectState['palette'] }) {
     ctx.fillStyle = '#1a1b1e';
     ctx.fillRect(0, 0, W, H);
 
-    const usable = palette.filter((c) => isUsable(c.hex));
-    const colors = usable.length > 0 ? usable : palette.length > 0 ? palette : [{ hex: '#444' }];
-    const shuffled = [...colors].sort(() => Math.random() - 0.5);
+    const usable = thumbnailColors.filter(isUsable);
+    const hexes = usable.length > 0 ? usable : thumbnailColors.length > 0 ? thumbnailColors : ['#444'];
+    const shuffled = [...hexes].sort(() => Math.random() - 0.5);
 
-    shuffled.forEach(({ hex }) => {
+    shuffled.forEach((hex) => {
       const normalized = normalizeHex(hex);
       const blobs = 3 + Math.floor(Math.random() * 5);
       for (let i = 0; i < blobs; i++) {
@@ -61,7 +61,7 @@ function PaletteThumbnail({ palette }: { palette: ProjectState['palette'] }) {
         ctx.fill();
       }
     });
-  }, [palette]);
+  }, [thumbnailColors]);
 
   return (
     <canvas
@@ -83,7 +83,7 @@ export function ProjectCardPreview({ project }: { project: ProjectState }) {
 
   return (
     <>
-      {!loaded && <PaletteThumbnail palette={project.palette} />}
+      {!loaded && <PaletteThumbnail thumbnailColors={project.thumbnailColors ?? []} />}
       {project.imageStorageUrl && (
         <img
           src={project.imageStorageUrl}

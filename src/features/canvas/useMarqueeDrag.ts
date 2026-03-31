@@ -39,7 +39,6 @@ export function useMarqueeDrag({
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (e.button !== 0) return;
-      e.stopPropagation();
       if (!isMarqueeMode) {
         panMouseDown(e);
         return;

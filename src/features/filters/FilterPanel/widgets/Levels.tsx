@@ -67,7 +67,7 @@ function LevelPoint({
           </Tooltip>
         )}
       </Group>
-      <Slider value={value} min={min} max={max} onChange={onUpdate} size="xs" />
+      <Slider value={value} min={min} max={max} onChange={onUpdate} size="xs" thumbLabel={label} />
     </Stack>
   );
 }

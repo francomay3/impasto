@@ -45,7 +45,7 @@ const theme = createTheme({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={theme} defaultColorScheme="dark">
+      <MantineProvider theme={theme} defaultColorScheme="dark" env={import.meta.env.VITE_E2E_TEST_MODE === 'true' ? 'test' : undefined}>
         <Notifications />
         <ErrorBoundary>
           <AuthInit />

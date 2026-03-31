@@ -7,7 +7,6 @@ import { rgbToHex } from '../../utils/colorUtils';
 import type { SamplingLevels } from '../filters/FilterContext';
 
 interface Options {
-  pendingNewColorIdRef: MutableRefObject<string | null>;
   lastImageDataRef: MutableRefObject<ImageData | null>;
   samplingColorId: string | null;
   samplingLevels: SamplingLevels | null;
@@ -17,12 +16,10 @@ interface Options {
   filters: FilterInstance[];
   updateColor: (id: string, changes: Partial<Color>) => void;
   updateFilter: (id: string, params: Record<string, number>) => void;
-  removeColor: (id: string) => void;
   setPalette: (palette: Color[]) => void;
 }
 
 export function useColorSamplingHandlers({
-  pendingNewColorIdRef,
   lastImageDataRef,
   samplingColorId,
   samplingLevels,
@@ -32,27 +29,21 @@ export function useColorSamplingHandlers({
   filters,
   updateColor,
   updateFilter,
-  removeColor,
   setPalette,
 }: Options) {
   const handleSample = useCallback(
     (sample: ColorSample, hex: string) => {
       if (!samplingColorId) return;
-      pendingNewColorIdRef.current = null;
       updateColor(samplingColorId, { hex, sample });
       completeSample();
       notifications.show({ message: `Color sampled: ${hex}`, color: 'primary' });
     },
-    [samplingColorId, updateColor, completeSample, pendingNewColorIdRef]
+    [samplingColorId, updateColor, completeSample]
   );
 
   const handleCancelSample = useCallback(() => {
-    if (samplingColorId && samplingColorId === pendingNewColorIdRef.current) {
-      removeColor(samplingColorId);
-    }
-    pendingNewColorIdRef.current = null;
     cancelSample();
-  }, [samplingColorId, removeColor, cancelSample, pendingNewColorIdRef]);
+  }, [cancelSample]);
 
   const handleSampleLevels = useCallback(
     (_sample: ColorSample, hex: string) => {

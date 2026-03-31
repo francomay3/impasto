@@ -1,12 +1,13 @@
 import { useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useAuthStore } from '../auth/authStore';
 import {
   getFirestoreProject,
   saveFirestoreProject,
   saveFirestoreImageUrl,
+  saveFirestoreThumbnailColors,
 } from '../../services/FirestoreService';
 import { uploadProjectImage } from '../../services/ImageStorageService';
 import Editor from './Editor';
@@ -41,6 +42,8 @@ export function ProjectPage() {
   const navigate = useNavigate();
   const isTestMode = import.meta.env.VITE_E2E_TEST_MODE === 'true';
 
+  const queryClient = useQueryClient();
+
   const { data: project, isLoading, isError } = useQuery({
     queryKey: queryKeys.project(user?.uid ?? '', id ?? ''),
     queryFn: () => resolveProject(user!.uid, id!),
@@ -57,19 +60,31 @@ export function ProjectPage() {
 
   const onSave = useCallback(
     async (state: ProjectState) => {
-      if (!user || !id) return;
+      if (isTestMode || !user || !id) return;
       await saveFirestoreProject(user.uid, id, state);
     },
-    [user, id]
+    [isTestMode, user, id]
   );
 
   const onNewImageFile = useCallback(
     async (file: File) => {
-      if (!user || !id) return;
+      if (isTestMode || !user || !id) return;
       const url = await uploadProjectImage(user.uid, id, file);
       await saveFirestoreImageUrl(user.uid, id, url);
+      queryClient.setQueryData<ProjectState | null>(
+        queryKeys.project(user.uid, id),
+        (prev) => prev ? { ...prev, imageStorageUrl: url } : prev
+      );
     },
-    [user, id]
+    [isTestMode, user, id, queryClient]
+  );
+
+  const onThumbnailColors = useCallback(
+    async (colors: string[]) => {
+      if (isTestMode || !user || !id) return;
+      await saveFirestoreThumbnailColors(user.uid, id, colors);
+    },
+    [isTestMode, user, id]
   );
 
   const isLoading_ = !isTestMode && isLoading;
@@ -82,6 +97,7 @@ export function ProjectPage() {
       isLoading={isLoading_}
       onSave={onSave}
       onNewImageFile={onNewImageFile}
+      onThumbnailColors={onThumbnailColors}
     />
   );
 }

@@ -1,19 +1,11 @@
-import { Group, Switch, Text, Tooltip } from '@mantine/core';
-import { RotateCcw, SplitSquareHorizontal, Square, SquarePlus, SquareMinus, SquareDashed } from 'lucide-react';
+import { Group, Switch, Text } from '@mantine/core';
+import { RotateCcw, SplitSquareHorizontal } from 'lucide-react';
 import { useCanvasContext } from '../CanvasContext';
 import { useFilterContext } from '../../filters/FilterContext';
 import { useEditorStore } from '../../editor/editorStore';
+import { usePaletteContext } from '../../palette/PaletteContext';
 import { SlimNumberInput } from '../../../shared/SlimNumberInput';
 import { SlimButton } from '../../../shared/SlimButton';
-import { SlimIconButton } from '../../../shared/SlimIconButton';
-import type { SelectionMode } from '../../../tools';
-
-const SELECTION_MODES: { mode: SelectionMode; icon: React.ReactNode; label: string }[] = [
-  { mode: 'new',       icon: <Square size={12} />,       label: 'New selection' },
-  { mode: 'add',       icon: <SquarePlus size={12} />,   label: 'Add to selection (Shift)' },
-  { mode: 'subtract',  icon: <SquareMinus size={12} />,  label: 'Subtract from selection (Alt)' },
-  { mode: 'intersect', icon: <SquareDashed size={12} />, label: 'Intersect with selection' },
-];
 
 const barStyle: React.CSSProperties = {
   flexShrink: 0,
@@ -26,31 +18,38 @@ const barStyle: React.CSSProperties = {
 };
 
 function PaletteToolOptions() {
-  const { activeTool, samplingRadius, setSamplingRadius, selectionMode, setSelectionMode } = useCanvasContext();
+  const { activeTool, samplingRadius, setSamplingRadius, selectionMode, setSelectionMode } =
+    useCanvasContext();
+  const { palette } = usePaletteContext();
+  const setSelectedColorIds = useEditorStore(s => s.setSelectedColorIds);
 
   if (activeTool === 'select') {
+    const sampledIds = palette.filter((c) => c.sample).map((c) => c.id);
     return (
       <Group gap={2}>
-        <SlimButton>Select All</SlimButton>
-        <SlimButton>Deselect</SlimButton>
+        <SlimButton onClick={() => setSelectedColorIds(new Set(sampledIds))}>Select All</SlimButton>
+        <SlimButton onClick={() => setSelectedColorIds(new Set())}>Deselect</SlimButton>
       </Group>
     );
   }
 
   if (activeTool === 'marquee') {
     return (
-      <Group gap={0}>
-        {SELECTION_MODES.map(({ mode, icon, label }) => (
-          <Tooltip key={mode} label={label} withArrow fz="xs">
-            <SlimIconButton
-              variant={selectionMode === mode ? 'light' : 'subtle'}
-              color={selectionMode === mode ? 'primary' : 'gray'}
-              onClick={(e) => { e.stopPropagation(); setSelectionMode(mode); }}
-            >
-              {icon}
-            </SlimIconButton>
-          </Tooltip>
-        ))}
+      <Group gap={2}>
+        <SlimButton
+          variant={selectionMode === 'add' ? 'light' : 'subtle'}
+          color={selectionMode === 'add' ? 'primary' : 'gray'}
+          onClick={() => setSelectionMode('add')}
+        >
+          Add to Selection
+        </SlimButton>
+        <SlimButton
+          variant={selectionMode === 'subtract' ? 'light' : 'subtle'}
+          color={selectionMode === 'subtract' ? 'primary' : 'gray'}
+          onClick={() => setSelectionMode('subtract')}
+        >
+          Subtract
+        </SlimButton>
       </Group>
     );
   }
@@ -83,7 +82,11 @@ function PaletteMixToggle() {
   return (
     <Switch
       size="xs"
-      label={<Text size="xs" c="dimmed">Show mixes</Text>}
+      label={
+        <Text size="xs" c="dimmed">
+          Show mixes
+        </Text>
+      }
       checked={showMixedColors}
       onChange={(e) => setShowMixedColors(e.currentTarget.checked)}
     />

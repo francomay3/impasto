@@ -114,6 +114,7 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
   return (
     <>
       <Box
+        data-no-pan={activeTool === 'marquee' ? '' : undefined}
         style={{
           position: 'absolute',
           inset: 0,

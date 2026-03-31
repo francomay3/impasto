@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Stack, Text, Group, ActionIcon, Tooltip } from '@mantine/core';
+import { Stack, Text } from '@mantine/core';
 import { DndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { FolderPlus } from 'lucide-react';
-import { AddItemButton } from '../../../shared/AddItemButton';
 import { SortableColorItem } from './ColorItem';
 import { GroupDropZone } from './GroupDropZone';
 import { SortableGroup } from './SortableGroup';
+import { PaletteSidebarHeader } from './PaletteSidebarHeader';
 import { usePaletteDnd } from './usePaletteDnd';
+import { useSortPalette } from './useSortPalette';
 import { usePaletteContext } from '../PaletteContext';
 import { useEditorStore } from '../../editor/editorStore';
 
@@ -23,9 +23,16 @@ export function PaletteSidebar() {
     onReorderGroups,
   } = usePaletteContext();
   const selectColor = useEditorStore(s => s.selectColor);
+  const sortPalette = useSortPalette();
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [newGroupId, setNewGroupId] = useState<string | null>(null);
+
+  const handleAddGroup = () => {
+    const id = crypto.randomUUID();
+    onAddGroup(id, `Group ${groups.length + 1}`);
+    setNewGroupId(id);
+  };
 
   const {
     sensors,
@@ -67,21 +74,11 @@ export function PaletteSidebar() {
       onDragCancel={handleDragCancel}
     >
       <Stack gap="xs" p="xs" onClick={() => selectColor(null)} data-testid="palette-sidebar">
-        <Group gap={6} wrap="nowrap">
-          <AddItemButton label="Add Color" hint="C" onClick={onAddColor} style={{ flex: 1 }} />
-          <Tooltip label="Add Group" position="right" withArrow>
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="md"
-              data-testid="add-group"
-              style={{ border: '1px dashed var(--mantine-color-dark-4)', flexShrink: 0 }}
-              onClick={() => { const id = crypto.randomUUID(); onAddGroup(id, `Group ${groups.length + 1}`); setNewGroupId(id); }}
-            >
-              <FolderPlus size={15} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
+        <PaletteSidebarHeader
+          onAddColor={onAddColor}
+          onAddGroup={handleAddGroup}
+          onSort={sortPalette}
+        />
 
         <SortableContext items={groups.map((g) => g.id)} strategy={verticalListSortingStrategy}>
           <Stack gap={6}>

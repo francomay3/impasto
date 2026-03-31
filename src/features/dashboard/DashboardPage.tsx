@@ -11,15 +11,15 @@ const FREE_PROJECT_LIMIT = 10;
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { projects, loading, isCreating, create, remove, rename } = useProjects();
+  const { projects, loading, hasAnyProject, isCreating, create, remove, rename } = useProjects();
   const [search, setSearch] = useState('');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && projects.length === 0) {
+    if (!loading && !hasAnyProject) {
       create().then((id) => navigate(`/project/${id}`, { replace: true }));
     }
-  }, [loading, projects.length, create, navigate]);
+  }, [loading, hasAnyProject, create, navigate]);
 
   const handleCreate = async () => {
     if (projects.length >= FREE_PROJECT_LIMIT) {
