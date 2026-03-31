@@ -15,11 +15,11 @@ test.describe('Multi-selection group creation', () => {
   async function openSelectionPopover(page: import('@playwright/test').Page) {
     const mod = process.platform === 'darwin' ? 'Meta' : 'Control'
     // Select first color
-    await page.getByTestId('color-item-0').getByTestId('color-item-inner').click()
+    await page.getByTestId('color-item-0').getByTestId('color-card').click()
     // Cmd+click second color to add to selection
-    await page.getByTestId('color-item-1').getByTestId('color-item-inner').click({ modifiers: [mod] })
+    await page.getByTestId('color-item-1').getByTestId('color-card').click({ modifiers: [mod] })
     // Right-click to open selection popover
-    await page.getByTestId('color-item-0').getByTestId('color-item-inner').click({ button: 'right' })
+    await page.getByTestId('color-item-0').getByTestId('color-card').click({ button: 'right' })
     await page.getByTestId('selection-popover').waitFor()
   }
 

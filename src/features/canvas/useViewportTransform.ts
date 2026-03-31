@@ -7,10 +7,13 @@ export interface ViewportTransform {
   panY: number;
 }
 
+type TransformListener = (t: ViewportTransform) => void;
+
 export function useViewportTransform() {
   const [transform, setTransform] = useState<ViewportTransform>({ scale: 1, panX: 0, panY: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const transformRef = useRef<ViewportTransform>({ scale: 1, panX: 0, panY: 0 });
+  const listenersRef = useRef<Set<TransformListener>>(new Set());
   const dragRef = useRef<{
     startX: number;
     startY: number;
@@ -18,9 +21,16 @@ export function useViewportTransform() {
     startPanY: number;
   } | null>(null);
 
-  const applyTransform = useCallback((t: ViewportTransform) => {
+  const subscribeToTransform = useCallback((cb: TransformListener) => {
+    listenersRef.current.add(cb);
+    return () => { listenersRef.current.delete(cb); };
+  }, []);
+
+  // commit=true also flushes a React state update to trigger dependent re-renders
+  const applyTransform = useCallback((t: ViewportTransform, commit = false) => {
     transformRef.current = t;
-    setTransform(t);
+    listenersRef.current.forEach(cb => cb(t));
+    if (commit) setTransform(t);
   }, []);
 
   const handleWheel = useCallback(
@@ -30,11 +40,12 @@ export function useViewportTransform() {
       const newScale = applyZoomStep(prev.scale, e.deltaY < 0);
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
+      // commit=true: zoom must re-render (scale affects inv, SamplerOverlay circle, etc.)
       applyTransform({
         scale: newScale,
         panX: panOnZoom(mx, prev.panX, prev.scale, newScale),
         panY: panOnZoom(my, prev.panY, prev.scale, newScale),
-      });
+      }, true);
     },
     [applyTransform]
   );
@@ -43,6 +54,7 @@ export function useViewportTransform() {
     (e: React.MouseEvent) => {
       if (e.button !== 0 && e.button !== 1) return;
       if ((e.target as HTMLElement).closest('[data-no-pan]')) return;
+      if (dragRef.current) return;
       (document.activeElement as HTMLElement)?.blur();
       e.preventDefault();
       const prev = transformRef.current;
@@ -64,6 +76,7 @@ export function useViewportTransform() {
         requestAnimationFrame(() => {
           rafPending = false;
           if (!dragRef.current || !latestEv) return;
+          // No commit during drag — pure imperative DOM write via listeners
           applyTransform({
             ...transformRef.current,
             panX: panOnDrag(dragRef.current.startPanX, dragRef.current.startX, latestEv.clientX),
@@ -77,6 +90,7 @@ export function useViewportTransform() {
         dragRef.current = null;
         latestEv = null;
         setIsDragging(false);
+        setTransform(transformRef.current); // commit final position once
         window.removeEventListener('mousemove', handleGlobalMove);
         window.removeEventListener('mouseup', handleGlobalUp);
       };
@@ -88,8 +102,8 @@ export function useViewportTransform() {
   );
 
   const resetTransform = useCallback(() => {
-    applyTransform({ scale: 1, panX: 0, panY: 0 });
+    applyTransform({ scale: 1, panX: 0, panY: 0 }, true);
   }, [applyTransform]);
 
-  return { transform, isDragging, handleWheel, handleMouseDown, resetTransform };
+  return { transform, isDragging, handleWheel, handleMouseDown, resetTransform, subscribeToTransform };
 }

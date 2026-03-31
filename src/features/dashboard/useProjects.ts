@@ -7,10 +7,10 @@ import {
   deleteFirestoreProject,
   renameFirestoreProject,
 } from '../../services/FirestoreService';
-import { useAuth } from '../auth/AuthContext';
+import { useAuthStore } from '../auth/authStore';
 
 export function useProjects() {
-  const { user } = useAuth();
+  const user = useAuthStore(s => s.user);
   const [projects, setProjects] = useState<ProjectState[]>([]);
   const [loading, setLoading] = useState(true);
 

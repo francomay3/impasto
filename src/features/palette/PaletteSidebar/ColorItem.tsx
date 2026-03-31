@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Color } from '../../../types';
 import { usePaletteContext } from '../PaletteContext';
-import { useEditorContext } from '../../editor/EditorContext';
+import { useEditorStore } from '../../editor/editorStore';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
 import { useColorContextMenu } from '../useColorContextMenu';
 import { useSelectionContextMenu } from '../useSelectionContextMenu';
@@ -20,8 +20,11 @@ interface ColorItemProps {
 
 function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
   const { samplingColorId, onRenameColor, onDeleteColor } = usePaletteContext();
-  const { selectedColorIds, onSelectColor, onToggleColorSelection, hoveredColorId, onHoverColor } =
-    useEditorContext();
+  const selectedColorIds = useEditorStore(s => s.selectedColorIds);
+  const hoveredColorId = useEditorStore(s => s.hoveredColorId);
+  const selectColor = useEditorStore(s => s.selectColor);
+  const toggleColorSelection = useEditorStore(s => s.toggleColorSelection);
+  const setHoveredColorId = useEditorStore(s => s.setHoveredColorId);
   const [editingName, setEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
   const [editPopoverPos, setEditPopoverPos] = useState<{ x: number; y: number } | null>(null);
@@ -42,8 +45,8 @@ function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (e.metaKey || e.shiftKey) onToggleColorSelection(color.id);
-    else onSelectColor(color.id);
+    if (e.metaKey || e.shiftKey) toggleColorSelection(color.id);
+    else selectColor(color.id);
   };
 
   const openContextMenu = useCallback(
@@ -74,10 +77,10 @@ function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
       <Box
         onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); onDeleteColor(color.id); } }}
         onClick={handleClick}
-        onMouseEnter={() => onHoverColor(color.id)}
-        onMouseLeave={() => onHoverColor(null)}
+        onMouseEnter={() => setHoveredColorId(color.id)}
+        onMouseLeave={() => setHoveredColorId(null)}
         {...contextTrigger}
-        data-testid="color-item-inner"
+        data-testid="color-card"
         style={{
           border: '1px solid var(--mantine-color-dark-4)',
           outline,
@@ -121,7 +124,7 @@ function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
 }
 
 export function SortableColorItem({ color, index }: { color: Color; index: number }) {
-  const { selectedColorIds } = useEditorContext();
+  const selectedColorIds = useEditorStore(s => s.selectedColorIds);
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: color.id, data: { type: 'color' } });
   return (

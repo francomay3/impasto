@@ -3,7 +3,6 @@ import { Layers, Palette, BarChart2, Grid, Scaling, Brush, ImageUp } from 'lucid
 import { ToolRail } from '../../canvas/ToolRail';
 import type { ToolRailItem } from '../../canvas/ToolRail';
 import { TOOLS } from '../../../tools';
-import { useToolContext } from '../../canvas/ToolContext';
 import { FilterPanel } from '../../filters/FilterPanel';
 import { PaletteSidebar } from '../../palette/PaletteSidebar';
 import { ErrorBoundary } from '../../../shared/ErrorBoundary';
@@ -54,8 +53,7 @@ interface Props {
 
 export function EditorTabs({ height = '100%' }: Props) {
   const { activeTab, onSetActiveTab, onFileSelected } = useEditorContext();
-  const { sourceImage } = useCanvasContext();
-  const { activeTool, setActiveTool } = useToolContext();
+  const { sourceImage, activeTool, setActiveTool } = useCanvasContext();
 
   const toolRailItems: ToolRailItem[] = TOOLS.map((tool) => ({
     icon: <tool.icon size={16} />,

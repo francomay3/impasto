@@ -9,7 +9,7 @@ import {
 import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
-import { AuthProvider } from './features/auth/AuthContext';
+import { AuthInit } from './features/auth/AuthInit';
 import { AppRouter } from './routes/AppRouter';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 
@@ -44,9 +44,8 @@ createRoot(document.getElementById('root')!).render(
     <MantineProvider theme={theme} defaultColorScheme="dark">
       <Notifications />
       <ErrorBoundary>
-        <AuthProvider>
-          <AppRouter />
-        </AuthProvider>
+        <AuthInit />
+        <AppRouter />
       </ErrorBoundary>
     </MantineProvider>
   </StrictMode>

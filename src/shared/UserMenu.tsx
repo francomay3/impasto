@@ -2,10 +2,10 @@ import { Menu, Avatar, Text, Group } from '@mantine/core';
 import { LogOut, Settings, CreditCard, Bell, FlaskConical } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
-import { useAuth } from '../features/auth/AuthContext';
+import { useAuthStore } from '../features/auth/authStore';
 
 export function UserMenu() {
-  const { user } = useAuth();
+  const user = useAuthStore(s => s.user);
 
   return (
     <Menu position="bottom-end" offset={8} withArrow>

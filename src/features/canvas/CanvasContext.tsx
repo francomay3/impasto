@@ -1,6 +1,7 @@
 import { createContext, useContext, type RefObject } from 'react';
 import type { ViewportTransform } from './useViewportTransform';
 import type { RawImage } from '../../types';
+import type { ToolId } from '../../tools';
 
 interface CanvasContextValue {
   sourceImage: RawImage | null;
@@ -9,11 +10,16 @@ interface CanvasContextValue {
   viewportTransform: ViewportTransform;
   isDragging: boolean;
   isSampling: boolean;
+  activeTool: ToolId;
+  setActiveTool: (id: ToolId) => void;
+  samplingRadius: number;
+  setSamplingRadius: (r: number) => void;
   showLabels: boolean;
   onToggleLabels: () => void;
   onWheel: (e: WheelEvent, rect: DOMRect) => void;
   onMouseDown: (e: React.MouseEvent) => void;
   onResetTransform: () => void;
+  subscribeToTransform: (cb: (t: ViewportTransform) => void) => () => void;
 }
 
 const CanvasContext = createContext<CanvasContextValue | null>(null);

@@ -8,12 +8,6 @@ interface EditorContextValue {
   canUndo: boolean;
   canRedo: boolean;
   isLoading: boolean;
-  selectedColorIds: Set<string>;
-  onSelectColor: (id: string | null) => void;
-  onToggleColorSelection: (id: string) => void;
-  onSetSelection: (ids: Set<string>) => void;
-  hoveredColorId: string | null;
-  onHoverColor: (id: string | null) => void;
   onExportClick: () => void;
   onReplaceImage: () => void;
   onFileSelected: (file: File) => void;
@@ -22,9 +16,6 @@ interface EditorContextValue {
   onRedo: () => void;
   activeTab: string;
   onSetActiveTab: (tab: string) => void;
-  hiddenPinIds: Set<string>;
-  onTogglePinVisibility: (id: string) => void;
-  onSetGroupPinsVisible: (colorIds: string[], visible: boolean) => void;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);

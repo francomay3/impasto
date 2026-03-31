@@ -4,7 +4,7 @@ import { useMergedRef } from '@mantine/hooks';
 import { Plus, Maximize2, Tag } from 'lucide-react';
 import { useCanvasContext } from './CanvasContext';
 import { usePaletteContext } from '../palette/PaletteContext';
-import { useContextMenu } from '../../context/ContextMenuContext';
+import { useContextMenuStore } from '../../context/contextMenuStore';
 import { getPixelHex } from '../../utils/colorUtils';
 
 interface Props {
@@ -27,12 +27,23 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(function Canv
     isSampling,
     showLabels,
     onToggleLabels,
+    subscribeToTransform,
   } = useCanvasContext();
   const { onAddColorAtPosition } = usePaletteContext();
-  const { open: openMenu } = useContextMenu();
+  const openMenu = useContextMenuStore(s => s.open);
   const containerRef = useRef<HTMLDivElement>(null);
+  const transformBoxRef = useRef<HTMLDivElement>(null);
   const localCanvasRef = useRef<HTMLCanvasElement>(null);
   const mergedRef = useMergedRef(ref, localCanvasRef);
+
+  // Apply viewport transforms imperatively — bypasses React's render cycle during drag.
+  // Falls back to the React-managed style on initial render and after zoom/drag-end commits.
+  useEffect(() => {
+    return subscribeToTransform(({ panX, panY, scale }) => {
+      const el = transformBoxRef.current;
+      if (el) el.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    });
+  }, [subscribeToTransform]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -111,6 +122,7 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(function Canv
         onContextMenu={handleContextMenu}
       >
         <Box
+          ref={transformBoxRef}
           style={{
             transformOrigin: '0 0',
             transform: transformCss,

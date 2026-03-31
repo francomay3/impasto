@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import type { useProjectState } from './useProjectState';
 import type { useImageHandlers } from './useImageHandlers';
-import type { SamplingLevels } from '../filters/FilterContext';
+import type { InteractionAPI } from '../canvas/useInteraction';
 
 type Project = ReturnType<typeof useProjectState>;
 type ImageHandlers = ReturnType<typeof useImageHandlers>;
@@ -8,34 +9,42 @@ type ImageHandlers = ReturnType<typeof useImageHandlers>;
 interface Options {
   project: Project;
   imageHandlers: ImageHandlers;
-  samplingLevels: SamplingLevels | null;
-  setSamplingColorId: (id: string | null) => void;
-  setSamplingLevels: (v: SamplingLevels | null) => void;
+  interaction: InteractionAPI;
 }
 
-export function useFilterContextValue({
-  project,
-  imageHandlers,
-  samplingLevels,
-  setSamplingColorId,
-  setSamplingLevels,
-}: Options) {
-  return {
-    filters: project.state.filters,
-    preIndexingBlur: project.state.preIndexingBlur,
-    setPreIndexingBlur: project.setPreIndexingBlur,
-    samplingLevels,
-    onAddFilter: project.addFilter,
-    onDuplicateFilter: project.duplicateFilter,
-    onRemoveFilter: project.removeFilter,
-    onUpdateFilter: project.updateFilter,
-    onPreviewFilter: project.updateFilterPreview,
-    onReorderFilters: project.reorderFilters,
-    onStartSamplingLevels: (filterId: string, point: 'black' | 'white') => {
-      setSamplingColorId(null);
-      setSamplingLevels({ filterId, point });
-    },
-    onSampleLevels: imageHandlers.handleSampleLevels,
-    onCancelSamplingLevels: () => setSamplingLevels(null),
-  };
+export function useFilterContextValue({ project, imageHandlers, interaction }: Options) {
+  const { samplingLevels, startSamplingLevels, cancel } = interaction;
+
+  return useMemo(
+    () => ({
+      filters: project.state.filters,
+      preIndexingBlur: project.state.preIndexingBlur,
+      setPreIndexingBlur: project.setPreIndexingBlur,
+      samplingLevels,
+      onAddFilter: project.addFilter,
+      onDuplicateFilter: project.duplicateFilter,
+      onRemoveFilter: project.removeFilter,
+      onUpdateFilter: project.updateFilter,
+      onPreviewFilter: project.updateFilterPreview,
+      onReorderFilters: project.reorderFilters,
+      onStartSamplingLevels: startSamplingLevels,
+      onSampleLevels: imageHandlers.handleSampleLevels,
+      onCancelSamplingLevels: cancel,
+    }),
+    [
+      project.state.filters,
+      project.state.preIndexingBlur,
+      project.setPreIndexingBlur,
+      samplingLevels,
+      project.addFilter,
+      project.duplicateFilter,
+      project.removeFilter,
+      project.updateFilter,
+      project.updateFilterPreview,
+      project.reorderFilters,
+      startSamplingLevels,
+      imageHandlers.handleSampleLevels,
+      cancel,
+    ]
+  );
 }

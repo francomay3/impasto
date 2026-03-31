@@ -1,4 +1,5 @@
 mod index;
+mod lut;
 
 use wasm_bindgen::prelude::*;
 

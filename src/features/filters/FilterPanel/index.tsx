@@ -8,12 +8,12 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import { FilterItem } from './FilterItem';
 import { AddItemButton } from '../../../shared/AddItemButton';
 import { useFilterContext } from '../FilterContext';
-import { useContextMenu } from '../../../context/ContextMenuContext';
+import { useContextMenuStore } from '../../../context/contextMenuStore';
 import { buildFilterMenuItems } from './filterMenuData';
 
 export function FilterPanel() {
   const { filters, onReorderFilters, onAddFilter } = useFilterContext();
-  const { open: openMenu } = useContextMenu();
+  const openMenu = useContextMenuStore(s => s.open);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const sensors = useSensors(useSensor(SmartMouseSensor));
 

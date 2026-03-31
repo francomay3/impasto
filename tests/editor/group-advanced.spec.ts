@@ -61,7 +61,7 @@ test.describe('Group advanced — collapse, rename, context menu, confirm delete
   test('group context menu shows Collapse when group is expanded', async ({ page }) => {
     await addGroup(page)
     await addColorToGroup(page, 'Group 1')
-    await page.getByTestId('group-item').click({ button: 'right' })
+    await page.getByTestId('group-header').click({ button: 'right' })
     await expect(page.getByRole('menuitem', { name: 'Collapse' })).toBeVisible()
     await page.keyboard.press('Escape')
   })
@@ -69,7 +69,7 @@ test.describe('Group advanced — collapse, rename, context menu, confirm delete
   test('Collapse from context menu hides the color items', async ({ page }) => {
     await addGroup(page)
     await addColorToGroup(page, 'Group 1')
-    await page.getByTestId('group-item').click({ button: 'right' })
+    await page.getByTestId('group-header').click({ button: 'right' })
     await page.getByRole('menuitem', { name: 'Collapse' }).click()
     await expect(page.getByTestId('color-item-0')).not.toBeAttached()
   })
@@ -132,7 +132,7 @@ test.describe('Group advanced — collapse, rename, context menu, confirm delete
   test('context menu Delete group on non-empty group also shows confirm dialog', async ({ page }) => {
     await addGroup(page)
     await addColorToGroup(page, 'Group 1')
-    await page.getByTestId('group-item').click({ button: 'right' })
+    await page.getByTestId('group-header').click({ button: 'right' })
     await page.getByRole('menuitem', { name: 'Delete group' }).click()
     await expect(page.getByRole('dialog', { name: 'Delete group' })).toBeVisible()
     await page.keyboard.press('Escape')

@@ -1,18 +1,23 @@
 import chroma from 'chroma-js';
+import mixbox from '../utils/mixbox';
 import type { Pigment } from '../types';
 
 export const PIGMENTS: Pigment[] = [
-  { name: 'Titanium White', hex: '#FFFFFF' },
-  { name: 'Ivory Black', hex: '#231F20' },
-  { name: 'Cadmium Yellow', hex: '#FFF600' },
-  { name: 'Yellow Ochre', hex: '#CB9D06' },
-  { name: 'Cadmium Red', hex: '#E30022' },
-  { name: 'Alizarin Crimson', hex: '#841B2D' },
-  { name: 'Ultramarine Blue', hex: '#4169E1' },
-  { name: 'Phthalo Blue', hex: '#000F89' },
-  { name: 'Viridian Green', hex: '#007F5C' },
-  { name: 'Raw Umber', hex: '#826644' },
-  { name: 'Burnt Sienna', hex: '#8A3324' },
+  { name: 'Titanium White', hex: '#fcfff0' },
+  { name: 'Ivory Black', hex: '#0c0b0a' },
+  { name: 'Cadmium Yellow', hex: '#feec00' },
+  { name: 'Hansa Yellow', hex: '#fcd300' },
+  { name: 'Cadmium Orange', hex: '#ff6900' },
+  { name: 'Cadmium Red', hex: '#ff2702' },
+  { name: 'Quinacridone Magenta', hex: '#80022e' },
+  { name: 'Cobalt Violet', hex: '#4e0042' },
+  { name: 'Ultramarine Blue', hex: '#190059' },
+  { name: 'Cobalt Blue', hex: '#002185' },
+  { name: 'Phthalo Blue', hex: '#0d1b44' },
+  { name: 'Phthalo Green', hex: '#003c32' },
+  { name: 'Permanent Green', hex: '#076d16' },
+  { name: 'Sap Green', hex: '#6b9404' },
+  { name: 'Burnt Sienna', hex: '#7b4800' },
 ];
 
 export const DEFAULT_MIX_GRANULARITY = 12;
@@ -32,22 +37,18 @@ function labDelta(hex1: string, hex2: string): number {
   return Math.sqrt((l1 - l2) ** 2 + (a1 - a2) ** 2 + (b1 - b2) ** 2);
 }
 
-function mixSubtractive(hexes: string[], weights: number[]): string {
-  // Approximate subtractive mixing via CMYK in linear light
-  let c = 0,
-    m = 0,
-    y = 0;
+function mixLatent(hexes: string[], weights: number[]): string {
   const total = weights.reduce((a, b) => a + b, 0);
+  const latentMix = new Array<number>(mixbox.LATENT_SIZE).fill(0);
   hexes.forEach((h, i) => {
     const w = weights[i] / total;
-    const [rc, gc, bc] = chroma(h).rgb();
-    c += (1 - rc / 255) * w;
-    m += (1 - gc / 255) * w;
-    y += (1 - bc / 255) * w;
+    const [r, g, b] = chroma(h).rgb();
+    const latent = mixbox.rgbToLatent(r, g, b);
+    for (let j = 0; j < latentMix.length; j++) {
+      latentMix[j] += w * latent[j];
+    }
   });
-  const r = Math.round((1 - c) * 255);
-  const g = Math.round((1 - m) * 255);
-  const b = Math.round((1 - y) * 255);
+  const [r, g, b] = mixbox.latentToRgb(latentMix);
   return chroma(r, g, b).hex();
 }
 
@@ -74,7 +75,7 @@ function computeBestMix(
   for (let i = 0; i < pigments.length; i++) {
     for (let j = i + 1; j < pigments.length; j++) {
       for (let a = 1; a < granularity; a++) {
-        const mixed = mixSubtractive([pigments[i].hex, pigments[j].hex], [a, granularity - a]);
+        const mixed = mixLatent([pigments[i].hex, pigments[j].hex], [a, granularity - a]);
         const d = labDelta(mixed, targetHex);
         if (d < bestDelta) {
           bestDelta = d;
@@ -95,10 +96,7 @@ function computeBestMix(
         for (let a = 1; a <= granularity - 2; a++) {
           for (let b = 1; b <= granularity - a - 1; b++) {
             const c = granularity - a - b;
-            const mixed = mixSubtractive(
-              [pigments[i].hex, pigments[j].hex, pigments[k].hex],
-              [a, b, c]
-            );
+            const mixed = mixLatent([pigments[i].hex, pigments[j].hex, pigments[k].hex], [a, b, c]);
             const d = labDelta(mixed, targetHex);
             if (d < bestDelta) {
               bestDelta = d;
@@ -138,7 +136,7 @@ export function findMixRecipe(
   deltaThreshold = DEFAULT_DELTA_THRESHOLD,
   pigments = PIGMENTS
 ): string {
-  return findMixData(targetHex, granularity, deltaThreshold, pigments)
-    .map((e) => `${e.parts} part${e.parts !== 1 ? 's' : ''} ${e.name}`)
-    .join(', ');
+  const data = findMixData(targetHex, granularity, deltaThreshold, pigments);
+  const total = data.reduce((s, e) => s + e.parts, 0);
+  return data.map((e) => `${Math.round((e.parts / total) * 100)}% ${e.name}`).join(', ');
 }

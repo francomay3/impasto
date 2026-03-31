@@ -3,9 +3,9 @@ import { Box, Text, ActionIcon, Tooltip, TextInput } from '@mantine/core';
 import { X, GripVertical, ChevronDown, ChevronRight, Pencil, Eye, EyeOff } from 'lucide-react';
 import useConfirmDialog from '../../../shared/useConfirmDialog';
 import type { ColorGroup } from '../../../types';
-import { useContextMenu } from '../../../context/ContextMenuContext';
+import { useContextMenuStore } from '../../../context/contextMenuStore';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
-import { useEditorContext } from '../../editor/EditorContext';
+import { useEditorStore } from '../../editor/editorStore';
 
 interface Props {
   group: ColorGroup;
@@ -40,8 +40,9 @@ export function GroupHeader({
 }: Props) {
   const [editing, setEditing] = useState(() => autoEdit ?? false);
   const [editName, setEditName] = useState(group.name);
-  const { hiddenPinIds, onSetGroupPinsVisible } = useEditorContext();
-  const { open: openMenu } = useContextMenu();
+  const hiddenPinIds = useEditorStore(s => s.hiddenPinIds);
+  const setGroupPinsVisible = useEditorStore(s => s.setGroupPinsVisible);
+  const openMenu = useContextMenuStore(s => s.open);
 
   const allPinsHidden =
     sampleColorIds.length > 0 && sampleColorIds.every((id) => hiddenPinIds.has(id));
@@ -91,6 +92,7 @@ export function GroupHeader({
   return (
     <Box
       {...(showDragHandle ? dragContainerAttributes : {})}
+      data-testid="group-header"
       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px', background: 'var(--mantine-color-dark-6)' }}
       {...contextTrigger}
     >
@@ -141,7 +143,7 @@ export function GroupHeader({
         <Tooltip label={allPinsHidden ? 'Show group pins' : 'Hide group pins'}>
           <ActionIcon size="xs" variant="subtle" color="gray" data-testid="group-pin-visibility-toggle"
             data-hidden={allPinsHidden ? 'true' : undefined}
-            onClick={(e) => { e.stopPropagation(); onSetGroupPinsVisible(sampleColorIds, allPinsHidden); }}>
+            onClick={(e) => { e.stopPropagation(); setGroupPinsVisible(sampleColorIds, allPinsHidden); }}>
             {allPinsHidden ? <EyeOff size={11} /> : <Eye size={11} />}
           </ActionIcon>
         </Tooltip>

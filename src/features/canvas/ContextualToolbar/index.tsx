@@ -1,6 +1,6 @@
 import { Group, Text } from '@mantine/core';
-import { ArrowUpDown, Download, RotateCcw, SplitSquareHorizontal } from 'lucide-react';
-import { useToolContext } from '../ToolContext';
+import { RotateCcw, SplitSquareHorizontal } from 'lucide-react';
+import { useCanvasContext } from '../CanvasContext';
 import { useFilterContext } from '../../filters/FilterContext';
 import { SlimNumberInput } from '../../../shared/SlimNumberInput';
 import { SlimButton } from '../../../shared/SlimButton';
@@ -16,7 +16,7 @@ const barStyle: React.CSSProperties = {
 };
 
 function PaletteToolOptions() {
-  const { activeTool, samplingRadius, setSamplingRadius } = useToolContext();
+  const { activeTool, samplingRadius, setSamplingRadius } = useCanvasContext();
 
   if (activeTool === 'select') {
     return (
@@ -94,13 +94,7 @@ export function ContextualToolbar({ tab }: Props) {
             <SlimButton leftSection={<RotateCcw size={12} />}>Reset</SlimButton>
           </>
         )}
-        {tab === 'palette' && (
-          <>
-            <PaletteBlurInput />
-            <SlimButton leftSection={<ArrowUpDown size={12} />}>Sort</SlimButton>
-            <SlimButton leftSection={<Download size={12} />}>Export</SlimButton>
-          </>
-        )}
+        {tab === 'palette' && <PaletteBlurInput />}
       </Group>
     </div>
   );

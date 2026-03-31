@@ -12,7 +12,7 @@ test.describe('Middle-click to delete color', () => {
     await page.getByRole('button', { name: /Add Color/ }).click()
     await page.getByTestId('color-item-0').waitFor()
 
-    const inner = page.getByTestId('color-item-0').getByTestId('color-item-inner')
+    const inner = page.getByTestId('color-item-0').getByTestId('color-card')
     const box = await inner.boundingBox()
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'middle' })
 
@@ -24,7 +24,7 @@ test.describe('Middle-click to delete color', () => {
     await page.getByRole('button', { name: /Add Color/ }).click()
     await page.getByTestId('color-item-1').waitFor()
 
-    const inner = page.getByTestId('color-item-0').getByTestId('color-item-inner')
+    const inner = page.getByTestId('color-item-0').getByTestId('color-card')
     const box = await inner.boundingBox()
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2, { button: 'middle' })
 

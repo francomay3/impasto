@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import type { ProjectState } from '../../types';
 import { type Snapshot, MAX_HISTORY, toSnapshot, fromSnapshot } from './historyStore';
 import type { ImageId } from './historyStore';
@@ -16,7 +16,8 @@ export function useHistory(initialState: ProjectState) {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
-  function push(state: ProjectState) {
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const push = useCallback((state: ProjectState) => {
     const snap = toSnapshot(
       state,
       store.current,
@@ -30,9 +31,10 @@ export function useHistory(initialState: ProjectState) {
     future.current = [];
     setCanUndo(true);
     setCanRedo(false);
-  }
+  }, []);
 
-  function undo(): ProjectState | null {
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const undo = useCallback((): ProjectState | null => {
     if (!past.current.length) return null;
     const prev = past.current[past.current.length - 1];
     future.current = [present.current, ...future.current];
@@ -41,9 +43,10 @@ export function useHistory(initialState: ProjectState) {
     setCanUndo(past.current.length > 0);
     setCanRedo(true);
     return fromSnapshot(prev, store.current);
-  }
+  }, []);
 
-  function redo(): ProjectState | null {
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const redo = useCallback((): ProjectState | null => {
     if (!future.current.length) return null;
     const next = future.current[0];
     past.current = [...past.current, present.current];
@@ -52,7 +55,7 @@ export function useHistory(initialState: ProjectState) {
     setCanUndo(true);
     setCanRedo(future.current.length > 0);
     return fromSnapshot(next, store.current);
-  }
+  }, []);
 
   return { push, undo, redo, canUndo, canRedo };
 }

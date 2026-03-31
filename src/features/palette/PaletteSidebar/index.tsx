@@ -9,7 +9,7 @@ import { GroupDropZone } from './GroupDropZone';
 import { SortableGroup } from './SortableGroup';
 import { usePaletteDnd } from './usePaletteDnd';
 import { usePaletteContext } from '../PaletteContext';
-import { useEditorContext } from '../../editor/EditorContext';
+import { useEditorStore } from '../../editor/editorStore';
 
 export function PaletteSidebar() {
   const {
@@ -22,7 +22,7 @@ export function PaletteSidebar() {
     onReorderPalette,
     onReorderGroups,
   } = usePaletteContext();
-  const { onSelectColor } = useEditorContext();
+  const selectColor = useEditorStore(s => s.selectColor);
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [newGroupId, setNewGroupId] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export function PaletteSidebar() {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <Stack gap="xs" p="xs" onClick={() => onSelectColor(null)} data-testid="palette-sidebar">
+      <Stack gap="xs" p="xs" onClick={() => selectColor(null)} data-testid="palette-sidebar">
         <Group gap={6} wrap="nowrap">
           <AddItemButton label="Add Color" hint="C" onClick={onAddColor} style={{ flex: 1 }} />
           <Tooltip label="Add Group" position="right" withArrow>

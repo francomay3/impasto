@@ -1,16 +1,16 @@
 import { useCallback } from 'react';
-import { useEditorContext } from '../editor/EditorContext';
-import { useSelectionPopover } from './SelectionPopoverContext';
+import { useEditorStore } from '../editor/editorStore';
+import { useSelectionPopoverStore } from './selectionPopoverStore';
 
 export function useSelectionContextMenu() {
-  const { selectedColorIds } = useEditorContext();
-  const { open } = useSelectionPopover();
+  const selectedSize = useEditorStore(s => s.selectedColorIds.size);
+  const open = useSelectionPopoverStore(s => s.open);
 
   return useCallback(
     (pos: { x: number; y: number }) => {
-      if (selectedColorIds.size < 2) return;
+      if (selectedSize < 2) return;
       open(pos);
     },
-    [selectedColorIds.size, open]
+    [selectedSize, open]
   );
 }

@@ -1,8 +1,8 @@
+import { useCallback, useMemo } from 'react';
 import type { useProjectState } from './useProjectState';
 import type { useImageHandlers } from './useImageHandlers';
 import type { useEditorHandlers } from './useEditorHandlers';
-import type { ToolId } from '../../tools';
-import type { SamplingLevels } from '../filters/FilterContext';
+import type { InteractionAPI } from '../canvas/useInteraction';
 
 type Project = ReturnType<typeof useProjectState>;
 type ImageHandlers = ReturnType<typeof useImageHandlers>;
@@ -12,48 +12,74 @@ interface Options {
   project: Project;
   imageHandlers: ImageHandlers;
   editorHandlers: EditorHandlers;
-  samplingColorId: string | null;
-  activeTool: ToolId;
-  setActiveTool: (t: ToolId) => void;
-  setSamplingColorId: (id: string | null) => void;
-  setSamplingLevels: (v: SamplingLevels | null) => void;
+  interaction: InteractionAPI;
 }
 
 export function usePaletteContextValue({
   project,
   imageHandlers,
   editorHandlers,
-  samplingColorId,
-  activeTool,
-  setActiveTool,
-  setSamplingColorId,
-  setSamplingLevels,
+  interaction,
 }: Options) {
-  return {
-    palette: project.state.palette,
-    groups: project.state.groups ?? [],
-    samplingColorId,
-    isAddingColor: activeTool === 'eyedropper',
-    onStartSampling: (id: string) => {
-      setSamplingLevels(null);
-      setActiveTool('select');
-      setSamplingColorId(id);
-    },
-    onSampleColor: editorHandlers.handleSampleWithSelect,
-    onCancelSampleColor: imageHandlers.handleCancelSample,
-    onAddNewColor: editorHandlers.handleAddNewColor,
-    onCancelAddingColor: () => setActiveTool('select'),
-    onRenameColor: (id: string, name: string) => project.updateColor(id, { name }),
-    onAddColor: imageHandlers.handleAddColor,
-    onAddColorAtPosition: imageHandlers.handleAddColorAtPosition,
-    onDeleteColor: imageHandlers.handleDeleteColor,
-    onPinMoveEnd: imageHandlers.handlePinMoveEnd,
-    onRemoveSamplePin: (id: string) => project.updateColor(id, { sample: undefined }),
-    onAddGroup: project.addGroup,
-    onRemoveGroup: project.removeGroup,
-    onRenameGroup: project.renameGroup,
-    onSetColorGroup: project.setColorGroup,
-    onReorderPalette: project.setPalette,
-    onReorderGroups: project.reorderGroups,
-  };
+  const { updateColor } = project;
+  const { samplingColorId, activeTool, startSamplingColor, cancel } = interaction;
+
+  const onRenameColor = useCallback(
+    (id: string, name: string) => updateColor(id, { name }),
+    [updateColor]
+  );
+
+  const onRemoveSamplePin = useCallback(
+    (id: string) => updateColor(id, { sample: undefined }),
+    [updateColor]
+  );
+
+  return useMemo(
+    () => ({
+      palette: project.state.palette,
+      groups: project.state.groups ?? [],
+      samplingColorId,
+      isAddingColor: activeTool === 'eyedropper',
+      onStartSampling: startSamplingColor,
+      onSampleColor: editorHandlers.handleSampleWithSelect,
+      onCancelSampleColor: imageHandlers.handleCancelSample,
+      onAddNewColor: editorHandlers.handleAddNewColor,
+      onCancelAddingColor: cancel,
+      onRenameColor,
+      onAddColor: imageHandlers.handleAddColor,
+      onAddColorAtPosition: imageHandlers.handleAddColorAtPosition,
+      onDeleteColor: imageHandlers.handleDeleteColor,
+      onPinMoveEnd: imageHandlers.handlePinMoveEnd,
+      onRemoveSamplePin,
+      onAddGroup: project.addGroup,
+      onRemoveGroup: project.removeGroup,
+      onRenameGroup: project.renameGroup,
+      onSetColorGroup: project.setColorGroup,
+      onReorderPalette: project.setPalette,
+      onReorderGroups: project.reorderGroups,
+    }),
+    [
+      project.state.palette,
+      project.state.groups,
+      samplingColorId,
+      activeTool,
+      startSamplingColor,
+      editorHandlers.handleSampleWithSelect,
+      imageHandlers.handleCancelSample,
+      editorHandlers.handleAddNewColor,
+      cancel,
+      onRenameColor,
+      imageHandlers.handleAddColor,
+      imageHandlers.handleAddColorAtPosition,
+      imageHandlers.handleDeleteColor,
+      imageHandlers.handlePinMoveEnd,
+      onRemoveSamplePin,
+      project.addGroup,
+      project.removeGroup,
+      project.renameGroup,
+      project.setColorGroup,
+      project.setPalette,
+      project.reorderGroups,
+    ]
+  );
 }

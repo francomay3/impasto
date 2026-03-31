@@ -21,125 +21,115 @@ interface Options {
   removeColor: ProjectActions['removeColor'];
   updateFilter: ProjectActions['updateFilter'];
   samplingColorId: string | null;
-  setSamplingColorId: (id: string | null) => void;
+  startSamplingColor: (id: string) => void;
+  completeSample: () => void;
+  cancelSample: () => void;
   samplingLevels: SamplingLevels | null;
-  setSamplingLevels: (v: SamplingLevels | null) => void;
   resetTransform?: () => void;
 }
 
 export function useImageHandlers({
   state, pipeline, setImage, updateColor, setPalette, addSampledColor,
-  removeColor, updateFilter, samplingColorId, setSamplingColorId,
-  samplingLevels, setSamplingLevels, resetTransform,
+  removeColor, updateFilter, samplingColorId, startSamplingColor,
+  completeSample, cancelSample, samplingLevels, resetTransform,
 }: Options) {
   const lastImageDataRef = useRef<ImageData | null>(null);
-  const pendingNewColorId = useRef<string | null>(null);
+  const pendingNewColorIdRef = useRef<string | null>(null);
   const justLoadedImageRef = useRef<object | null>(null);
   const [debouncedFilters] = useDebouncedValue(state.filters, 300);
 
-  const renderPalette = useCallback(
-    (imageData?: ImageData, palette?: typeof state.palette) => {
-      const data = imageData ?? lastImageDataRef.current;
-      if (!data) return;
-      const activePalette = palette ?? state.palette;
-      if (activePalette.length === 0) return;
-      const forIndexing = pipeline.blurImageData(data, state.preIndexingBlur);
-      pipeline.renderIndexed(activePalette, forIndexing);
-    },
-    [pipeline, state]
-  );
+  // Refs so effects and callbacks can access fresh values without extra deps.
+  const pipelineRef = useRef(pipeline);
+  pipelineRef.current = pipeline;
+  const resetTransformRef = useRef(resetTransform);
+  resetTransformRef.current = resetTransform;
+  const debouncedFiltersRef = useRef(debouncedFilters);
+  debouncedFiltersRef.current = debouncedFilters;
+  const sourceImageRef = useRef(state.sourceImage);
+  sourceImageRef.current = state.sourceImage;
+  const filtersRef = useRef(state.filters);
+  filtersRef.current = state.filters;
 
   const deriveAndRender = useCallback(
     (imageData: ImageData) => {
       lastImageDataRef.current = imageData;
       const sampled = state.palette.filter((c) => c.sample);
-      if (sampled.length === 0) { renderPalette(imageData); return; }
+      if (sampled.length === 0) return;
       const newPalette = state.palette.map((c) => {
         if (!c.sample) return c;
         const [r, g, b] = sampleCircleAverage(imageData, c.sample.x, c.sample.y, c.sample.radius);
         return { ...c, hex: rgbToHex(r, g, b) };
       });
       setPalette(newPalette);
-      renderPalette(imageData, newPalette);
     },
-    [state.palette, setPalette, renderPalette]
+    [state.palette, setPalette]
   );
+  const deriveAndRenderRef = useRef(deriveAndRender);
+  deriveAndRenderRef.current = deriveAndRender;
 
+  // Runs when the source image is replaced externally (e.g. project load).
+  // Uses refs for pipeline/filters/deriveAndRender so filter changes don't re-trigger this.
   useEffect(() => {
-    if (!state.sourceImage) return;
-    if (state.sourceImage === justLoadedImageRef.current) { justLoadedImageRef.current = null; return; }
-    resetTransform?.();
-    pipeline.loadImage(state.sourceImage);
-    const imageData = pipeline.applyFilterPipeline(debouncedFilters as FilterInstance[]);
-    if (imageData) deriveAndRender(imageData);
-  }, [state.sourceImage]); // eslint-disable-line react-hooks/exhaustive-deps
+    const image = state.sourceImage;
+    if (!image) return;
+    if (image === justLoadedImageRef.current) { justLoadedImageRef.current = null; return; }
+    resetTransformRef.current?.();
+    pipelineRef.current.loadImage(image);
+    const imageData = pipelineRef.current.applyFilterPipeline(debouncedFiltersRef.current as FilterInstance[]);
+    if (imageData) deriveAndRenderRef.current(imageData);
+  }, [state.sourceImage]);
 
+  // Runs when filters change (debounced). Uses refs for pipeline/sourceImage/deriveAndRender.
   useEffect(() => {
-    if (!state.sourceImage) return;
-    const imageData = pipeline.applyFilterPipeline(debouncedFilters as FilterInstance[]);
-    if (imageData) deriveAndRender(imageData);
-  }, [debouncedFilters]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!state.sourceImage) return;
-    renderPalette();
-  }, [state.preIndexingBlur]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!state.sourceImage) return;
-    renderPalette();
-  }, [state.palette]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!sourceImageRef.current) return;
+    const imageData = pipelineRef.current.applyFilterPipeline(debouncedFilters as FilterInstance[]);
+    if (imageData) deriveAndRenderRef.current(imageData);
+  }, [debouncedFilters]);
 
   const handleImageLoadBitmap = useCallback(
     (bitmap: ImageBitmap) => {
-      resetTransform?.();
-      const rawImage = pipeline.loadBitmap(bitmap);
+      resetTransformRef.current?.();
+      const rawImage = pipelineRef.current.loadBitmap(bitmap);
       justLoadedImageRef.current = rawImage;
       setImage(rawImage);
-      const imageData = pipeline.applyFilterPipeline(state.filters as FilterInstance[]);
-      if (imageData) deriveAndRender(imageData);
+      const imageData = pipelineRef.current.applyFilterPipeline(filtersRef.current as FilterInstance[]);
+      if (imageData) deriveAndRenderRef.current(imageData);
       bitmap.close();
     },
-    [pipeline, setImage, deriveAndRender, resetTransform, state.filters]
+    [setImage]
   );
 
   const handleAddColor = useCallback(() => {
     const id = crypto.randomUUID();
-    pendingNewColorId.current = id;
+    pendingNewColorIdRef.current = id;
     const pending = { id, hex: '#000000', locked: false, ratio: 0, mixRecipe: '' } as const;
     setPalette([...state.palette, pending]);
-    renderPalette(undefined, [...state.palette, pending]);
-    setSamplingColorId(id);
-  }, [setPalette, renderPalette, state.palette, setSamplingColorId]);
+    startSamplingColor(id);
+  }, [setPalette, state.palette, startSamplingColor]);
 
   const handleAddColorAtPosition = useCallback(
     (sample: ColorSample, hex: string): string => {
       const id = crypto.randomUUID();
       addSampledColor(id, sample, hex);
-      renderPalette(undefined, [
-        ...state.palette,
-        { id, hex, sample, locked: false, ratio: 0, mixRecipe: '' },
-      ]);
       return id;
     },
-    [addSampledColor, renderPalette, state.palette]
+    [addSampledColor]
   );
 
   const handleDeleteColor = useCallback(
     (id: string) => {
       removeColor(id);
-      renderPalette(undefined, state.palette.filter((c) => c.id !== id));
-      if (samplingColorId === id) setSamplingColorId(null);
+      if (samplingColorId === id) cancelSample();
     },
-    [removeColor, renderPalette, state.palette, samplingColorId, setSamplingColorId]
+    [removeColor, samplingColorId, cancelSample]
   );
 
   const samplingHandlers = useColorSamplingHandlers({
-    pendingNewColorId, lastImageDataRef,
-    samplingColorId, setSamplingColorId,
-    samplingLevels, setSamplingLevels,
+    pendingNewColorIdRef, lastImageDataRef,
+    samplingColorId, samplingLevels,
+    completeSample, cancelSample,
     palette: state.palette, filters: state.filters,
-    updateColor, updateFilter, removeColor, setPalette, renderPalette,
+    updateColor, updateFilter, removeColor, setPalette,
   });
 
   return {

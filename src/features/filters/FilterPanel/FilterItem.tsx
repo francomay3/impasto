@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { FilterInstance } from '../../../types';
 import { useFilterContext } from '../FilterContext';
-import { useContextMenu } from '../../../context/ContextMenuContext';
+import { useContextMenuStore } from '../../../context/contextMenuStore';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
 import { FilterWidget } from './FilterWidget';
 import { FilterItemHeader } from './FilterItemHeader';
@@ -25,7 +25,7 @@ export function FilterItem({ filter }: { filter: FilterInstance }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: filter.id,
   });
-  const { open: openMenu } = useContextMenu();
+  const openMenu = useContextMenuStore(s => s.open);
 
   const activeSamplingPoint = samplingLevels?.filterId === filter.id ? samplingLevels.point : null;
 

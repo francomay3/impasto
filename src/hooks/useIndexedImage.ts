@@ -50,7 +50,7 @@ export function useIndexedImage(sourceImage: RawImage | null, sigma: number, pal
   };
 
   useEffect(() => {
-    if (!sourceImage) return;
+    if (!sourceImage) { setDisplayData(null); return; }
     scheduleWithLoading();
   }, [sourceImage, scheduleWithLoading]);
 

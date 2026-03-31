@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal, TextInput, Button, Group } from '@mantine/core';
 
 interface Props {
@@ -10,10 +10,6 @@ interface Props {
 
 export function RenameProjectModal({ opened, name, onClose, onConfirm }: Props) {
   const [nameInput, setNameInput] = useState(name);
-
-  useEffect(() => {
-    if (opened) setNameInput(name);
-  }, [opened, name]);
 
   const handleConfirm = () => {
     const trimmed = nameInput.trim();

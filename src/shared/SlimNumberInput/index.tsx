@@ -18,7 +18,7 @@ export function SlimNumberInput({ styles, ...props }: Props) {
         },
         controls: {
           width: 16,
-          height: 22,
+          height: 20,
         },
         control: {
           height: 0,

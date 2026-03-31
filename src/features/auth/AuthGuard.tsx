@@ -1,10 +1,11 @@
 import { Center, Loader } from '@mantine/core';
 import type { ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuthStore } from './authStore';
 import { AuthScreen } from './AuthScreen';
 
 export function AuthGuard({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const user = useAuthStore(s => s.user);
+  const loading = useAuthStore(s => s.loading);
 
   if (loading) {
     return (

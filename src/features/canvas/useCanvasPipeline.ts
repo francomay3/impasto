@@ -1,35 +1,14 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback } from 'react';
 import type { FilterInstance, Color, RawImage } from '../../types';
 import { createRawImage } from '../../types';
-import { applyFilters, blurImageData } from '../../utils/imageProcessing';
+import { applyFilters } from '../../utils/imageProcessing';
 import { quantizeImage } from '../../utils/kMeansWrapper';
 import { findMixRecipe } from '../../services/ColorMixer';
-import IndexedRendererWorker from '../../workers/indexedRenderer.worker?worker';
 
 export function useCanvasPipeline(
-  filteredCanvasRef: React.RefObject<HTMLCanvasElement | null>,
-  indexedCanvasRef: React.RefObject<HTMLCanvasElement | null>
+  filteredCanvasRef: React.RefObject<HTMLCanvasElement | null>
 ) {
   const sourceCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
-  const workerRef = useRef<Worker | null>(null);
-  const renderGenerationRef = useRef(0);
-
-  useEffect(() => {
-    const worker = new IndexedRendererWorker();
-    workerRef.current = worker;
-    worker.onmessage = (
-      e: MessageEvent<{ buffer: ArrayBuffer; width: number; height: number; generation: number }>
-    ) => {
-      const { buffer, width, height, generation } = e.data;
-      if (generation !== renderGenerationRef.current) return;
-      const indexed = indexedCanvasRef.current;
-      if (!indexed) return;
-      indexed
-        .getContext('2d')!
-        .putImageData(new ImageData(new Uint8ClampedArray(buffer), width, height), 0, 0);
-    };
-    return () => worker.terminate();
-  }, [indexedCanvasRef]);
 
   const loadImage = useCallback((image: RawImage): void => {
     const canvas = sourceCanvasRef.current;
@@ -81,44 +60,11 @@ export function useCanvasPipeline(
     []
   );
 
-  const renderIndexed = useCallback(
-    (palette: Color[], sourceData?: ImageData) => {
-      const filtered = filteredCanvasRef.current;
-      const indexed = indexedCanvasRef.current;
-      const worker = workerRef.current;
-      if (!filtered || !indexed || !worker || palette.length === 0) return;
-      if (indexed.width !== filtered.width || indexed.height !== filtered.height) {
-        indexed.width = filtered.width;
-        indexed.height = filtered.height;
-      }
-      const imageData =
-        sourceData ??
-        filtered
-          .getContext('2d', { willReadFrequently: true })!
-          .getImageData(0, 0, filtered.width, filtered.height);
-      const generation = ++renderGenerationRef.current;
-      const bufferCopy = imageData.data.slice().buffer;
-      worker.postMessage(
-        {
-          data: new Uint8ClampedArray(bufferCopy),
-          width: imageData.width,
-          height: imageData.height,
-          palette,
-          generation,
-        },
-        [bufferCopy]
-      );
-    },
-    [filteredCanvasRef, indexedCanvasRef]
-  );
-
   return {
     sourceCanvasRef,
     loadImage,
     loadBitmap,
     applyFilterPipeline,
-    blurImageData,
     runQuantization,
-    renderIndexed,
   };
 }

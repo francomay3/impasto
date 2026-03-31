@@ -81,9 +81,8 @@ export function renderSwatches(
     doc.rect(x, acy, SWATCH_SIZE, SWATCH_SIZE, 'S');
 
     const mixData = findMixData(color.hex, granularity, deltaThreshold, pigments);
-    const recipe =
-      color.mixRecipe ||
-      mixData.map((e) => `${e.parts} part${e.parts !== 1 ? 's' : ''} ${e.name}`).join(', ');
+    const total = mixData.reduce((s, e) => s + e.parts, 0);
+    const recipeLines = mixData.map((e) => `${Math.round((e.parts / total) * 100)}% ${e.name}`);
 
     try {
       doc.addImage(drawPieDataUrl(mixData), 'PNG', x + SWATCH_SIZE + 2, acy, PIE_SIZE, PIE_SIZE);
@@ -104,7 +103,7 @@ export function renderSwatches(
       doc.setTextColor(0);
       recipeY = acy + 13;
     }
-    if (recipe) doc.text(doc.splitTextToSize(recipe, textW), x + textX, recipeY);
+    if (recipeLines.length) doc.text(recipeLines, x + textX, recipeY);
   });
 
   return y + Math.ceil(colors.length / 3) * ROW_H;

@@ -65,18 +65,18 @@ describe('findMixRecipe', () => {
     expect(recipe.length).toBeGreaterThan(0);
   });
 
-  it('uses plural "parts" for quantities greater than 1', () => {
-    // Force a multi-part mix by picking a color far from any single pigment
+  it('formats each entry as "X% Name"', () => {
     const recipe = findMixRecipe('#7b4f2e');
-    // At least one entry should be a mix — check formatting
-    const hasParts = /\d+ parts /.test(recipe) || /1 part /.test(recipe);
-    expect(hasParts).toBe(true);
+    const entries = recipe.split(', ');
+    for (const entry of entries) {
+      expect(entry).toMatch(/^\d+% .+/);
+    }
   });
 
-  it('uses singular "part" for a quantity of 1', () => {
+  it('returns "100% Name" for a single-pigment match', () => {
     const white = PIGMENTS.find((p) => p.name === 'Titanium White')!;
     const recipe = findMixRecipe(white.hex, DEFAULT_MIX_GRANULARITY, DEFAULT_DELTA_THRESHOLD);
-    expect(recipe).toBe('1 part Titanium White');
+    expect(recipe).toBe('100% Titanium White');
   });
 
   it('joins multiple pigments with ", "', () => {

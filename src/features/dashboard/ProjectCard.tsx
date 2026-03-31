@@ -6,7 +6,7 @@ import type { ProjectState } from '../../types';
 import useConfirmDialog from '../../shared/useConfirmDialog';
 import { ProjectCardPreview } from './ProjectCardPreview';
 import { RenameProjectModal } from './RenameProjectModal';
-import { useContextMenu } from '../../context/ContextMenuContext';
+import { useContextMenuStore } from '../../context/contextMenuStore';
 
 interface Props {
   project: ProjectState;
@@ -35,7 +35,7 @@ function CardMenuItems({ onOpen, onOpenNewTab, onRename, onDelete }: MenuItemsPr
 
 export function ProjectCard({ project, onDelete, onRename }: Props) {
   const navigate = useNavigate();
-  const { open: openMenu } = useContextMenu();
+  const openMenu = useContextMenuStore(s => s.open);
   const [hovered, setHovered] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const date = new Date(project.updatedAt).toLocaleDateString();
@@ -112,6 +112,7 @@ export function ProjectCard({ project, onDelete, onRename }: Props) {
 
       {confirmDialog}
       <RenameProjectModal
+        key={renameOpen ? project.name : 'closed'}
         opened={renameOpen}
         name={project.name}
         onClose={() => setRenameOpen(false)}

@@ -1,9 +1,8 @@
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useRef, useCallback, useEffect, useState, useMemo } from 'react';
 import type { RefObject } from 'react';
 import { useCanvasContext } from './CanvasContext';
 import { usePaletteContext } from '../palette/PaletteContext';
-import { useEditorContext } from '../editor/EditorContext';
-import { useToolContext } from './ToolContext';
+import { useEditorStore } from '../editor/editorStore';
 import { useColorContextMenu } from '../palette/useColorContextMenu';
 import { useSelectionContextMenu } from '../palette/useSelectionContextMenu';
 import { useCanvasMeasure } from './useCanvasMeasure';
@@ -21,23 +20,31 @@ interface Props {
 }
 
 export function SamplePinsOverlay({ canvasRef }: Props) {
-  const { sourceImage, viewportTransform, isSampling, filteredCanvasRef } = useCanvasContext();
+  const { sourceImage, viewportTransform, isSampling, filteredCanvasRef, activeTool } = useCanvasContext();
   const resolvedCanvasRef = canvasRef ?? filteredCanvasRef;
   const { palette, groups, onPinMoveEnd } = usePaletteContext();
-  const { selectedColorIds, onSelectColor, onToggleColorSelection, hoveredColorId, onHoverColor, hiddenPinIds } =
-    useEditorContext();
-  const { activeTool } = useToolContext();
+  const selectedColorIds = useEditorStore(s => s.selectedColorIds);
+  const hoveredColorId = useEditorStore(s => s.hoveredColorId);
+  const hiddenPinIds = useEditorStore(s => s.hiddenPinIds);
+  const selectColor = useEditorStore(s => s.selectColor);
+  const toggleColorSelection = useEditorStore(s => s.toggleColorSelection);
+  const setHoveredColorId = useEditorStore(s => s.setHoveredColorId);
   const openColorMenu = useColorContextMenu();
   const openSelectionMenu = useSelectionContextMenu();
   const svgRef = useRef<SVGSVGElement>(null);
   const [editPin, setEditPin] = useState<EditPin | null>(null);
 
   const { canvasRect, measure } = useCanvasMeasure(resolvedCanvasRef);
-  useEffect(() => { measure(); }, [viewportTransform, measure]);
+  // Only re-measure on zoom (scale change) — pan is handled by the CSS transform layer.
+  const { scale } = viewportTransform;
+  useEffect(() => { measure(); }, [scale, measure]);
   useEffect(() => { if (!isSampling) measure(); }, [isSampling, measure]);
 
   const inSelectMode = activeTool === 'select' || activeTool === 'marquee';
-  const sampledColors = palette.filter((c) => c.sample && !hiddenPinIds.has(c.id));
+  const sampledColors = useMemo(
+    () => palette.filter((c) => c.sample && !hiddenPinIds.has(c.id)),
+    [palette, hiddenPinIds]
+  );
 
   const { drag: effectiveDragRaw, hasDraggedRef, handleMouseDown, handleMouseMove, handleMouseUp } =
     usePinDrag({ palette, sourceImage, svgRef, onPinMoveEnd, inSelectMode });
@@ -47,10 +54,10 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
     (e: React.MouseEvent, colorId: string) => {
       e.stopPropagation();
       if (hasDraggedRef.current) return;
-      if (e.metaKey || e.shiftKey) onToggleColorSelection(colorId);
-      else onSelectColor(colorId);
+      if (e.metaKey || e.shiftKey) toggleColorSelection(colorId);
+      else selectColor(colorId);
     },
-    [onSelectColor, onToggleColorSelection, hasDraggedRef]
+    [selectColor, toggleColorSelection, hasDraggedRef]
   );
 
   const handleContextMenu = useCallback(
@@ -67,11 +74,15 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
     [openColorMenu, openSelectionMenu, selectedColorIds]
   );
 
+  const imgW = sourceImage?.width ?? 0;
+  const imgH = sourceImage?.height ?? 0;
+  const inv = useMemo(
+    () => (canvasRect && canvasRect.width > 0 ? imgW / canvasRect.width : 1),
+    [imgW, canvasRect]
+  );
+
   if (!sourceImage || sampledColors.length === 0 || !canvasRect || canvasRect.width === 0)
     return null;
-
-  const { width: imgW, height: imgH } = sourceImage;
-  const inv = imgW / canvasRect.width;
 
   return (
     <>
@@ -79,10 +90,9 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
         ref={svgRef}
         style={{
           position: 'absolute',
-          left: canvasRect.left,
-          top: canvasRect.top,
-          width: canvasRect.width,
-          height: canvasRect.height,
+          inset: 0,
+          width: '100%',
+          height: '100%',
           overflow: 'visible',
           pointerEvents: effectiveDrag ? 'all' : 'none',
         }}
@@ -112,8 +122,8 @@ export function SamplePinsOverlay({ canvasRef }: Props) {
               inv={inv}
               onMouseDown={handleMouseDown}
               onClick={handlePinClick}
-              onMouseEnter={onHoverColor}
-              onMouseLeave={() => onHoverColor(null)}
+              onMouseEnter={setHoveredColorId}
+              onMouseLeave={() => setHoveredColorId(null)}
               onContextMenu={handleContextMenu}
             />
           );

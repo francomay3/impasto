@@ -28,13 +28,23 @@ export function usePinDrag({ palette, sourceImage, svgRef, onPinMoveEnd, inSelec
   const [drag, setDrag] = useState<DragState | null>(null);
   const hasDraggedRef = useRef(false);
 
+  // Stable refs so callbacks don't rebuild when these change mid-gesture
+  const paletteRef = useRef(palette);
+  paletteRef.current = palette;
+  const dragRef = useRef(drag);
+  dragRef.current = drag;
+  const sourceImageRef = useRef(sourceImage);
+  sourceImageRef.current = sourceImage;
+  const onPinMoveEndRef = useRef(onPinMoveEnd);
+  onPinMoveEndRef.current = onPinMoveEnd;
+
   const handleMouseDown = useCallback(
     (e: React.MouseEvent, colorId: string) => {
       if (e.button !== 0) return;
       e.stopPropagation();
       if (inSelectMode) return;
       const svg = svgRef.current;
-      const color = palette.find((c) => c.id === colorId);
+      const color = paletteRef.current.find((c) => c.id === colorId);
       if (!svg || !color?.sample) return;
       hasDraggedRef.current = false;
       const startPt = clientToSvg(svg, e.clientX, e.clientY);
@@ -46,31 +56,34 @@ export function usePinDrag({ palette, sourceImage, svgRef, onPinMoveEnd, inSelec
         currentSample: originalSample,
       });
     },
-    [palette, inSelectMode, svgRef]
+    [inSelectMode, svgRef]
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (!drag || !svgRef.current || !sourceImage) return;
+      const currentDrag = dragRef.current;
+      const image = sourceImageRef.current;
+      if (!currentDrag || !svgRef.current || !image) return;
       hasDraggedRef.current = true;
       const pt = clientToSvg(svgRef.current, e.clientX, e.clientY);
       const x = Math.round(
-        Math.max(0, Math.min(sourceImage.width - 1, drag.originalSample.x + pt.x - drag.startPt.x))
+        Math.max(0, Math.min(image.width - 1, currentDrag.originalSample.x + pt.x - currentDrag.startPt.x))
       );
       const y = Math.round(
-        Math.max(0, Math.min(sourceImage.height - 1, drag.originalSample.y + pt.y - drag.startPt.y))
+        Math.max(0, Math.min(image.height - 1, currentDrag.originalSample.y + pt.y - currentDrag.startPt.y))
       );
       setDrag((prev) =>
         prev ? { ...prev, currentSample: { ...prev.originalSample, x, y } } : null
       );
     },
-    [drag, sourceImage, svgRef]
+    [svgRef]
   );
 
   const handleMouseUp = useCallback(() => {
-    if (drag && hasDraggedRef.current) onPinMoveEnd(drag.colorId, drag.currentSample);
+    const d = dragRef.current;
+    if (d && hasDraggedRef.current) onPinMoveEndRef.current(d.colorId, d.currentSample);
     setDrag(null);
-  }, [drag, onPinMoveEnd]);
+  }, []);
 
   return { drag, hasDraggedRef, handleMouseDown, handleMouseMove, handleMouseUp };
 }

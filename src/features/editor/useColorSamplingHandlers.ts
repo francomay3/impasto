@@ -7,59 +7,52 @@ import { rgbToHex } from '../../utils/colorUtils';
 import type { SamplingLevels } from '../filters/FilterContext';
 
 interface Options {
-  pendingNewColorId: MutableRefObject<string | null>;
+  pendingNewColorIdRef: MutableRefObject<string | null>;
   lastImageDataRef: MutableRefObject<ImageData | null>;
   samplingColorId: string | null;
-  setSamplingColorId: (id: string | null) => void;
   samplingLevels: SamplingLevels | null;
-  setSamplingLevels: (v: SamplingLevels | null) => void;
+  completeSample: () => void;
+  cancelSample: () => void;
   palette: Color[];
   filters: FilterInstance[];
   updateColor: (id: string, changes: Partial<Color>) => void;
   updateFilter: (id: string, params: Record<string, number>) => void;
   removeColor: (id: string) => void;
   setPalette: (palette: Color[]) => void;
-  renderPalette: (imageData?: ImageData, palette?: Color[]) => void;
 }
 
 export function useColorSamplingHandlers({
-  pendingNewColorId,
+  pendingNewColorIdRef,
   lastImageDataRef,
   samplingColorId,
-  setSamplingColorId,
   samplingLevels,
-  setSamplingLevels,
+  completeSample,
+  cancelSample,
   palette,
   filters,
   updateColor,
   updateFilter,
   removeColor,
   setPalette,
-  renderPalette,
 }: Options) {
   const handleSample = useCallback(
     (sample: ColorSample, hex: string) => {
       if (!samplingColorId) return;
-      pendingNewColorId.current = null;
+      pendingNewColorIdRef.current = null;
       updateColor(samplingColorId, { hex, sample });
-      setSamplingColorId(null);
-      renderPalette(
-        undefined,
-        palette.map((c) => (c.id === samplingColorId ? { ...c, hex, sample } : c))
-      );
+      completeSample();
       notifications.show({ message: `Color sampled: ${hex}`, color: 'primary' });
     },
-    [samplingColorId, updateColor, renderPalette, palette, setSamplingColorId, pendingNewColorId]
+    [samplingColorId, updateColor, completeSample, pendingNewColorIdRef]
   );
 
   const handleCancelSample = useCallback(() => {
-    if (samplingColorId && samplingColorId === pendingNewColorId.current) {
+    if (samplingColorId && samplingColorId === pendingNewColorIdRef.current) {
       removeColor(samplingColorId);
-      renderPalette(undefined, palette.filter((c) => c.id !== samplingColorId));
     }
-    pendingNewColorId.current = null;
-    setSamplingColorId(null);
-  }, [samplingColorId, removeColor, renderPalette, palette, setSamplingColorId, pendingNewColorId]);
+    pendingNewColorIdRef.current = null;
+    cancelSample();
+  }, [samplingColorId, removeColor, cancelSample, pendingNewColorIdRef]);
 
   const handleSampleLevels = useCallback(
     (_sample: ColorSample, hex: string) => {
@@ -81,9 +74,9 @@ export function useColorSamplingHandlers({
         updateFilter(filterId, { whitePoint: newWhite });
         notifications.show({ message: `White point set to ${newWhite}`, color: 'gray' });
       }
-      setSamplingLevels(null);
+      completeSample();
     },
-    [samplingLevels, filters, updateFilter, setSamplingLevels]
+    [samplingLevels, filters, updateFilter, completeSample]
   );
 
   const handlePinMoveEnd = useCallback(
@@ -98,9 +91,8 @@ export function useColorSamplingHandlers({
         return { ...c, hex: rgbToHex(r, g, b), ...(c.id === colorId ? { sample } : {}) };
       });
       setPalette(newPalette);
-      renderPalette(imageData, newPalette);
     },
-    [updateColor, setPalette, renderPalette, palette, lastImageDataRef]
+    [updateColor, setPalette, palette, lastImageDataRef]
   );
 
   return { handleSample, handleCancelSample, handleSampleLevels, handlePinMoveEnd };

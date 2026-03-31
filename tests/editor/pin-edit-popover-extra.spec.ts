@@ -32,16 +32,16 @@ test.describe('PinEditPopover — outside click and new-group back arrow', () =>
 
   test('selecting "+ New group" switches to the group name input', async ({ page }) => {
     await openEditPopover(page)
-    const groupSelect = page.getByTestId('pin-edit-popover').getByRole('combobox')
+    const groupSelect = page.getByTestId('pin-edit-popover').getByPlaceholder('No group')
     await groupSelect.click()
     await page.getByRole('option', { name: '+ New group' }).click()
     await expect(page.getByTestId('pin-edit-popover').getByLabel('New group name')).toBeVisible()
-    await expect(page.getByTestId('pin-edit-popover').getByRole('combobox')).not.toBeAttached()
+    await expect(page.getByTestId('pin-edit-popover').getByPlaceholder('No group')).not.toBeAttached()
   })
 
   test('clicking the back arrow returns to the group select dropdown', async ({ page }) => {
     await openEditPopover(page)
-    const groupSelect = page.getByTestId('pin-edit-popover').getByRole('combobox')
+    const groupSelect = page.getByTestId('pin-edit-popover').getByPlaceholder('No group')
     await groupSelect.click()
     await page.getByRole('option', { name: '+ New group' }).click()
     // Confirm we are in create-group mode
@@ -49,17 +49,17 @@ test.describe('PinEditPopover — outside click and new-group back arrow', () =>
     // Click the back arrow
     await page.getByTestId('new-group-back').click()
     // Should be back to the group select
-    await expect(page.getByTestId('pin-edit-popover').getByRole('combobox')).toBeVisible()
+    await expect(page.getByTestId('pin-edit-popover').getByPlaceholder('No group')).toBeVisible()
     await expect(page.getByTestId('pin-edit-popover').getByLabel('New group name')).not.toBeAttached()
   })
 
   test('back arrow restores the original group value (no group)', async ({ page }) => {
     await openEditPopover(page)
-    const groupSelect = page.getByTestId('pin-edit-popover').getByRole('combobox')
+    const groupSelect = page.getByTestId('pin-edit-popover').getByPlaceholder('No group')
     await groupSelect.click()
     await page.getByRole('option', { name: '+ New group' }).click()
     await page.getByTestId('new-group-back').click()
     // No group was originally set, so combobox should show placeholder
-    await expect(page.getByTestId('pin-edit-popover').getByRole('combobox')).toBeVisible()
+    await expect(page.getByTestId('pin-edit-popover').getByPlaceholder('No group')).toBeVisible()
   })
 })

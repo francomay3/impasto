@@ -1,12 +1,10 @@
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useRef, useCallback, useEffect, useState, useMemo } from 'react';
 import type { RefObject } from 'react';
 import { Box } from '@mantine/core';
 import { PinEditPopover } from '../palette/PinEditPopover';
 import { useCanvasContext } from './CanvasContext';
 import { usePaletteContext } from '../palette/PaletteContext';
-import { useEditorContext } from '../editor/EditorContext';
-import { useToolContext } from './ToolContext';
-import { useCanvasMeasure } from './useCanvasMeasure';
+import { useEditorStore } from '../editor/editorStore';
 import { useColorContextMenu } from '../palette/useColorContextMenu';
 import { useSelectionContextMenu } from '../palette/useSelectionContextMenu';
 import { usePinHitTest } from './usePinHitTest';
@@ -17,25 +15,29 @@ interface Props {
 }
 
 export function MarqueeSelectOverlay({ canvasRef }: Props) {
-  const { activeTool } = useToolContext();
-  const { sourceImage, viewportTransform, onMouseDown: panMouseDown } = useCanvasContext();
+  const { sourceImage, activeTool, onMouseDown: panMouseDown } = useCanvasContext();
   const { palette } = usePaletteContext();
-  const { selectedColorIds, onSelectColor, onToggleColorSelection, onSetSelection, onHoverColor, hiddenPinIds } =
-    useEditorContext();
-  const { measure } = useCanvasMeasure(canvasRef);
+  const selectedColorIds = useEditorStore(s => s.selectedColorIds);
+  const hiddenPinIds = useEditorStore(s => s.hiddenPinIds);
+  const selectColor = useEditorStore(s => s.selectColor);
+  const toggleColorSelection = useEditorStore(s => s.toggleColorSelection);
+  const setSelectedColorIds = useEditorStore(s => s.setSelectedColorIds);
+  const setHoveredColorId = useEditorStore(s => s.setHoveredColorId);
   const openColorMenu = useColorContextMenu();
   const openSelectionMenu = useSelectionContextMenu();
   const [editPin, setEditPin] = useState<{ colorId: string; position: { x: number; y: number } } | null>(null);
 
   const selectedColorIdsRef = useRef(selectedColorIds);
-  const visiblePins = palette.filter((c) => c.sample && !hiddenPinIds.has(c.id));
+  const visiblePins = useMemo(
+    () => palette.filter((c) => c.sample && !hiddenPinIds.has(c.id)),
+    [palette, hiddenPinIds]
+  );
   const visiblePinsRef = useRef(visiblePins);
   visiblePinsRef.current = visiblePins;
   const sourceImageRef = useRef(sourceImage);
   sourceImageRef.current = sourceImage;
 
   useEffect(() => { selectedColorIdsRef.current = selectedColorIds; }, [selectedColorIds]);
-  useEffect(() => { measure(); }, [viewportTransform, measure]);
 
   const { findPinAt, getPinsInRect } = usePinHitTest({
     canvasRef, sourceImageRef, visiblePinsRef, sourceImage, visiblePins,
@@ -43,7 +45,7 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
 
   const { drag, handleMouseDown, hasDraggedRef } = useMarqueeDrag({
     getPinsInRect,
-    onSetSelection,
+    onSetSelection: setSelectedColorIds,
     selectedColorIdsRef,
     panMouseDown,
     isMarqueeMode: activeTool === 'marquee',
@@ -55,13 +57,13 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
       if (hasDraggedRef.current) { hasDraggedRef.current = false; return; }
       const pinId = findPinAt(e.clientX, e.clientY);
       if (pinId) {
-        if (e.metaKey || e.shiftKey) onToggleColorSelection(pinId);
-        else onSelectColor(pinId);
+        if (e.metaKey || e.shiftKey) toggleColorSelection(pinId);
+        else selectColor(pinId);
       } else {
-        onSelectColor(null);
+        selectColor(null);
       }
     },
-    [findPinAt, onSelectColor, onToggleColorSelection, hasDraggedRef]
+    [findPinAt, selectColor, toggleColorSelection, hasDraggedRef]
   );
 
   const hoveredPinRef = useRef<string | null>(null);
@@ -70,9 +72,9 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
       const pinId = findPinAt(e.clientX, e.clientY);
       if (pinId === hoveredPinRef.current) return;
       hoveredPinRef.current = pinId;
-      onHoverColor(pinId);
+      setHoveredColorId(pinId);
     },
-    [findPinAt, onHoverColor]
+    [findPinAt, setHoveredColorId]
   );
 
   const handleContextMenu = useCallback(
@@ -120,7 +122,7 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onClick={handleClick}
-        onMouseLeave={() => onHoverColor(null)}
+        onMouseLeave={() => setHoveredColorId(null)}
         onContextMenu={handleContextMenu}
       />
       {rectStyle && <Box style={rectStyle} />}

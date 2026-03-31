@@ -78,25 +78,16 @@ export function PaletteTabContent() {
           ref={filteredRef}
           variant="filtered"
           overlayChildren={
-            <>
-              {isAddingColor ? (
-                <SamplerOverlay
-                  canvasRef={filteredRef}
-                  onSample={onAddNewColor}
-                  onCancel={onCancelAddingColor}
-                />
-              ) : samplingColorId ? (
-                <SamplerOverlay
-                  canvasRef={filteredRef}
-                  onSample={onSampleColor}
-                  onCancel={onCancelSampleColor}
-                />
-              ) : null}
-              <SamplePinsOverlay canvasRef={filteredRef} />
-              <MarqueeSelectOverlay canvasRef={filteredRef} />
-            </>
+            isAddingColor ? (
+              <SamplerOverlay canvasRef={filteredRef} onSample={onAddNewColor} onCancel={onCancelAddingColor} />
+            ) : samplingColorId ? (
+              <SamplerOverlay canvasRef={filteredRef} onSample={onSampleColor} onCancel={onCancelSampleColor} />
+            ) : null
           }
-        />
+        >
+          <SamplePinsOverlay canvasRef={filteredRef} />
+          <MarqueeSelectOverlay canvasRef={filteredRef} />
+        </CanvasViewport>
         <Text style={labelStyle} size="xs" c="dimmed">
           Filtered
         </Text>

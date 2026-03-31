@@ -49,7 +49,7 @@ test.describe('Multi-selection popover', () => {
 
   test('selection popover has a Group select dropdown', async ({ page }) => {
     await page.getByTestId('color-item-0').click({ button: 'right' })
-    await expect(page.getByTestId('selection-popover').getByLabel('Group')).toBeVisible()
+    await expect(page.getByTestId('selection-popover').getByLabel('Group', { exact: true })).toBeVisible()
   })
 
   test('selection popover has a New group input', async ({ page }) => {

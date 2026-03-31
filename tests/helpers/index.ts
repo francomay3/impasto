@@ -54,12 +54,3 @@ export async function openEditorWithImage(page: Page): Promise<void> {
 export async function activateTool(page: Page, toolId: string): Promise<void> {
   await page.getByTestId(`tool-${toolId}`).click()
 }
-
-/**
- * No-op: auth is automatically bypassed in E2E test mode via VITE_E2E_TEST_MODE=true.
- * See src/context/AuthContext.tsx for implementation.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function signInAs(_page: Page, _role: 'owner'): Promise<void> {
-  // Auth is bypassed in test mode — no sign-in needed
-}

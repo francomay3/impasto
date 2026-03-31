@@ -11,32 +11,32 @@ test.describe('Sampler overlay — Alt+wheel changes radius', () => {
   async function openSamplerAndGetRadius(page: import('@playwright/test').Page) {
     await page.keyboard.press('e')
     await page.getByTestId('sampler-overlay').waitFor({ timeout: 5000 })
-    const input = page.getByTestId('contextual-toolbar').locator('[data-testid="sampling-radius-input"] input')
+    const input = page.getByTestId('contextual-toolbar').getByTestId('sampling-radius-input')
     return input
   }
 
   test('Alt+wheel scrolling down decreases the sampling radius', async ({ page }) => {
     const input = await openSamplerAndGetRadius(page)
-    const before = Number(await input.inputValue())
+    const before = parseInt(await input.inputValue(), 10)
 
     // Dispatch a wheel event with altKey on window — the handler is registered on window
     await page.evaluate(() => {
       window.dispatchEvent(new WheelEvent('wheel', { altKey: true, deltaY: 30, bubbles: true, cancelable: true }))
     })
 
-    const after = Number(await input.inputValue())
+    const after = parseInt(await input.inputValue(), 10)
     expect(after).toBeLessThan(before)
   })
 
   test('Alt+wheel scrolling up increases the sampling radius', async ({ page }) => {
     const input = await openSamplerAndGetRadius(page)
-    const before = Number(await input.inputValue())
+    const before = parseInt(await input.inputValue(), 10)
 
     await page.evaluate(() => {
       window.dispatchEvent(new WheelEvent('wheel', { altKey: true, deltaY: -30, bubbles: true, cancelable: true }))
     })
 
-    const after = Number(await input.inputValue())
+    const after = parseInt(await input.inputValue(), 10)
     expect(after).toBeGreaterThan(before)
   })
 
@@ -65,7 +65,7 @@ test.describe('Sampler overlay — Alt+wheel changes radius', () => {
       })
     }
 
-    const after = Number(await input.inputValue())
+    const after = parseInt(await input.inputValue(), 10)
     expect(after).toBeGreaterThanOrEqual(1)
   })
 
@@ -81,7 +81,7 @@ test.describe('Sampler overlay — Alt+wheel changes radius', () => {
       })
     }
 
-    const after = Number(await input.inputValue())
+    const after = parseInt(await input.inputValue(), 10)
     expect(after).toBeLessThanOrEqual(200)
   })
 })

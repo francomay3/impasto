@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+import { useAuthStore } from '../auth/authStore';
 import {
   getFirestoreProject,
   saveFirestoreProject,
@@ -39,7 +39,7 @@ async function resolveInitialState(
 
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const user = useAuthStore(s => s.user);
   const isTestMode = import.meta.env.VITE_E2E_TEST_MODE === 'true';
   const [loadState, setLoadState] = useState<LoadState>(
     isTestMode ? DEFAULT_PROJECT_STATE : 'loading'

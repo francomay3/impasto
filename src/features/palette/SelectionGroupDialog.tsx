@@ -11,7 +11,7 @@ import {
   Divider,
 } from '@mantine/core';
 import { Eye, EyeOff, Trash2, X } from 'lucide-react';
-import { useEditorContext } from '../editor/EditorContext';
+import { useEditorStore } from '../editor/editorStore';
 import { usePaletteContext } from './PaletteContext';
 
 interface PopoverPos {
@@ -20,8 +20,10 @@ interface PopoverPos {
 }
 
 export function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: () => void }) {
-  const { selectedColorIds, onSelectColor, hiddenPinIds, onSetGroupPinsVisible } =
-    useEditorContext();
+  const selectedColorIds = useEditorStore(s => s.selectedColorIds);
+  const hiddenPinIds = useEditorStore(s => s.hiddenPinIds);
+  const selectColor = useEditorStore(s => s.selectColor);
+  const setGroupPinsVisible = useEditorStore(s => s.setGroupPinsVisible);
   const { palette, groups, onDeleteColor, onSetColorGroup, onAddGroup } = usePaletteContext();
   const [newGroupName, setNewGroupName] = useState('');
 
@@ -52,16 +54,21 @@ export function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: (
 
   const handleDelete = () => {
     ids.forEach((colorId) => onDeleteColor(colorId));
-    onSelectColor(null);
+    selectColor(null);
     close();
   };
+
+  const DIALOG_W = 220;
+  const DIALOG_H_EST = 280;
+  const left = Math.min(pos.x, window.innerWidth - DIALOG_W - 8);
+  const top = Math.min(pos.y, window.innerHeight - DIALOG_H_EST - 8);
 
   return (
     <Paper
       p="sm"
       shadow="md"
       data-testid="selection-popover"
-      style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 300, minWidth: 220 }}
+      style={{ position: 'fixed', left, top, zIndex: 300, minWidth: 220 }}
       styles={{ root: { background: 'var(--mantine-color-dark-7)', border: '1px solid var(--mantine-color-dark-4)' } }}
     >
       <Stack gap="xs">
@@ -100,7 +107,7 @@ export function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: (
           <ActionIcon
             variant="subtle"
             size="sm"
-            onClick={() => { onSetGroupPinsVisible(ids, !allHidden); close(); }}
+            onClick={() => { setGroupPinsVisible(ids, !allHidden); close(); }}
             title={allHidden ? 'Show pins' : 'Hide pins'}
           >
             {allHidden ? <Eye size={14} /> : <EyeOff size={14} />}

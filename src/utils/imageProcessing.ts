@@ -45,7 +45,7 @@ function applyLevels(imageData: ImageData, p: LevelsParams): ImageData {
   return new ImageData(data, imageData.width, imageData.height);
 }
 
-export function blurImageData(imageData: ImageData, blur: number): ImageData {
+function blurImageData(imageData: ImageData, blur: number): ImageData {
   if (blur === 0) return imageData;
   const { width, height } = imageData;
   const src = document.createElement('canvas');

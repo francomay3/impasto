@@ -3,9 +3,9 @@ import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { HOTKEYS } from '../../hotkeys';
 import type { FilterType } from '../../types';
-import type { ToolId } from '../../tools';
-import { useContextMenu } from '../../context/ContextMenuContext';
+import { useContextMenuStore } from '../../context/contextMenuStore';
 import { buildFilterMenuItems } from '../filters/FilterPanel/filterMenuData';
+import type { InteractionAPI } from '../canvas/useInteraction';
 
 interface Params {
   onUndo: () => void;
@@ -15,9 +15,9 @@ interface Params {
   onClearSelection: () => void;
   onDeleteSelectedColor: () => void;
   onPasteFile: (file: File) => void;
-  setActiveTool: (id: ToolId) => void;
   onToggleSelectTool: () => void;
   onToggleMarqueeTool: () => void;
+  interaction: Pick<InteractionAPI, 'isSampling' | 'cancel'>;
 }
 
 export function useEditorHotkeys({
@@ -28,17 +28,15 @@ export function useEditorHotkeys({
   onClearSelection,
   onDeleteSelectedColor,
   onPasteFile,
-  setActiveTool,
   onToggleSelectTool,
   onToggleMarqueeTool,
+  interaction,
 }: Params) {
   const mousePos = useRef({ x: 0, y: 0 });
-  const { open: openMenu } = useContextMenu();
+  const openMenu = useContextMenuStore(s => s.open);
 
   useEffect(() => {
-    const track = (e: MouseEvent) => {
-      mousePos.current = { x: e.clientX, y: e.clientY };
-    };
+    const track = (e: MouseEvent) => { mousePos.current = { x: e.clientX, y: e.clientY }; };
     window.addEventListener('mousemove', track);
     return () => window.removeEventListener('mousemove', track);
   }, []);
@@ -65,17 +63,8 @@ export function useEditorHotkeys({
     [HOTKEYS.UNDO, onUndo],
     [HOTKEYS.REDO, onRedo],
     [HOTKEYS.REDO_ALT, onRedo],
-    [
-      HOTKEYS.CANCEL,
-      () => {
-        onClearSelection();
-        setActiveTool('select');
-      },
-    ],
-    [
-      HOTKEYS.ADD_FILTER,
-      () => openMenu({ ...mousePos.current, items: buildFilterMenuItems(onAddFilter) }),
-    ],
+    [HOTKEYS.CANCEL, () => { onClearSelection(); interaction.cancel(); }],
+    [HOTKEYS.ADD_FILTER, () => openMenu({ ...mousePos.current, items: buildFilterMenuItems(onAddFilter) })],
     [HOTKEYS.ADD_COLOR, onAddColor],
     [HOTKEYS.DELETE_COLOR, onDeleteSelectedColor],
     [HOTKEYS.TOOL_EYEDROPPER, onAddColor],

@@ -17,8 +17,8 @@ test.describe('Resample color', () => {
   })
 
   test('clicking the crosshair button on a color shows the sampler overlay', async ({ page }) => {
-    // The Crosshair ActionIcon is inside color-item-inner
-    await page.getByTestId('color-item-0').getByTestId('color-item-inner').getByTitle('Sample from image').click()
+    // The Crosshair ActionIcon is inside color-card
+    await page.getByTestId('color-item-0').getByTestId('color-card').getByTitle('Sample from image').click()
     await expect(page.getByTestId('sampler-overlay')).toBeVisible()
   })
 
@@ -48,7 +48,7 @@ test.describe('Resample color', () => {
     await page.getByRole('menuitem', { name: 'Resample' }).click()
     await page.getByTestId('sampler-overlay').waitFor()
     // ColorItem applies a blue outline when samplingColorId === color.id
-    const inner = page.getByTestId('color-item-0').getByTestId('color-item-inner')
+    const inner = page.getByTestId('color-item-0').getByTestId('color-card')
     const outline = await inner.evaluate((el) => window.getComputedStyle(el).outline)
     expect(outline).toContain('rgb')
   })

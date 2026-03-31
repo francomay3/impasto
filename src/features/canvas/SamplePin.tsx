@@ -1,8 +1,8 @@
 import { Tooltip } from '@mantine/core';
 import type { Color, ColorGroup, ColorSample } from '../../types';
 
-export const DOT_R = 6;
-export const HIT_R = DOT_R + 5;
+const DOT_R = 6;
+const HIT_R = DOT_R + 5;
 
 interface Props {
   color: Color;

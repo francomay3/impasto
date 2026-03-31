@@ -11,14 +11,14 @@ test.describe('PinEditPopover group assignment', () => {
   })
 
   async function openPinEditPopover(page: import('@playwright/test').Page) {
-    await page.getByTestId('color-item-0').getByTestId('color-item-inner').click({ button: 'right' })
+    await page.getByTestId('color-item-0').getByTestId('color-card').click({ button: 'right' })
     await page.getByRole('menuitem', { name: 'Edit' }).click()
     await page.getByTestId('pin-edit-popover').waitFor()
   }
 
   test('selecting "+ New group" shows a group name input', async ({ page }) => {
     await openPinEditPopover(page)
-    const groupSelect = page.getByTestId('pin-edit-popover').getByRole('combobox')
+    const groupSelect = page.getByTestId('pin-edit-popover').getByPlaceholder('No group')
     await groupSelect.click()
     await page.getByRole('option', { name: '+ New group' }).click()
     await expect(page.getByTestId('pin-edit-popover').getByPlaceholder('Group name')).toBeVisible()
@@ -26,7 +26,7 @@ test.describe('PinEditPopover group assignment', () => {
 
   test('creating a new group via PinEditPopover assigns the color to it', async ({ page }) => {
     await openPinEditPopover(page)
-    const groupSelect = page.getByTestId('pin-edit-popover').getByRole('combobox')
+    const groupSelect = page.getByTestId('pin-edit-popover').getByPlaceholder('No group')
     await groupSelect.click()
     await page.getByRole('option', { name: '+ New group' }).click()
     await page.getByTestId('pin-edit-popover').getByPlaceholder('Group name').fill('Paint Group')
@@ -51,11 +51,11 @@ test.describe('PinEditPopover group assignment', () => {
     // Open PinEditPopover for color-item-1 (index 1 - but after group render the ungrouped colors may shift)
     // Use the last color-item that lacks a group
     const ungroupedItem = page.locator('[data-testid^="color-item-"]:not([data-testid="color-item-0"])').first()
-    await ungroupedItem.getByTestId('color-item-inner').click({ button: 'right' })
+    await ungroupedItem.getByTestId('color-card').click({ button: 'right' })
     await page.getByRole('menuitem', { name: 'Edit' }).click()
     await page.getByTestId('pin-edit-popover').waitFor()
 
-    const groupSelect = page.getByTestId('pin-edit-popover').getByRole('combobox')
+    const groupSelect = page.getByTestId('pin-edit-popover').getByPlaceholder('No group')
     await groupSelect.click()
     await page.getByRole('option', { name: groupName! }).click()
     await page.getByTestId('pin-edit-popover').getByRole('button', { name: 'Save' }).click()
@@ -67,7 +67,7 @@ test.describe('PinEditPopover group assignment', () => {
 
   test('cancelling PinEditPopover does not change the group', async ({ page }) => {
     await openPinEditPopover(page)
-    const groupSelect = page.getByTestId('pin-edit-popover').getByRole('combobox')
+    const groupSelect = page.getByTestId('pin-edit-popover').getByPlaceholder('No group')
     await groupSelect.click()
     await page.getByRole('option', { name: '+ New group' }).click()
     await page.getByTestId('pin-edit-popover').getByPlaceholder('Group name').fill('Should Not Appear')

@@ -47,7 +47,7 @@ export function FilterSlider({
         onChange={onChange}
         onChangeEnd={onChangeEnd}
         size="xs"
-        thumbProps={{ 'aria-label': label }}
+        thumbLabel={label}
       />
     </Stack>
   );

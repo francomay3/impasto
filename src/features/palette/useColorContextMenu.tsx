@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
 import { Crosshair, Copy, PinOff, Trash2, Settings2 } from 'lucide-react';
 import { usePaletteContext } from './PaletteContext';
-import { useContextMenu } from '../../context/ContextMenuContext';
+import { useContextMenuStore } from '../../context/contextMenuStore';
 
 interface OpenOptions {
   onEditStart?: () => void;
@@ -10,7 +10,7 @@ interface OpenOptions {
 
 export function useColorContextMenu() {
   const { palette, onStartSampling, onDeleteColor, onRemoveSamplePin } = usePaletteContext();
-  const { open: openMenu } = useContextMenu();
+  const openMenu = useContextMenuStore(s => s.open);
 
   const open = useCallback(
     (colorId: string, pos: { x: number; y: number }, opts: OpenOptions = {}) => {

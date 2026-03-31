@@ -24,14 +24,14 @@ test.describe('Canvas right-click context menu', () => {
 
   test('right-clicking the filtered canvas on Palette tab shows Add color here', async ({ page }) => {
     await page.getByRole('tab', { name: /Palette/ }).click()
-    const canvas = page.getByTestId('canvas-viewport-filtered')
+    const canvas = page.getByRole('tabpanel', { name: /Palette/ }).getByTestId('canvas-viewport-filtered')
     await canvas.click({ button: 'right' })
     await expect(page.getByRole('menuitem', { name: 'Add color here' })).toBeVisible()
   })
 
   test('clicking Add color here adds a color to the palette', async ({ page }) => {
     await page.getByRole('tab', { name: /Palette/ }).click()
-    const canvas = page.getByTestId('canvas-viewport-filtered')
+    const canvas = page.getByRole('tabpanel', { name: /Palette/ }).getByTestId('canvas-viewport-filtered')
     await canvas.click({ button: 'right' })
     await page.getByRole('menuitem', { name: 'Add color here' }).click()
     await expect(page.locator('[data-testid^="color-item-"]')).toHaveCount(1)
@@ -39,18 +39,18 @@ test.describe('Canvas right-click context menu', () => {
 
   test('right-clicking the filtered canvas on Palette tab shows Show labels', async ({ page }) => {
     await page.getByRole('tab', { name: /Palette/ }).click()
-    const canvas = page.getByTestId('canvas-viewport-filtered')
-    await canvas.click({ button: 'right' })
-    await expect(page.getByRole('menuitem', { name: 'Show labels' })).toBeVisible()
-  })
-
-  test('clicking Show labels changes the menu item to Hide labels', async ({ page }) => {
-    await page.getByRole('tab', { name: /Palette/ }).click()
-    const canvas = page.getByTestId('canvas-viewport-filtered')
-    await canvas.click({ button: 'right' })
-    await page.getByRole('menuitem', { name: 'Show labels' }).click()
-    // Re-open context menu to check toggle
+    const canvas = page.getByRole('tabpanel', { name: /Palette/ }).getByTestId('canvas-viewport-filtered')
     await canvas.click({ button: 'right' })
     await expect(page.getByRole('menuitem', { name: 'Hide labels' })).toBeVisible()
+  })
+
+  test('clicking Hide labels changes the menu item to Show labels', async ({ page }) => {
+    await page.getByRole('tab', { name: /Palette/ }).click()
+    const canvas = page.getByRole('tabpanel', { name: /Palette/ }).getByTestId('canvas-viewport-filtered')
+    await canvas.click({ button: 'right' })
+    await page.getByRole('menuitem', { name: 'Hide labels' }).click()
+    // Re-open context menu to check toggle
+    await canvas.click({ button: 'right' })
+    await expect(page.getByRole('menuitem', { name: 'Show labels' })).toBeVisible()
   })
 })

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Auth screen', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => { (window as any).__e2e_signed_out = true })
     await page.goto('/')
   })
 

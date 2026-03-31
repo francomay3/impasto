@@ -9,8 +9,8 @@ import { useViewportTransform } from '../canvas/useViewportTransform';
 import { useImageHandlers } from './useImageHandlers';
 import { useUndoRedo } from './useUndoRedo';
 import { useEditorHotkeys } from './useEditorHotkeys';
-import { useHiddenPins } from './useHiddenPins';
 import { useEditorHandlers } from './useEditorHandlers';
+import { useInteraction } from '../canvas/useInteraction';
 import { ReplaceImageModal, type ReplaceImageModalRef } from './ReplaceImageModal';
 import { AppHeader } from './AppHeader';
 import { ExportModal } from './ExportModal';
@@ -20,14 +20,12 @@ import { PaletteContext } from '../palette/PaletteContext';
 import { FilterContext } from '../filters/FilterContext';
 import { EditorContext } from './EditorContext';
 import { CanvasContext } from '../canvas/CanvasContext';
-import { ToolContext } from '../canvas/ToolContext';
-import { SelectionPopoverProvider } from '../palette/SelectionPopoverContext';
+import { SelectionPopoverPortal } from '../palette/SelectionPopoverPortal';
 import { usePaletteContextValue } from './usePaletteContextValue';
 import { useFilterContextValue } from './useFilterContextValue';
 import { useCanvasContextValue } from './useCanvasContextValue';
 import { useEditorContextValue } from './useEditorContextValue';
-import type { ToolId } from '../../tools';
-import type { SamplingLevels } from '../filters/FilterContext';
+import { useEditorStore } from './editorStore';
 import type { ProjectState } from '../../types';
 
 interface AppProps {
@@ -42,30 +40,30 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   const { status: saveStatus, save } = useSaveStatus(onSave);
   const onStateChange = useCallback(
     (s: ProjectState) => { history.push(s); save(s); },
-    [history.push, save]
+    [history, save]
   );
   const project = useProjectState({ initialState, onSave: onStateChange });
   const filteredCanvasRef = useRef<HTMLCanvasElement>(null);
   const indexedCanvasRef = useRef<HTMLCanvasElement>(null);
-  const pipeline = useCanvasPipeline(filteredCanvasRef, indexedCanvasRef);
+  const pipeline = useCanvasPipeline(filteredCanvasRef);
   const viewport = useViewportTransform();
   const replaceRef = useRef<ReplaceImageModalRef>(null);
-  const [samplingColorId, setSamplingColorId] = useState<string | null>(null);
-  const [activeTool, setActiveTool] = useState<ToolId>('select');
-  const [samplingRadius, setSamplingRadius] = useState(30);
-  const [hoveredColorId, setHoveredColorId] = useState<string | null>(null);
+  const interaction = useInteraction();
   const [activeTab, setActiveTab] = useState('filters');
-  const [samplingLevels, setSamplingLevels] = useState<SamplingLevels | null>(null);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
-  const hiddenPins = useHiddenPins();
+  const selectColor = useEditorStore(s => s.selectColor);
 
   const imageHandlers = useImageHandlers({
     state: project.state, pipeline,
     setImage: project.setImage, updateColor: project.updateColor,
     setPalette: project.updateDerivedPalette, addSampledColor: project.addSampledColor,
     removeColor: project.removeColor, updateFilter: project.updateFilter,
-    samplingColorId, setSamplingColorId, samplingLevels, setSamplingLevels,
+    samplingColorId: interaction.samplingColorId,
+    startSamplingColor: interaction.startSamplingColor,
+    completeSample: interaction.completeSample,
+    cancelSample: interaction.cancel,
+    samplingLevels: interaction.samplingLevels,
     resetTransform: viewport.resetTransform,
   });
 
@@ -75,84 +73,79 @@ export default function Editor({ initialState, isLoading, onSave, onNewImageFile
   });
 
   const editorHandlers = useEditorHandlers({
-    state: project.state, activeTool, samplingColorId,
+    state: project.state,
+    samplingColorId: interaction.samplingColorId,
+    interaction,
     handleAddColorAtPosition: imageHandlers.handleAddColorAtPosition,
     handleSample: imageHandlers.handleSample,
     handleDeleteColor: imageHandlers.handleDeleteColor,
     handleImageLoadBitmap: imageHandlers.handleImageLoadBitmap,
-    setActiveTool, setActiveTab, replaceRef, onNewImageFile,
+    setActiveTab, replaceRef, onNewImageFile,
   });
 
   useEditorHotkeys({
     onUndo: handleUndo, onRedo: handleRedo,
     onAddFilter: project.addFilter, onAddColor: editorHandlers.handleEnterAddColorMode,
-    onClearSelection: () => editorHandlers.setSelectedColorIds(new Set()),
+    onClearSelection: () => useEditorStore.getState().setSelectedColorIds(new Set()),
     onDeleteSelectedColor: editorHandlers.handleDeleteSelectedColors,
-    onPasteFile: editorHandlers.handlePasteFile, setActiveTool,
+    onPasteFile: editorHandlers.handlePasteFile,
     onToggleSelectTool: editorHandlers.handleToggleSelectTool,
     onToggleMarqueeTool: editorHandlers.handleToggleMarqueeTool,
+    interaction,
   });
 
-  const paletteValue = usePaletteContextValue({
-    project, imageHandlers, editorHandlers,
-    samplingColorId, activeTool, setActiveTool, setSamplingColorId, setSamplingLevels,
-  });
-  const filterValue = useFilterContextValue({
-    project, imageHandlers, samplingLevels, setSamplingColorId, setSamplingLevels,
-  });
+  const paletteValue = usePaletteContextValue({ project, imageHandlers, editorHandlers, interaction });
+  const filterValue = useFilterContextValue({ project, imageHandlers, interaction });
   const canvasValue = useCanvasContextValue({
-    project, viewport, filteredCanvasRef, indexedCanvasRef,
-    activeTool, samplingColorId, samplingLevels, showLabels, setShowLabels,
+    project, viewport, filteredCanvasRef, indexedCanvasRef, interaction, showLabels, setShowLabels,
   });
   const editorValue = useEditorContextValue({
-    project, editorHandlers, hiddenPins: hiddenPins, saveStatus,
+    project, editorHandlers, saveStatus,
     canUndo: history.canUndo, canRedo: history.canRedo, isLoading: !!isLoading,
-    hoveredColorId, setHoveredColorId, activeTab, setActiveTab,
+    activeTab, setActiveTab,
     setExportModalOpen, replaceRef, handleUndo, handleRedo,
   });
 
   return (
-    <ToolContext.Provider value={{ activeTool, setActiveTool, samplingRadius, setSamplingRadius }}>
-      <CanvasContext.Provider value={canvasValue}>
-        <EditorContext.Provider value={editorValue}>
-          <PaletteContext.Provider value={paletteValue}>
-            <SelectionPopoverProvider>
-              <FilterContext.Provider value={filterValue}>
-                <AppShell header={{ height: 68 }} padding={0}>
-                  <ErrorBoundary label="Header" compact>
-                    <AppHeader />
-                  </ErrorBoundary>
-                  <AppShell.Main
-                    onClick={() => editorHandlers.handleSelectColor(null)}
-                    style={{
-                      background: 'var(--mantine-color-dark-9)',
-                      paddingTop: 'calc(var(--app-shell-header-height) + 4px)',
-                    }}
-                  >
-                    {isLoading ? (
-                      <Center h="calc(100vh - var(--app-shell-header-height))">
-                        <Loader color="primary" />
-                      </Center>
-                    ) : (
-                      <EditorTabs height="calc(100vh - var(--app-shell-header-height))" />
-                    )}
-                  </AppShell.Main>
-                  <ExportModal
-                    opened={exportModalOpen}
-                    state={project.state}
-                    onClose={() => setExportModalOpen(false)}
-                  />
-                  <ReplaceImageModal
-                    ref={replaceRef}
-                    hasSamples={project.state.palette.some((c) => c.sample)}
-                    onFileSelected={editorHandlers.handleFileSelected}
-                  />
-                </AppShell>
-              </FilterContext.Provider>
-            </SelectionPopoverProvider>
-          </PaletteContext.Provider>
-        </EditorContext.Provider>
-      </CanvasContext.Provider>
-    </ToolContext.Provider>
+    <CanvasContext.Provider value={canvasValue}>
+      <EditorContext.Provider value={editorValue}>
+        <PaletteContext.Provider value={paletteValue}>
+          <FilterContext.Provider value={filterValue}>
+            <SelectionPopoverPortal />
+            <AppShell header={{ height: 68 }} padding={0}>
+              <ErrorBoundary label="Header" compact>
+                <AppHeader />
+              </ErrorBoundary>
+              <AppShell.Main
+                onClick={() => selectColor(null)}
+                style={{
+                  background: 'var(--mantine-color-dark-9)',
+                  paddingTop: 'calc(var(--app-shell-header-height) + 4px)',
+                  userSelect: 'none',
+                }}
+              >
+                {isLoading ? (
+                  <Center h="calc(100vh - var(--app-shell-header-height))">
+                    <Loader color="primary" />
+                  </Center>
+                ) : (
+                  <EditorTabs height="calc(100vh - var(--app-shell-header-height))" />
+                )}
+              </AppShell.Main>
+              <ExportModal
+                opened={exportModalOpen}
+                state={project.state}
+                onClose={() => setExportModalOpen(false)}
+              />
+              <ReplaceImageModal
+                ref={replaceRef}
+                hasSamples={project.state.palette.some((c) => c.sample)}
+                onFileSelected={editorHandlers.handleFileSelected}
+              />
+            </AppShell>
+          </FilterContext.Provider>
+        </PaletteContext.Provider>
+      </EditorContext.Provider>
+    </CanvasContext.Provider>
   );
 }

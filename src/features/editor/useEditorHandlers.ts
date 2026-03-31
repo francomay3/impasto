@@ -1,19 +1,19 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import type { RefObject } from 'react';
-import type { ToolId } from '../../tools';
 import type { ColorSample, ProjectState } from '../../types';
 import { prepareImage } from '../../utils/imageResize';
 import type { ReplaceImageModalRef } from './ReplaceImageModal';
+import type { InteractionAPI } from '../canvas/useInteraction';
+import { useEditorStore } from './editorStore';
 
 interface Params {
   state: ProjectState;
-  activeTool: ToolId;
   samplingColorId: string | null;
+  interaction: Pick<InteractionAPI, 'activateEyedropper' | 'selectTool' | 'completeSample' | 'toggleMarquee'>;
   handleAddColorAtPosition: (sample: ColorSample, hex: string) => string;
   handleSample: (sample: ColorSample, hex: string) => void;
   handleDeleteColor: (id: string) => void;
   handleImageLoadBitmap: (bitmap: ImageBitmap) => void;
-  setActiveTool: (id: ToolId) => void;
   setActiveTab: (tab: string) => void;
   replaceRef: RefObject<ReplaceImageModalRef | null>;
   onNewImageFile?: (file: File) => void;
@@ -21,35 +21,16 @@ interface Params {
 
 export function useEditorHandlers({
   state,
-  activeTool,
   samplingColorId,
+  interaction,
   handleAddColorAtPosition,
   handleSample,
   handleDeleteColor,
   handleImageLoadBitmap,
-  setActiveTool,
   setActiveTab,
   replaceRef,
   onNewImageFile,
 }: Params) {
-  const [selectedColorIds, setSelectedColorIds] = useState<Set<string>>(new Set());
-
-  const handleSelectColor = useCallback((id: string | null) => {
-    if (!id) {
-      setSelectedColorIds(new Set());
-      return;
-    }
-    setSelectedColorIds((prev) => (prev.size === 1 && prev.has(id) ? new Set() : new Set([id])));
-  }, []);
-
-  const handleToggleColorSelection = useCallback((id: string) => {
-    setSelectedColorIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }, []);
-
   const handleFileSelected = useCallback(
     (file: File) => {
       prepareImage(file).then(({ bitmap, webpFile }) => {
@@ -61,43 +42,42 @@ export function useEditorHandlers({
   );
 
   const handleEnterAddColorMode = useCallback(() => {
-    setSelectedColorIds(new Set());
-    setActiveTool('eyedropper');
+    useEditorStore.getState().setSelectedColorIds(new Set());
+    interaction.activateEyedropper();
     setActiveTab('palette');
-  }, [setActiveTool, setActiveTab]);
+  }, [interaction, setActiveTab]);
 
   const handleAddNewColor = useCallback(
     (sample: ColorSample, hex: string) => {
       const id = handleAddColorAtPosition(sample, hex);
-      setSelectedColorIds(new Set([id]));
-      setActiveTool('select');
+      useEditorStore.getState().setSelectedColorIds(new Set([id]));
+      interaction.completeSample();
     },
-    [handleAddColorAtPosition, setActiveTool]
+    [handleAddColorAtPosition, interaction]
   );
 
   const handleSampleWithSelect = useCallback(
     (sample: ColorSample, hex: string) => {
       const id = samplingColorId;
       handleSample(sample, hex);
-      if (id) setSelectedColorIds(new Set([id]));
+      if (id) useEditorStore.getState().setSelectedColorIds(new Set([id]));
     },
     [samplingColorId, handleSample]
   );
 
   const handleDeleteSelectedColors = useCallback(() => {
-    setSelectedColorIds((prev) => {
-      prev.forEach((id) => handleDeleteColor(id));
-      return new Set();
-    });
+    const ids = useEditorStore.getState().selectedColorIds;
+    ids.forEach((id) => handleDeleteColor(id));
+    useEditorStore.getState().setSelectedColorIds(new Set());
   }, [handleDeleteColor]);
 
   const handleToggleSelectTool = useCallback(() => {
-    setActiveTool('select');
-  }, [setActiveTool]);
+    interaction.selectTool('select');
+  }, [interaction]);
 
   const handleToggleMarqueeTool = useCallback(() => {
-    setActiveTool(activeTool === 'marquee' ? 'select' : 'marquee');
-  }, [activeTool, setActiveTool]);
+    interaction.toggleMarquee();
+  }, [interaction]);
 
   const handlePasteFile = useCallback(
     (file: File) => {
@@ -108,10 +88,6 @@ export function useEditorHandlers({
   );
 
   return {
-    selectedColorIds,
-    setSelectedColorIds,
-    handleSelectColor,
-    handleToggleColorSelection,
     handleFileSelected,
     handleEnterAddColorMode,
     handleAddNewColor,
