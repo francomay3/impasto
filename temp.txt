@@ -1,1 +1,0 @@
-/ralph-loop "read '/Users/framay/projects/impasto/TODO/prompt.md'. thats your assignment" --max-iterations 20  --completion-promise "WORK_DONE" 

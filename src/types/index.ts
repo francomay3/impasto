@@ -22,7 +22,7 @@ export type Color = {
 
 export type Pigment = {
   name: string;
-  hex: string;
+  rgb: string;
 };
 
 export type FilterType = 'brightness-contrast' | 'hue-saturation' | 'levels' | 'blur';

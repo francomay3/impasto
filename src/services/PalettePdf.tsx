@@ -2,7 +2,7 @@ import { Document, Page, View, Text, Image, StyleSheet, Svg, Path, Circle } from
 import type { Color, ColorGroup, Pigment } from '../types';
 import { findMixData, mixedResultHex, type MixEntry } from './ColorMixer';
 
-export type PalettePdfProps = {
+type PalettePdfProps = {
   title: string;
   date: string;
   palette: Color[];
@@ -50,20 +50,29 @@ function arcPath(cx: number, cy: number, r: number, a1: number, a2: number): str
   return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${a2 - a1 > Math.PI ? 1 : 0} 1 ${x2} ${y2} Z`;
 }
 
-function Pie({ entries }: { entries: MixEntry[] }) {
+function buildArcs(entries: MixEntry[]) {
   const total = entries.reduce((sum, e) => sum + e.parts, 0);
   const cx = 18, cy = 18, r = 16;
-  let angle = -Math.PI / 2;
+  const sweeps = entries.map((e) => (e.parts / total) * Math.PI * 2);
+  const startAngles = sweeps.reduce<number[]>(
+    (acc, sweep) => [...acc, acc[acc.length - 1] + sweep],
+    [-Math.PI / 2]
+  ).slice(0, sweeps.length);
+  return entries.map((e, i) => ({
+    key: i,
+    fill: e.rgb,
+    d: entries.length === 1
+      ? `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.001} ${cy - r} Z`
+      : arcPath(cx, cy, r, startAngles[i], startAngles[i] + sweeps[i]),
+  }));
+}
+
+function Pie({ entries }: { entries: MixEntry[] }) {
+  const cx = 18, cy = 18, r = 16;
+  const arcs = buildArcs(entries);
   return (
     <Svg width={36} height={36} style={s.pie}>
-      {entries.map((e, i) => {
-        const sweep = (e.parts / total) * Math.PI * 2;
-        const d = entries.length === 1
-          ? `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.001} ${cy - r} Z`
-          : arcPath(cx, cy, r, angle, angle + sweep);
-        angle += sweep;
-        return <Path key={i} d={d} fill={e.hex} />;
-      })}
+      {arcs.map(({ key, d, fill }) => <Path key={key} d={d} fill={fill} />)}
       <Circle cx={cx} cy={cy} r={r} fill="none" stroke="#ccc" strokeWidth={1} />
     </Svg>
   );

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
+import { useCallback, useMemo, useState, type RefObject } from 'react';
 import type { useProjectState } from './useProjectState';
 import type { useViewportTransform } from '../canvas/useViewportTransform';
 import type { InteractionAPI } from '../canvas/useInteraction';
@@ -31,12 +31,9 @@ export function useCanvasContextValue({
 
   const [selectionMode, setSelectionMode] = useState<SelectionMode>('new');
 
-  useEffect(() => {
-    if (activeTool !== 'marquee') setSelectionMode('new');
-  }, [activeTool]);
-
   const setActiveTool = useCallback(
     (id: ToolId) => {
+      if (id !== 'marquee') setSelectionMode('new');
       if (id === 'eyedropper') activateEyedropper();
       else selectTool(id);
     },

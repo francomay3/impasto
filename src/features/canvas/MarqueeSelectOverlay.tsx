@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState, useMemo } from 'react';
+import { useRef, useCallback, useEffect, useLayoutEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import type { RefObject } from 'react';
 import { Box } from '@mantine/core';
@@ -34,9 +34,11 @@ export function MarqueeSelectOverlay({ canvasRef }: Props) {
     [palette, hiddenPinIds]
   );
   const visiblePinsRef = useRef(visiblePins);
-  visiblePinsRef.current = visiblePins;
   const sourceImageRef = useRef(sourceImage);
-  sourceImageRef.current = sourceImage;
+  useLayoutEffect(() => {
+    visiblePinsRef.current = visiblePins;
+    sourceImageRef.current = sourceImage;
+  });
 
   useEffect(() => { selectedColorIdsRef.current = selectedColorIds; }, [selectedColorIds]);
 

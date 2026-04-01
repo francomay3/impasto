@@ -14,11 +14,11 @@ describe('findMixData', () => {
     expect(result.length).toBeGreaterThan(0);
   });
 
-  it('each entry has name, hex, and parts fields', () => {
+  it('each entry has name, rgb, and parts fields', () => {
     const result = findMixData('#0000ff');
     for (const entry of result) {
       expect(typeof entry.name).toBe('string');
-      expect(entry.hex).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(entry.rgb).toMatch(/^rgb\(\d+,\s*\d+,\s*\d+\)$/);
       expect(typeof entry.parts).toBe('number');
       expect(entry.parts).toBeGreaterThan(0);
     }
@@ -27,7 +27,7 @@ describe('findMixData', () => {
   it('returns a single-pigment result for an exact pigment match', () => {
     // Titanium White is in the pigment list — exact match should return 1 entry
     const white = PIGMENTS.find((p) => p.name === 'Titanium White')!;
-    const result = findMixData(white.hex, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD);
+    const result = findMixData(white.rgb, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD);
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe('Titanium White');
     expect(result[0].parts).toBe(1);
@@ -50,8 +50,8 @@ describe('findMixData', () => {
 
   it('accepts a custom pigment list', () => {
     const custom = [
-      { name: 'Red', hex: '#ff0000' },
-      { name: 'Blue', hex: '#0000ff' },
+      { name: 'Red', rgb: 'rgb(255, 0, 0)' },
+      { name: 'Blue', rgb: 'rgb(0, 0, 255)' },
     ];
     const result = findMixData('#ff0000', 6, 10, custom);
     expect(result[0].name).toBe('Red');
@@ -75,7 +75,7 @@ describe('findMixRecipe', () => {
 
   it('returns "100% Name" for a single-pigment match', () => {
     const white = PIGMENTS.find((p) => p.name === 'Titanium White')!;
-    const recipe = findMixRecipe(white.hex, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD);
+    const recipe = findMixRecipe(white.rgb, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD);
     expect(recipe).toBe('100% Titanium White');
   });
 
@@ -83,8 +83,8 @@ describe('findMixRecipe', () => {
     // Use a custom 2-pigment set (red + blue) and ask for purple.
     // Neither pigment alone is close to purple so the algorithm returns a pair.
     const custom = [
-      { name: 'Red', hex: '#ff0000' },
-      { name: 'Blue', hex: '#0000ff' },
+      { name: 'Red', rgb: 'rgb(255, 0, 0)' },
+      { name: 'Blue', rgb: 'rgb(0, 0, 255)' },
     ];
     const recipe = findMixRecipe(
       '#800080',

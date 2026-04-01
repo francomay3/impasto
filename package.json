@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -b --noEmit && eslint . --max-warnings=0 && knip",
     "knip": "knip",
     "preview": "vite preview",
     "build:wasm": "npm run build:wasm:img_ops && npm run build:wasm:img_index",

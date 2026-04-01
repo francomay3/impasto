@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { FilterInstance, ColorSample } from '../../types';
 import type { useCanvasPipeline } from '../canvas/useCanvasPipeline';
@@ -37,19 +37,21 @@ export function useImageHandlers({
   const justLoadedImageRef = useRef<object | null>(null);
   const [debouncedFilters] = useDebouncedValue(state.filters, 300);
   const saveThumbnailColorsRef = useRef(saveThumbnailColors);
-  saveThumbnailColorsRef.current = saveThumbnailColors;
 
   // Refs so effects and callbacks can access fresh values without extra deps.
   const pipelineRef = useRef(pipeline);
-  pipelineRef.current = pipeline;
   const resetTransformRef = useRef(resetTransform);
-  resetTransformRef.current = resetTransform;
   const debouncedFiltersRef = useRef(debouncedFilters);
-  debouncedFiltersRef.current = debouncedFilters;
   const sourceImageRef = useRef(state.sourceImage);
-  sourceImageRef.current = state.sourceImage;
   const filtersRef = useRef(state.filters);
-  filtersRef.current = state.filters;
+  useLayoutEffect(() => {
+    saveThumbnailColorsRef.current = saveThumbnailColors;
+    pipelineRef.current = pipeline;
+    resetTransformRef.current = resetTransform;
+    debouncedFiltersRef.current = debouncedFilters;
+    sourceImageRef.current = state.sourceImage;
+    filtersRef.current = state.filters;
+  });
 
   const deriveAndRender = useCallback(
     (imageData: ImageData) => {
@@ -67,7 +69,7 @@ export function useImageHandlers({
     [state.palette, setPalette]
   );
   const deriveAndRenderRef = useRef(deriveAndRender);
-  deriveAndRenderRef.current = deriveAndRender;
+  useLayoutEffect(() => { deriveAndRenderRef.current = deriveAndRender; });
 
   // Runs when the source image is replaced externally (e.g. project load).
   // Uses refs for pipeline/filters/deriveAndRender so filter changes don't re-trigger this.

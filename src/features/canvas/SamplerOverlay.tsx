@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, type RefObject } from 'react';
+import { useRef, useEffect, useLayoutEffect, useCallback, type RefObject } from 'react';
 import { Box } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 import { sampleCircleAverage } from '../../utils/imageProcessing';
@@ -22,7 +22,7 @@ export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
   // Imperatively tracked — avoids React re-renders on every mousemove.
   const mouseClientRef = useRef({ x: -9999, y: -9999 });
   const radiusRef = useRef(radius);
-  radiusRef.current = radius;
+  useLayoutEffect(() => { radiusRef.current = radius; });
   const rafRef = useRef<number | null>(null);
 
   useHotkeys([[HOTKEYS.CANCEL, onCancel]]);

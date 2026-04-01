@@ -79,7 +79,7 @@ export function PigmentsPanel() {
                     width: 10,
                     height: 10,
                     borderRadius: 2,
-                    background: p.hex,
+                    background: p.rgb,
                     border: '1px solid var(--mantine-color-dark-3)',
                     flexShrink: 0,
                   }}

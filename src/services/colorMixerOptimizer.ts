@@ -27,7 +27,7 @@ function nelderMead(objective: (w: number[]) => number, n: number, maxIter = 200
     v[i] += 0.3 * n;
     pts.push(v);
   }
-  let vals = pts.map(eval_);
+  const vals = pts.map(eval_);
 
   for (let iter = 0; iter < maxIter; iter++) {
     const ord = [...Array(n + 1).keys()].sort((a, b) => vals[a] - vals[b]);
@@ -81,7 +81,7 @@ export function findBestNPigments(
   const minWeight = minPaintPercent / 100;
 
   for (const combo of getCombinations(pigments, n)) {
-    const hexes = combo.map(p => p.hex);
+    const hexes = combo.map(p => p.rgb);
     const rawWeights = nelderMead(w => ciede2000(mixLatent(hexes, w), targetHex), n);
 
     // Drop pigments below the minimum threshold and re-optimise the surviving set.
@@ -89,7 +89,7 @@ export function findBestNPigments(
     if (kept.length === 0) continue;
 
     const finalCombo = kept.map(({ p }) => p);
-    const finalHexes = finalCombo.map(p => p.hex);
+    const finalHexes = finalCombo.map(p => p.rgb);
     const finalWeights = kept.length === 1
       ? [1]
       : nelderMead(w => ciede2000(mixLatent(finalHexes, w), targetHex), kept.length);

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useLayoutEffect } from 'react';
 import type { RefObject } from 'react';
 import type { Color, ColorSample } from '../../types';
 
@@ -30,13 +30,15 @@ export function usePinDrag({ palette, sourceImage, svgRef, onPinMoveEnd, inSelec
 
   // Stable refs so callbacks don't rebuild when these change mid-gesture
   const paletteRef = useRef(palette);
-  paletteRef.current = palette;
   const dragRef = useRef(drag);
-  dragRef.current = drag;
   const sourceImageRef = useRef(sourceImage);
-  sourceImageRef.current = sourceImage;
   const onPinMoveEndRef = useRef(onPinMoveEnd);
-  onPinMoveEndRef.current = onPinMoveEnd;
+  useLayoutEffect(() => {
+    paletteRef.current = palette;
+    dragRef.current = drag;
+    sourceImageRef.current = sourceImage;
+    onPinMoveEndRef.current = onPinMoveEnd;
+  });
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent, colorId: string) => {

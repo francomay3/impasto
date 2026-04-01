@@ -21,7 +21,7 @@ export function useProjects() {
   const { data = [], isLoading: loading } = useQuery({
     queryKey: queryKeys.projects(user?.uid ?? ''),
     queryFn: () => E2E_TEST_MODE
-      ? Promise.resolve<ProjectState[]>((window as any).__e2e_projects ?? [])
+      ? Promise.resolve<ProjectState[]>((window as Window & { __e2e_projects?: ProjectState[] }).__e2e_projects ?? [])
       : listFirestoreProjects(user!.uid),
     enabled: !!user,
   });

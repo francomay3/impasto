@@ -76,7 +76,7 @@ export const MOCK_PROJECTS: ProjectState[] = [
  */
 export async function openDashboard(page: Page, projects: ProjectState[] = MOCK_PROJECTS): Promise<void> {
   await page.addInitScript((ps) => {
-    (window as any).__e2e_projects = ps;
+    (window as Window & { __e2e_projects?: unknown }).__e2e_projects = ps;
   }, projects);
   await page.goto('/');
   await page.getByTestId('project-card').first().waitFor({ timeout: 5000 });

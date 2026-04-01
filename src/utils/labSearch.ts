@@ -1,6 +1,6 @@
 import { rgbToLab, deltaELab } from './colorUtils';
 
-export interface LabSearchResult {
+interface LabSearchResult {
   x: number;
   y: number;
   deltaE: number;
