@@ -1,51 +1,19 @@
 import { Box, Stack, Tabs, Text, Title } from '@mantine/core';
 import { Layers, Palette, BarChart2, Grid, Scaling, Brush, ImageUp } from 'lucide-react';
-import { ToolRail } from '../../canvas/ToolRail';
-import type { ToolRailItem } from '../../canvas/ToolRail';
+import { ToolRail, type ToolRailItem } from '../../canvas/ToolRail';
 import { TOOLS } from '../../../tools';
 import { FilterPanel } from '../../filters/FilterPanel';
 import { PaletteAside } from '../../palette/PaletteAside';
 import { ErrorBoundary } from '../../../shared/ErrorBoundary';
 import { FiltersTabContent } from './FiltersTabContent';
 import { PaletteTabContent } from './PaletteTabContent';
+import { TabLayout } from './TabLayout';
 import { ImageUploader } from '../../canvas/ImageUploader';
 import { useEditorContext } from '../EditorContext';
 import { useCanvasContext } from '../../canvas/CanvasContext';
+import { useEngine } from '../../canvas/engine/EngineContext';
+import { useToolState } from '../../canvas/engine/useToolState';
 import { ContextualToolbar } from '../../canvas/ContextualToolbar';
-
-const asideStyle: React.CSSProperties = {
-  width: 292,
-  flexShrink: 0,
-  borderLeft: '1px solid var(--mantine-color-dark-6)',
-  background: 'var(--mantine-color-dark-8)',
-  overflowY: 'auto',
-  scrollbarWidth: 'none',
-};
-
-function TabLayout({
-  children,
-  aside,
-  rail,
-  toolbar,
-}: {
-  children?: React.ReactNode;
-  aside: React.ReactNode;
-  rail?: React.ReactNode;
-  toolbar?: React.ReactNode;
-}) {
-  return (
-    <Box style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
-      {rail}
-      <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {toolbar}
-        <Box style={{ flex: 1, overflow: 'hidden' }}>{children}</Box>
-      </Box>
-      <Box style={asideStyle} className="hide-scrollbar">
-        {aside}
-      </Box>
-    </Box>
-  );
-}
 
 interface Props {
   height?: string | number;
@@ -53,7 +21,9 @@ interface Props {
 
 export function EditorTabs({ height = '100%' }: Props) {
   const { activeTab, onSetActiveTab, onFileSelected } = useEditorContext();
-  const { sourceImage, activeTool, setActiveTool } = useCanvasContext();
+  const { sourceImage } = useCanvasContext();
+  const engine = useEngine();
+  const { activeTool, setActiveTool } = useToolState(engine);
 
   const toolRailItems: ToolRailItem[] = TOOLS.map((tool) => ({
     icon: <tool.icon size={16} />,

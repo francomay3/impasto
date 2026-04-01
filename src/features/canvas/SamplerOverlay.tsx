@@ -3,21 +3,19 @@ import { Box } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 import { sampleCircleAverage } from '../../utils/imageProcessing';
 import { rgbToHex } from '../../utils/colorUtils';
-import { useCanvasContext } from './CanvasContext';
 import { HOTKEYS } from '../../hotkeys';
 import type { ColorSample } from '../../types';
 
 interface Props {
   onSample: (sample: ColorSample, hex: string) => void;
   onCancel: () => void;
-  /** Canvas to read pixels from. Defaults to filteredCanvasRef from CanvasContext. */
-  canvasRef?: RefObject<HTMLCanvasElement | null>;
+  canvasRef: RefObject<HTMLCanvasElement | null>;
+  radius: number;
+  setRadius: (r: number) => void;
+  viewportScale: number;
 }
 
-export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
-  const { filteredCanvasRef, viewportTransform, samplingRadius: radius, setSamplingRadius: setRadius } = useCanvasContext();
-  const sourceCanvasRef = canvasRef ?? filteredCanvasRef;
-  const viewportScale = viewportTransform.scale;
+export function SamplerOverlay({ onSample, onCancel, canvasRef, radius, setRadius, viewportScale }: Props) {
   const overlayRef = useRef<HTMLCanvasElement>(null);
   // Imperatively tracked — avoids React re-renders on every mousemove.
   const mouseClientRef = useRef({ x: -9999, y: -9999 });
@@ -77,7 +75,7 @@ export function SamplerOverlay({ onSample, onCancel, canvasRef }: Props) {
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.stopPropagation();
-    const canvas = sourceCanvasRef.current;
+    const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
     const canvasRect = canvas.getBoundingClientRect();

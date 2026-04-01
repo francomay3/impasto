@@ -1,14 +1,14 @@
 import { useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { FilterInstance, ColorSample } from '../../types';
-import type { useCanvasPipeline } from '../canvas/useCanvasPipeline';
+import type { CanvasPipeline } from '../canvas/engine/pipeline';
 import type { useProjectState } from './useProjectState';
 import { sampleCircleAverage } from '../../utils/imageProcessing';
 import { rgbToHex } from '../../utils/colorUtils';
 import { useColorSamplingHandlers } from './useColorSamplingHandlers';
 import type { SamplingLevels } from '../filters/FilterContext';
 
-type Pipeline = ReturnType<typeof useCanvasPipeline>;
+type Pipeline = CanvasPipeline;
 type ProjectActions = ReturnType<typeof useProjectState>;
 
 interface Options {

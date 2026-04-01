@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { useProjectState } from './useProjectState';
 import type { useImageHandlers } from './useImageHandlers';
-import type { InteractionAPI } from '../canvas/useInteraction';
+import type { InteractionAPI } from '../canvas/engine/useToolState';
 
 type Project = ReturnType<typeof useProjectState>;
 type ImageHandlers = ReturnType<typeof useImageHandlers>;

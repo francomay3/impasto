@@ -5,7 +5,7 @@ import { HOTKEYS } from '../../hotkeys';
 import type { FilterType } from '../../types';
 import { useContextMenuStore } from '../../shared/contextMenuStore';
 import { buildFilterMenuItems } from '../filters/FilterPanel/filterMenuData';
-import type { InteractionAPI } from '../canvas/useInteraction';
+import type { InteractionAPI } from '../canvas/engine/useToolState';
 
 interface Params {
   onUndo: () => void;

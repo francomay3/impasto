@@ -1,6 +1,7 @@
 import { Group, Switch, Text } from '@mantine/core';
 import { RotateCcw, SplitSquareHorizontal } from 'lucide-react';
-import { useCanvasContext } from '../CanvasContext';
+import { useEngine } from '../engine/EngineContext';
+import { useToolState } from '../engine/useToolState';
 import { useFilterContext } from '../../filters/FilterContext';
 import { useEditorStore } from '../../editor/editorStore';
 import { usePaletteContext } from '../../palette/PaletteContext';
@@ -18,8 +19,8 @@ const barStyle: React.CSSProperties = {
 };
 
 function PaletteToolOptions() {
-  const { activeTool, samplingRadius, setSamplingRadius, selectionMode, setSelectionMode } =
-    useCanvasContext();
+  const engine = useEngine();
+  const { activeTool, samplingRadius, setSamplingRadius, selectionMode, setSelectionMode } = useToolState(engine);
   const { palette } = usePaletteContext();
   const setSelectedColorIds = useEditorStore(s => s.setSelectedColorIds);
 

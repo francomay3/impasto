@@ -3,7 +3,7 @@ import type { RefObject } from 'react';
 import type { ColorSample, ProjectState } from '../../types';
 import { prepareImage } from '../../utils/imageResize';
 import type { ReplaceImageModalRef } from './ReplaceImageModal';
-import type { InteractionAPI } from '../canvas/useInteraction';
+import type { InteractionAPI } from '../canvas/engine/useToolState';
 import { useEditorStore } from './editorStore';
 
 interface Params {

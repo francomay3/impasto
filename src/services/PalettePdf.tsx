@@ -1,6 +1,7 @@
-import { Document, Page, View, Text, Image, StyleSheet, Svg, Path, Circle } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image, Svg, Path, Circle } from '@react-pdf/renderer';
 import type { Color, ColorGroup, Pigment } from '../types';
 import { findMixData, mixedResultHex, type MixEntry } from './ColorMixer';
+import { s } from './PalettePdfStyles';
 
 type PalettePdfProps = {
   title: string;
@@ -13,36 +14,6 @@ type PalettePdfProps = {
   deltaThreshold: number;
   pigments: Pigment[];
 };
-
-const s = StyleSheet.create({
-  page: { padding: 20, fontFamily: 'Helvetica', fontSize: 8 },
-  title: { fontSize: 18, marginBottom: 3 },
-  date: { fontSize: 9, color: '#888', marginBottom: 14 },
-  images: { flexDirection: 'row', marginBottom: 14 },
-  imgBlock: { flex: 1, marginRight: 8 },
-  imgBlockLast: { flex: 1 },
-  imgLabel: { fontSize: 7, color: '#888', marginTop: 3 },
-  sectionTitle: { fontSize: 11, marginBottom: 8 },
-  group: { marginBottom: 10 },
-  groupLabel: {
-    fontSize: 9,
-    color: '#555',
-    paddingBottom: 3,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#bbb',
-    marginBottom: 6,
-  },
-  row: { flexDirection: 'row', breakInside: 'avoid', marginBottom: 14 },
-  cell: { flex: 1, flexDirection: 'row', alignItems: 'flex-start', paddingRight: 10 },
-  swatch: { width: 28, height: 28, borderRadius: 2, flexShrink: 0 },
-  pie: { flexShrink: 0, marginLeft: 6, marginRight: 6 },
-  info: { flex: 1, marginLeft: 6 },
-  colorName: { fontSize: 7, fontFamily: 'Helvetica-Bold', marginBottom: 1 },
-  hex: { fontSize: 6, color: '#888', marginBottom: 1 },
-  recipeLine: { fontSize: 6, color: '#444' },
-  swatchLabel: { fontSize: 5, color: '#999', marginTop: 2, textAlign: 'center' },
-  swatchCol: { flexDirection: 'column', alignItems: 'center', marginRight: 4, flexShrink: 0 },
-});
 
 function arcPath(cx: number, cy: number, r: number, a1: number, a2: number): string {
   const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
@@ -82,7 +53,7 @@ function SwatchCell({ color, minPaintPercent, deltaThreshold, pigments }: {
   color: Color; minPaintPercent: number; deltaThreshold: number; pigments: Pigment[];
 }) {
   const mix = findMixData(color.hex, minPaintPercent, deltaThreshold, pigments);
-  const total = mix.reduce((s, e) => s + e.parts, 0);
+  const total = mix.reduce((sum, e) => sum + e.parts, 0);
   const lines = mix.map((e) => `${Math.round((e.parts / total) * 100)}% ${e.name}`);
   const resultHex = mixedResultHex(mix);
   return (

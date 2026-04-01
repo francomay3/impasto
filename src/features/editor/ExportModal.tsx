@@ -3,14 +3,8 @@ import {
   Modal,
   Stack,
   TextInput,
-  Text,
-  NumberInput,
-  SimpleGrid,
-  Checkbox,
   Group,
   Button,
-  Box,
-  Skeleton,
 } from '@mantine/core';
 import { Download } from 'lucide-react';
 import { notifications } from '@mantine/notifications';
@@ -23,6 +17,7 @@ import { useCanvasContext } from '../canvas/CanvasContext';
 import { useAuthStore } from '../auth/authStore';
 import { loadExportSettings, saveExportSettings } from '../../services/FirestoreService';
 import { queryKeys } from '../../lib/queryKeys';
+import { ExportSettingsForm } from './ExportSettingsForm';
 
 interface Props {
   opened: boolean;
@@ -49,7 +44,6 @@ export function ExportModal({ opened, state, onClose }: Props) {
   const [selectedPigmentNames, setSelectedPigmentNames] = useState<string[]>(ALL_PIGMENT_NAMES);
   const [title, setTitle] = useState(state.name);
 
-  // Sync local state from query result when it arrives
   const resolved = savedSettings ?? null;
   const effectiveMin = resolved?.minPaintPercent ?? minPaintPercent;
   const effectiveDelta = resolved?.delta ?? delta;
@@ -74,15 +68,7 @@ export function ExportModal({ opened, state, onClose }: Props) {
     setExporting(true);
     try {
       const selectedPigments = PIGMENTS.filter((p) => pigments.has(p.name));
-      await exportPdf(
-        state,
-        filteredCanvasRef.current,
-        indexedCanvasRef.current,
-        effectiveMin,
-        effectiveDelta,
-        selectedPigments,
-        title || state.name
-      );
+      await exportPdf(state, filteredCanvasRef.current, indexedCanvasRef.current, effectiveMin, effectiveDelta, selectedPigments, title || state.name);
       if (user) {
         saveMutation.mutate({ minPaintPercent: effectiveMin, delta: effectiveDelta, selectedPigmentNames: effectivePigmentNames });
       }
@@ -116,88 +102,19 @@ export function ExportModal({ opened, state, onClose }: Props) {
   return (
     <Modal opened={opened} onClose={onClose} title="Export PDF" size="lg">
       <Stack gap="md">
-        <TextInput
-          label="PDF title"
-          value={title}
-          onChange={(e) => setTitle(e.currentTarget.value)}
+        <TextInput label="PDF title" value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
+        <ExportSettingsForm
+          settingsLoading={settingsLoading}
+          effectiveMin={effectiveMin}
+          effectiveDelta={effectiveDelta}
+          pigments={pigments}
+          onMinChange={handleMinChange}
+          onDeltaChange={handleDeltaChange}
+          onPigmentToggle={handlePigmentToggle}
         />
-        <Skeleton visible={settingsLoading}>
-        <Stack gap={4}>
-          <Text size="sm" fw={500}>
-            Minimum paint percentage
-          </Text>
-          <Text size="xs" c="dimmed">
-            Pigments contributing less than this percentage to a mix are dropped. Higher values
-            produce simpler recipes; lower values allow more precise matches.
-          </Text>
-          <NumberInput
-            value={effectiveMin}
-            onChange={handleMinChange}
-            min={1}
-            max={20}
-            step={1}
-            suffix="%"
-            size="sm"
-          />
-        </Stack>
-        <Stack gap={4}>
-          <Text size="sm" fw={500}>
-            Color accuracy (ΔE)
-          </Text>
-          <Text size="xs" c="dimmed">
-            How close a mixed color needs to be before the search stops. Lower values demand a
-            tighter match. A value of 4 is a practical threshold.
-          </Text>
-          <NumberInput
-            value={effectiveDelta}
-            onChange={handleDeltaChange}
-            min={1}
-            max={30}
-            step={1}
-            size="sm"
-          />
-        </Stack>
-        <Stack gap={4}>
-          <Text size="sm" fw={500}>
-            Pigments
-          </Text>
-          <Text size="xs" c="dimmed">
-            Only checked pigments will be considered when calculating mix recipes.
-          </Text>
-          <SimpleGrid cols={2} spacing={6} mt={4}>
-            {PIGMENTS.map((p) => (
-              <Checkbox
-                key={p.name}
-                size="xs"
-                checked={pigments.has(p.name)}
-                onChange={(e) => handlePigmentToggle(p.name, e.currentTarget.checked)}
-                label={
-                  <Group gap={6} wrap="nowrap">
-                    <Box
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 2,
-                        background: p.rgb,
-                        border: '1px solid var(--mantine-color-dark-3)',
-                        flexShrink: 0,
-                      }}
-                    />
-                    <Text size="xs">{p.name}</Text>
-                  </Group>
-                }
-              />
-            ))}
-          </SimpleGrid>
-        </Stack>
-        </Skeleton>
         <Group justify="flex-end" gap="xs">
-          <Button variant="subtle" color="gray" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button leftSection={<Download size={14} />} onClick={handleExport} loading={exporting}>
-            Export
-          </Button>
+          <Button variant="subtle" color="gray" onClick={onClose}>Cancel</Button>
+          <Button leftSection={<Download size={14} />} onClick={handleExport} loading={exporting}>Export</Button>
         </Group>
       </Stack>
     </Modal>

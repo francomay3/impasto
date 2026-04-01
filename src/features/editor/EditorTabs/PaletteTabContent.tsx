@@ -13,6 +13,9 @@ import { CanvasViewport } from '../../canvas/CanvasViewport';
 import { SamplePinsOverlay } from '../../canvas/SamplePinsOverlay';
 import { SamplerOverlay } from '../../canvas/SamplerOverlay';
 import { MarqueeSelectOverlay } from '../../canvas/MarqueeSelectOverlay';
+import { PinEditPopover } from '../../palette/PinEditPopover';
+import { useEngine } from '../../canvas/engine/EngineContext';
+import { useCanvasOverlayProps } from '../../canvas/engine/useCanvasOverlayProps';
 
 const labelStyle: React.CSSProperties = {
   position: 'absolute',
@@ -38,6 +41,9 @@ export function PaletteTabContent() {
   const showMixedColors = useEditorStore((s) => s.showMixedColors);
   const { pigments, minPaintPercent, delta } = useExportSettings();
   const filteredRef = useRef<HTMLCanvasElement>(null);
+
+  const engine = useEngine();
+  const overlayProps = useCanvasOverlayProps(engine, filteredRef);
 
   const filteredData = useFilteredImage(sourceImage, filters);
 
@@ -87,16 +93,26 @@ export function PaletteTabContent() {
           variant="filtered"
           overlayChildren={
             <>
-              <MarqueeSelectOverlay canvasRef={filteredRef} />
+              <MarqueeSelectOverlay {...overlayProps.marquee} />
               {isAddingColor ? (
-                <SamplerOverlay canvasRef={filteredRef} onSample={onAddNewColor} onCancel={onCancelAddingColor} />
+                <SamplerOverlay
+                  {...overlayProps.sampler}
+                  canvasRef={filteredRef}
+                  onSample={onAddNewColor}
+                  onCancel={onCancelAddingColor}
+                />
               ) : samplingColorId ? (
-                <SamplerOverlay canvasRef={filteredRef} onSample={onSampleColor} onCancel={onCancelSampleColor} />
+                <SamplerOverlay
+                  {...overlayProps.sampler}
+                  canvasRef={filteredRef}
+                  onSample={onSampleColor}
+                  onCancel={onCancelSampleColor}
+                />
               ) : null}
             </>
           }
         >
-          <SamplePinsOverlay canvasRef={filteredRef} />
+          <SamplePinsOverlay {...overlayProps.pins} canvasRef={filteredRef} />
         </CanvasViewport>
         <Text style={labelStyle} size="xs" c="dimmed">
           Filtered
@@ -119,6 +135,13 @@ export function PaletteTabContent() {
           {(isIndexedLoading || (showMixedColors && isMixLoading)) && <Loader size="xs" />}
         </Group>
       </Box>
+      {overlayProps.editPin && (
+        <PinEditPopover
+          colorId={overlayProps.editPin.colorId}
+          position={overlayProps.editPin.position}
+          onClose={overlayProps.clearEditPin}
+        />
+      )}
     </Group>
   );
 }

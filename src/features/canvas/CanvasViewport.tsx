@@ -3,6 +3,9 @@ import { Box } from '@mantine/core';
 import { useMergedRef } from '@mantine/hooks';
 import { Plus, Maximize2, Tag } from 'lucide-react';
 import { useCanvasContext } from './CanvasContext';
+import { useEngine } from './engine/EngineContext';
+import { useViewportState } from './engine/useViewportState';
+import { useToolState } from './engine/useToolState';
 import { usePaletteContext } from '../palette/PaletteContext';
 import { useContextMenuStore } from '../../shared/contextMenuStore';
 import { getPixelHex } from '../../utils/colorUtils';
@@ -18,17 +21,10 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(function Canv
   { children, overlayChildren, variant = 'filtered' },
   ref
 ) {
-  const {
-    viewportTransform: t,
-    onWheel,
-    onMouseDown,
-    onResetTransform,
-    isDragging,
-    isSampling,
-    showLabels,
-    onToggleLabels,
-    subscribeToTransform,
-  } = useCanvasContext();
+  const engine = useEngine();
+  const { transform: t, isDragging, handleWheel: onWheel, handleMouseDown: onMouseDown, resetTransform: onResetTransform, subscribeToTransform } = useViewportState(engine);
+  const { isSampling } = useToolState(engine);
+  const { showLabels, onToggleLabels } = useCanvasContext();
   const { onAddColorAtPosition } = usePaletteContext();
   const openMenu = useContextMenuStore(s => s.open);
   const containerRef = useRef<HTMLDivElement>(null);

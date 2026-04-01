@@ -1,6 +1,9 @@
 import { useRef, useEffect } from 'react';
 import { Box, Group, Text } from '@mantine/core';
 import { useCanvasContext } from '../../canvas/CanvasContext';
+import { useEngine } from '../../canvas/engine/EngineContext';
+import { useToolState } from '../../canvas/engine/useToolState';
+import { useViewportState } from '../../canvas/engine/useViewportState';
 import { useFilterContext } from '../../filters/FilterContext';
 import { useFilteredImage } from '../../filters/useFilteredImage';
 import { CanvasViewport } from '../../canvas/CanvasViewport';
@@ -30,6 +33,9 @@ const labelStyle: React.CSSProperties = {
 
 export function FiltersTabContent() {
   const { sourceImage, filteredCanvasRef } = useCanvasContext();
+  const engine = useEngine();
+  const { samplingRadius, setSamplingRadius } = useToolState(engine);
+  const { transform } = useViewportState(engine);
   const { filters, samplingLevels, onSampleLevels, onCancelSamplingLevels } = useFilterContext();
   const originalRef = useRef<HTMLCanvasElement>(null);
   const filteredData = useFilteredImage(sourceImage, filters);
@@ -67,7 +73,14 @@ export function FiltersTabContent() {
           ref={filteredCanvasRef}
           overlayChildren={
             samplingLevels && (
-              <SamplerOverlay onSample={onSampleLevels} onCancel={onCancelSamplingLevels} />
+              <SamplerOverlay
+                canvasRef={filteredCanvasRef}
+                radius={samplingRadius}
+                setRadius={setSamplingRadius}
+                viewportScale={transform.scale}
+                onSample={onSampleLevels}
+                onCancel={onCancelSamplingLevels}
+              />
             )
           }
         />

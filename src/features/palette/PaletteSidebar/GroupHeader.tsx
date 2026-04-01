@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
-import { Box, Text, ActionIcon, Tooltip, TextInput } from '@mantine/core';
+import { Box, ActionIcon, Tooltip } from '@mantine/core';
 import { X, GripVertical, ChevronDown, ChevronRight, Pencil, Eye, EyeOff } from 'lucide-react';
 import useConfirmDialog from '../../../shared/useConfirmDialog';
 import type { ColorGroup } from '../../../types';
 import { useContextMenuStore } from '../../../shared/contextMenuStore';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
 import { useEditorStore } from '../../editor/editorStore';
+import { GroupNameEditor } from './GroupNameEditor';
 
 interface Props {
   group: ColorGroup;
@@ -24,19 +25,9 @@ interface Props {
 }
 
 export function GroupHeader({
-  group,
-  collapsed,
-  colorCount,
-  sampleColorIds,
-  showDragHandle,
-  isDragging,
-  autoEdit,
-  dragHandleRef,
-  dragHandleListeners,
-  dragContainerAttributes,
-  onToggleCollapse,
-  onRename,
-  onDelete,
+  group, collapsed, colorCount, sampleColorIds, showDragHandle, isDragging, autoEdit,
+  dragHandleRef, dragHandleListeners, dragContainerAttributes,
+  onToggleCollapse, onRename, onDelete,
 }: Props) {
   const [editing, setEditing] = useState(() => autoEdit ?? false);
   const [editName, setEditName] = useState(group.name);
@@ -61,8 +52,7 @@ export function GroupHeader({
   const openContextMenu = useCallback(
     ({ x, y }: { x: number; y: number }) => {
       openMenu({
-        x,
-        y,
+        x, y,
         items: [
           {
             label: 'Rename',
@@ -113,31 +103,15 @@ export function GroupHeader({
             {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
           </Box>
         )}
-        {editing ? (
-          <TextInput
-            value={editName}
-            onChange={(e) => setEditName(e.currentTarget.value)}
-            onBlur={handleRenameSubmit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleRenameSubmit();
-              if (e.key === 'Escape') setEditing(false);
-            }}
-            onFocus={(e) => e.currentTarget.select()}
-            size="xs"
-            autoFocus
-            style={{ flex: 1 }}
-            onClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          <Box style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-            <Text size="xs" fw={600} c="dimmed" data-testid="group-name" style={{ userSelect: 'none' }}>
-              {group.name}
-            </Text>
-            {colorCount === 0 && (
-              <Text size="xs" c="dimmed" style={{ fontStyle: 'italic', opacity: 0.5 }}>empty</Text>
-            )}
-          </Box>
-        )}
+        <GroupNameEditor
+          editing={editing}
+          editName={editName}
+          groupName={group.name}
+          colorCount={colorCount}
+          onChange={setEditName}
+          onSubmit={handleRenameSubmit}
+          onCancel={() => setEditing(false)}
+        />
       </Box>
       {!editing && sampleColorIds.length > 0 && (
         <Tooltip label={allPinsHidden ? 'Show group pins' : 'Hide group pins'}>
