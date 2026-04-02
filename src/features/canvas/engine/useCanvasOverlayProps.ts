@@ -35,9 +35,13 @@ export function useCanvasOverlayProps(
   const [editPin, setEditPin] = useState<EditPin | null>(null);
   const hoveredPinRef = useRef<string | null>(null);
   const hasDraggedRef = useRef(false);
+  const pinActuallyDraggedRef = useRef(false);
+  const wrappedOnPinMoveEnd = useCallback(
+    (...args: Parameters<typeof onPinMoveEnd>) => { pinActuallyDraggedRef.current = true; onPinMoveEnd(...args); }, [onPinMoveEnd],
+  );
 
   useEffect(() => { engine.setSourceData(palette, sourceImage); }, [engine, palette, sourceImage]);
-  useEffect(() => { engine.setOnPinMoveEnd(onPinMoveEnd); }, [engine, onPinMoveEnd]);
+  useEffect(() => { engine.setOnPinMoveEnd(wrappedOnPinMoveEnd); }, [engine, wrappedOnPinMoveEnd]);
   useEffect(() => { if (snap.drag.type === 'marquee') hasDraggedRef.current = true; }, [snap.drag]);
 
   const getRect = useCallback(() => canvasRef.current?.getBoundingClientRect() ?? null, [canvasRef]);
@@ -74,18 +78,21 @@ export function useCanvasOverlayProps(
     [openColorMenu, openSelectionMenu, selectedIds],
   );
 
-  const onMarqueeMouseDown = useCallback(
-    (e: ReactMouseEvent) => {
-      const rect = getRect();
-      if (rect) engine.handleMouseDown(e.nativeEvent, rect as DOMRect);
-    },
-    [engine, getRect],
-  );
+  const onMarqueeMouseDown = useCallback((e: ReactMouseEvent) => {
+    const rect = getRect();
+    if (!rect) return;
+    if (engine.getSnapshot().tool.activeTool === 'select' && e.button === 0) {
+      const pinId = engine.findPinAt(e.clientX, e.clientY, rect as DOMRect);
+      if (pinId) { e.stopPropagation(); engine.handlePinMouseDown(pinId, e.nativeEvent, rect as DOMRect); return; }
+    }
+    engine.handleMouseDown(e.nativeEvent, rect as DOMRect);
+  }, [engine, getRect]);
 
   const onMarqueeClick = useCallback(
     (e: ReactMouseEvent) => {
       e.stopPropagation();
       if (hasDraggedRef.current) { hasDraggedRef.current = false; return; }
+      if (pinActuallyDraggedRef.current) { pinActuallyDraggedRef.current = false; return; }
       const rect = getRect();
       const pinId = rect ? engine.findPinAt(e.clientX, e.clientY, rect as DOMRect) : null;
       if (pinId) { if (e.metaKey || e.shiftKey) toggleColorSelection(pinId); else selectColor(pinId); }
@@ -133,6 +140,7 @@ export function useCanvasOverlayProps(
     },
     marquee: {
       activeTool: snap.tool.activeTool,
+      isHoveringPin: !!hoveredId,
       marqueeDrag: snap.drag.type === 'marquee' ? snap.drag : null,
       onMouseDown: onMarqueeMouseDown,
       onClick: onMarqueeClick,

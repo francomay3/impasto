@@ -3,7 +3,7 @@ import { Box } from '@mantine/core';
 import type { MarqueeOverlayProps } from './engine/overlayProps.types';
 
 export function MarqueeSelectOverlay({
-  activeTool, marqueeDrag, onMouseDown, onClick, onMouseMove, onMouseLeave, onContextMenu,
+  activeTool, isHoveringPin, marqueeDrag, onMouseDown, onClick, onMouseMove, onMouseLeave, onContextMenu,
 }: MarqueeOverlayProps) {
   if (activeTool !== 'select' && activeTool !== 'marquee') return null;
 
@@ -27,7 +27,7 @@ export function MarqueeSelectOverlay({
         data-no-pan={activeTool === 'marquee' ? '' : undefined}
         style={{
           position: 'absolute', inset: 0,
-          cursor: activeTool === 'marquee' ? 'crosshair' : 'default',
+          cursor: activeTool === 'marquee' ? 'crosshair' : isHoveringPin ? 'pointer' : 'inherit',
           zIndex: 5, pointerEvents: 'all',
         }}
         onMouseDown={onMouseDown}

@@ -1,6 +1,7 @@
 import { Group, ActionIcon, Tooltip } from '@mantine/core';
 import { ArrowUpDown, FolderPlus } from 'lucide-react';
 import { AddItemButton } from '../../../shared/AddItemButton';
+import { HOTKEYS, hotkeyLabel } from '../../../hotkeys';
 
 interface Props {
   onAddColor: () => void;
@@ -11,7 +12,7 @@ interface Props {
 export function PaletteSidebarHeader({ onAddColor, onAddGroup, onSort }: Props) {
   return (
     <Group gap={6} wrap="nowrap">
-      <AddItemButton label="Add Color" hint="C" onClick={onAddColor} style={{ flex: 1 }} />
+      <AddItemButton label="Add Color" hint={hotkeyLabel(HOTKEYS.ADD_COLOR)} onClick={onAddColor} style={{ flex: 1 }} />
       <Tooltip label="Sort by color similarity" position="right" withArrow>
         <ActionIcon
           variant="subtle"

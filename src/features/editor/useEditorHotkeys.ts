@@ -89,7 +89,6 @@ export function useEditorHotkeys({
     [HOTKEYS.ADD_FILTER, () => openMenu({ ...mousePos.current, items: buildFilterMenuItems(onAddFilter) })],
     [HOTKEYS.ADD_COLOR, onAddColor],
     [HOTKEYS.DELETE_COLOR, onDeleteSelectedColor],
-    [HOTKEYS.TOOL_EYEDROPPER, onAddColor],
     [HOTKEYS.TOOL_SELECT, onToggleSelectTool],
     [HOTKEYS.TOOL_MARQUEE, onToggleMarqueeTool],
   ]);

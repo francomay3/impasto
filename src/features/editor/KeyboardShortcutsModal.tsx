@@ -1,25 +1,27 @@
+import { Fragment } from 'react';
 import { Modal, Table, Kbd, Text, Group } from '@mantine/core';
+import { HOTKEYS, HOTKEY_META, hotkeyParts, type ShortcutContext } from '../../hotkeys';
 
-interface ShortcutRow {
-  action: string;
-  keys: string[][];
+const CONTEXT_ORDER: ShortcutContext[] = ['Global', 'Palette', 'Filters'];
+
+function buildSections() {
+  const sections = new Map<ShortcutContext, { action: string; keys: string[][] }[]>(
+    CONTEXT_ORDER.map((ctx) => [ctx, []])
+  );
+
+  for (const [key, meta] of Object.entries(HOTKEY_META) as [keyof typeof HOTKEYS, typeof HOTKEY_META[keyof typeof HOTKEYS]][]) {
+    if (meta.aliasOf) continue;
+    const aliasKeys = (Object.entries(HOTKEY_META) as [keyof typeof HOTKEYS, typeof HOTKEY_META[keyof typeof HOTKEYS]][])
+      .filter(([, m]) => m.aliasOf === key)
+      .map(([k]) => hotkeyParts(HOTKEYS[k]));
+    const allKeys = [hotkeyParts(HOTKEYS[key]), ...aliasKeys];
+    sections.get(meta.context)!.push({ action: meta.action, keys: allKeys });
+  }
+
+  return [...sections.entries()].filter(([, rows]) => rows.length > 0);
 }
 
-const SHORTCUTS: ShortcutRow[] = [
-  { action: 'Save', keys: [['⌘', 'S']] },
-  { action: 'Undo', keys: [['⌘', 'Z']] },
-  {
-    action: 'Redo',
-    keys: [
-      ['⌘', '⇧', 'Z'],
-      ['⌘', 'Y'],
-    ],
-  },
-  { action: 'Add Filter', keys: [['⌘', 'F']] },
-  { action: 'Add Color to Palette', keys: [['C']] },
-  { action: 'Keyboard Shortcuts', keys: [['?']] },
-  { action: 'Cancel / Close', keys: [['Esc']] },
-];
+const SECTIONS = buildSections();
 
 function KeyCombo({ keys }: { keys: string[] }) {
   return (
@@ -27,11 +29,7 @@ function KeyCombo({ keys }: { keys: string[] }) {
       {keys.map((k, i) => (
         <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <Kbd size="xs">{k}</Kbd>
-          {i < keys.length - 1 && (
-            <Text size="xs" c="dimmed">
-              +
-            </Text>
-          )}
+          {i < keys.length - 1 && <Text size="xs" c="dimmed">+</Text>}
         </span>
       ))}
     </Group>
@@ -48,26 +46,34 @@ export function KeyboardShortcutsModal({ opened, onClose }: Props) {
     <Modal opened={opened} onClose={onClose} title="Keyboard Shortcuts" size="sm">
       <Table>
         <Table.Tbody>
-          {SHORTCUTS.map(({ action, keys }) => (
-            <Table.Tr key={action}>
-              <Table.Td>
-                <Text size="sm">{action}</Text>
-              </Table.Td>
-              <Table.Td>
-                <Group gap="xs" justify="flex-end" wrap="nowrap">
-                  {keys.map((combo, i) => (
-                    <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <KeyCombo keys={combo} />
-                      {i < keys.length - 1 && (
-                        <Text size="xs" c="dimmed">
-                          /
-                        </Text>
-                      )}
-                    </span>
-                  ))}
-                </Group>
-              </Table.Td>
-            </Table.Tr>
+          {SECTIONS.map(([context, rows]) => (
+            <Fragment key={context}>
+              <Table.Tr>
+                <Table.Th
+                  colSpan={2}
+                  style={{ paddingTop: 16, paddingBottom: 4, borderBottom: 'none' }}
+                >
+                  <Text size="xs" fw={600} tt="uppercase" c="dimmed" style={{ letterSpacing: '0.06em' }}>
+                    {context}
+                  </Text>
+                </Table.Th>
+              </Table.Tr>
+              {rows.map(({ action, keys }) => (
+                <Table.Tr key={action}>
+                  <Table.Td><Text size="sm">{action}</Text></Table.Td>
+                  <Table.Td>
+                    <Group gap="xs" justify="flex-end" wrap="nowrap">
+                      {keys.map((combo, i) => (
+                        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <KeyCombo keys={combo} />
+                          {i < keys.length - 1 && <Text size="xs" c="dimmed">/</Text>}
+                        </span>
+                      ))}
+                    </Group>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Fragment>
           ))}
         </Table.Tbody>
       </Table>

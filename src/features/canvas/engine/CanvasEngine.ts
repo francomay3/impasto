@@ -96,8 +96,8 @@ export class CanvasEngine {
   }
 
   handlePinMouseDown(colorId: string, e: MouseEvent, canvasRect: DOMRect): void {
-    const { isSampling, activeTool } = this.state.tool;
-    if (isSampling || activeTool === 'select' || activeTool === 'marquee') return;
+    const { isSampling } = this.state.tool;
+    if (isSampling) return;
     const pinDrag = startPinDrag(colorId, e, canvasRect, this.palette);
     if (!pinDrag) return;
     this.state = { ...this.state, drag: { type: 'pin', colorId: pinDrag.colorId, currentSample: pinDrag.currentSample } };

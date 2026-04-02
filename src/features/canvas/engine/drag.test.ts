@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { CanvasEngine } from './CanvasEngine'
+import type { Color } from '../../../types'
 
 vi.mock('../../editor/editorStore', () => ({
   useEditorStore: {
@@ -116,6 +117,37 @@ describe('DragState transitions', () => {
       engine.handleMouseDown(new MouseEvent('mousedown', { button: 0, clientX: 10, clientY: 10 }), makeRect())
       window.dispatchEvent(new MouseEvent('mousemove', { clientX: 11, clientY: 10 }))
       expect(engine.getSnapshot().drag).toEqual({ type: 'none' })
+    })
+  })
+
+  describe('pin drag via handlePinMouseDown', () => {
+    const makePin = (): Color => ({
+      id: 'c1', hex: '#000', locked: false, ratio: 1, mixRecipe: '',
+      sample: { x: 50, y: 50, radius: 10 },
+    })
+
+    it('starts pin drag in select mode (regression: was blocked by tool guard)', () => {
+      const engine = new CanvasEngine()
+      engine.setSourceData([makePin()], { width: 100, height: 100 })
+      engine.selectTool('select')
+      engine.handlePinMouseDown('c1', new MouseEvent('mousedown', { clientX: 50, clientY: 50 }), makeRect())
+      expect(engine.getSnapshot().drag.type).toBe('pin')
+    })
+
+    it('starts pin drag in marquee mode (regression: was blocked by tool guard)', () => {
+      const engine = new CanvasEngine()
+      engine.setSourceData([makePin()], { width: 100, height: 100 })
+      engine.selectTool('marquee')
+      engine.handlePinMouseDown('c1', new MouseEvent('mousedown', { clientX: 50, clientY: 50 }), makeRect())
+      expect(engine.getSnapshot().drag.type).toBe('pin')
+    })
+
+    it('remains idle when isSampling is true', () => {
+      const engine = new CanvasEngine()
+      engine.setSourceData([makePin()], { width: 100, height: 100 })
+      engine.startSamplingColor('c1')
+      engine.handlePinMouseDown('c1', new MouseEvent('mousedown', { clientX: 50, clientY: 50 }), makeRect())
+      expect(engine.getSnapshot().drag.type).toBe('none')
     })
   })
 })

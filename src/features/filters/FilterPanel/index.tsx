@@ -10,6 +10,7 @@ import { AddItemButton } from '../../../shared/AddItemButton';
 import { useFilterContext } from '../FilterContext';
 import { useContextMenuStore } from '../../../shared/contextMenuStore';
 import { buildFilterMenuItems } from './filterMenuData';
+import { HOTKEYS, hotkeyLabel } from '../../../hotkeys';
 
 export function FilterPanel() {
   const { filters, onReorderFilters, onAddFilter } = useFilterContext();
@@ -30,7 +31,7 @@ export function FilterPanel() {
       <AddItemButton
         ref={addButtonRef}
         label="Add Filter"
-        hint="⌘F"
+        hint={hotkeyLabel(HOTKEYS.ADD_FILTER)}
         onClick={() => {
           const rect = addButtonRef.current?.getBoundingClientRect();
           if (rect)

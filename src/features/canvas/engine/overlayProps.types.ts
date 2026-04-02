@@ -26,6 +26,7 @@ export interface SamplePinsOverlayProps {
 
 export interface MarqueeOverlayProps {
   activeTool: ToolId;
+  isHoveringPin: boolean;
   marqueeDrag: { start: { x: number; y: number }; current: { x: number; y: number } } | null;
   onMouseDown: (e: ReactMouseEvent) => void;
   onClick: (e: ReactMouseEvent) => void;
