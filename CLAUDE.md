@@ -40,3 +40,19 @@ Not acceptable — extract to `.ts` first instead:
 - Anything that can be tested without rendering React at all
 
 When in doubt: if you can write the test in a `.test.ts` file, do that instead.
+
+## Planning
+
+When asked to write a plan for a feature or refactor, always use the `/plan-project` skill. Never write ad-hoc plan files directly.
+
+## Scalability First
+
+**Always implement features using the most scalable, well-architected solution. Never take the quick and easy path.**
+
+When multiple approaches exist, choose the one that:
+- Holds up as complexity grows
+- Keeps concerns properly separated
+- Avoids coupling that will need to be undone later
+- Follows the established patterns in the codebase
+
+If the right solution requires a major refactor, **ask for permission before proceeding**. Do not work around existing architecture to avoid touching it — that compounds tech debt. The correct path is worth the extra effort.

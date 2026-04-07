@@ -19,7 +19,7 @@ interface ColorItemProps {
 }
 
 function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
-  const { samplingColorId, onRenameColor, onDeleteColor } = usePaletteContext();
+  const { onRenameColor, onDeleteColor } = usePaletteContext();
   const selectedColorIds = useEditorStore(s => s.selectedColorIds);
   const hoveredColorId = useEditorStore(s => s.hoveredColorId);
   const selectColor = useEditorStore(s => s.selectColor);
@@ -63,14 +63,11 @@ function ColorItem({ color, dragHandleRef, dragListeners }: ColorItemProps) {
   const contextTrigger = useContextTrigger(openContextMenu);
 
   const isSelected = selectedColorIds.has(color.id);
-  const outline =
-    samplingColorId === color.id
-      ? '2px solid var(--mantine-color-blue-4)'
-      : isSelected
-        ? '2px solid var(--mantine-color-primary-4)'
-        : hoveredColorId === color.id
-          ? '2px solid var(--mantine-color-secondary-4)'
-          : undefined;
+  const outline = isSelected
+    ? '2px solid var(--mantine-color-primary-4)'
+    : hoveredColorId === color.id
+      ? '2px solid var(--mantine-color-secondary-4)'
+      : undefined;
 
   return (
     <>

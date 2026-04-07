@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Stack, Radio, Group, Checkbox } from '@mantine/core';
+import { Stack, Radio, Checkbox } from '@mantine/core';
 import type { ColorBalanceParams } from '../../../../types';
 import { FilterSlider } from '../FilterSlider';
 

@@ -22,7 +22,6 @@ interface Options {
   addSampledColor: ProjectActions['addSampledColor'];
   removeColor: ProjectActions['removeColor'];
   updateFilter: ProjectActions['updateFilter'];
-  samplingColorId: string | null;
   completeSample: () => void;
   cancelSample: () => void;
   samplingLevels: SamplingLevels | null;
@@ -32,7 +31,7 @@ interface Options {
 
 export function useImageHandlers({
   state, sourceImage, pipeline, setImage, onImageLoaded, updateColor, setPalette,
-  addSampledColor, removeColor, updateFilter, samplingColorId,
+  addSampledColor, removeColor, updateFilter,
   completeSample, cancelSample, samplingLevels, resetTransform, saveThumbnailColors,
 }: Options) {
   const lastImageDataRef = useRef<ImageData | null>(null);
@@ -111,14 +110,13 @@ export function useImageHandlers({
   const handleDeleteColor = useCallback(
     (id: string) => {
       removeColor(id);
-      if (samplingColorId === id) cancelSample();
     },
-    [removeColor, samplingColorId, cancelSample]
+    [removeColor]
   );
 
   const samplingHandlers = useColorSamplingHandlers({
     lastImageDataRef,
-    samplingColorId, samplingLevels,
+    samplingLevels,
     completeSample, cancelSample,
     palette: state.palette, filters: state.filters,
     updateColor, updateFilter, setPalette,

@@ -1,13 +1,13 @@
 import { forwardRef, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { Box } from '@mantine/core';
 import { useMergedRef } from '@mantine/hooks';
-import { Plus, Maximize2, Tag } from 'lucide-react';
-import { useCanvasContext } from './CanvasContext';
+import { Plus, Maximize2, Download } from 'lucide-react';
 import { useEngine } from './engine/EngineContext';
 import { useViewportState } from './engine/useViewportState';
 import { usePaletteContext } from '../palette/PaletteContext';
 import { useContextMenuStore } from '../../shared/contextMenuStore';
 import { getPixelHex } from '../../utils/colorUtils';
+import { downloadCanvas } from '../../utils/canvasUtils';
 
 interface Props {
   children?: React.ReactNode;
@@ -23,7 +23,6 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(function Canv
   const engine = useEngine();
   const { transform: t, isDragging, handleWheel: onWheel, handleMouseDown: onMouseDown, resetTransform: onResetTransform, subscribeToTransform } = useViewportState(engine);
   const { isSampling } = useSyncExternalStore(engine.subscribe.bind(engine), engine.getToolState.bind(engine));
-  const { showLabels, onToggleLabels } = useCanvasContext();
   const { onAddColorAtPosition } = usePaletteContext();
   const openMenu = useContextMenuStore(s => s.open);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -39,6 +38,15 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(function Canv
       if (el) el.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
     });
   }, [subscribeToTransform]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    engine.setViewportSize(el.offsetWidth, el.offsetHeight);
+    const ro = new ResizeObserver(() => engine.setViewportSize(el.offsetWidth, el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [engine]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -81,19 +89,11 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(function Canv
               ]
             : []),
           { label: 'Fit to view', icon: <Maximize2 size={14} />, onClick: onResetTransform },
-          ...(isFiltered
-            ? [
-                {
-                  label: showLabels ? 'Hide labels' : 'Show labels',
-                  icon: <Tag size={14} />,
-                  onClick: onToggleLabels,
-                },
-              ]
-            : []),
+          ...(canvas ? [{ label: 'Download image', icon: <Download size={14} />, onClick: () => downloadCanvas(canvas) }] : []),
         ],
       });
     },
-    [variant, openMenu, onAddColorAtPosition, onResetTransform, showLabels, onToggleLabels]
+    [variant, openMenu, onAddColorAtPosition, onResetTransform]
   );
 
   const cursor = isSampling ? 'crosshair' : isDragging ? 'grabbing' : 'grab';

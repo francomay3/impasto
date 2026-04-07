@@ -58,7 +58,6 @@ export default function Editor({
     selectTool: engine.selectTool.bind(engine),
     activateEyedropper: engine.activateEyedropper.bind(engine),
     toggleMarquee: engine.toggleMarquee.bind(engine),
-    startSamplingColor: engine.startSamplingColor.bind(engine),
     startSamplingLevels: engine.startSamplingLevels.bind(engine),
     completeSample: engine.completeSample.bind(engine),
     cancel: engine.cancel.bind(engine),
@@ -70,7 +69,6 @@ export default function Editor({
   const [activeTab, setActiveTab] = useState('filters');
   const [activeFilterTool, setActiveFilterTool] = useState<FilterToolId>('pan');
   const [exportModalOpen, setExportModalOpen] = useState(false);
-  const [showLabels, setShowLabels] = useState(true);
   const selectColor = useEditorStore((s) => s.selectColor);
 
   const { imageHandlers, editorHandlers, handleUndo, handleRedo, sourceImage } = useEditorActions({
@@ -83,10 +81,9 @@ export default function Editor({
 
   const paletteValue = usePaletteContextValue({ project, imageHandlers, editorHandlers, interaction });
   const filterValue = useFilterContextValue({ project, imageHandlers, interaction });
-  const onToggleLabels = useCallback(() => setShowLabels((v) => !v), []);
   const canvasValue = useMemo(
-    () => ({ sourceImage, filteredCanvasRef, indexedCanvasRef, showLabels, onToggleLabels }),
-    [sourceImage, filteredCanvasRef, indexedCanvasRef, showLabels, onToggleLabels]
+    () => ({ sourceImage, filteredCanvasRef, indexedCanvasRef }),
+    [sourceImage, filteredCanvasRef, indexedCanvasRef]
   );
   const editorValue = useEditorContextValue({
     project,

@@ -8,7 +8,6 @@ import type { SamplingLevels } from '../filters/FilterContext';
 
 interface Options {
   lastImageDataRef: MutableRefObject<ImageData | null>;
-  samplingColorId: string | null;
   samplingLevels: SamplingLevels | null;
   completeSample: () => void;
   cancelSample: () => void;
@@ -21,7 +20,6 @@ interface Options {
 
 export function useColorSamplingHandlers({
   lastImageDataRef,
-  samplingColorId,
   samplingLevels,
   completeSample,
   cancelSample,
@@ -31,16 +29,6 @@ export function useColorSamplingHandlers({
   updateFilter,
   setPalette,
 }: Options) {
-  const handleSample = useCallback(
-    (sample: ColorSample, hex: string) => {
-      if (!samplingColorId) return;
-      updateColor(samplingColorId, { hex, sample });
-      completeSample();
-      notifications.show({ message: `Color sampled: ${hex}`, color: 'primary' });
-    },
-    [samplingColorId, updateColor, completeSample]
-  );
-
   const handleCancelSample = useCallback(() => {
     cancelSample();
   }, [cancelSample]);
@@ -86,5 +74,5 @@ export function useColorSamplingHandlers({
     [updateColor, setPalette, palette, lastImageDataRef]
   );
 
-  return { handleSample, handleCancelSample, handleSampleLevels, handlePinMoveEnd };
+  return { handleCancelSample, handleSampleLevels, handlePinMoveEnd };
 }

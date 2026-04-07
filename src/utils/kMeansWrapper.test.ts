@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { quantizeImage } from './kMeansWrapper';
+import type { Color } from '../types';
 
 function makeImageData(pixels: number[], width: number, height: number): ImageData {
   return { data: new Uint8ClampedArray(pixels), width, height } as unknown as ImageData;
@@ -32,5 +33,20 @@ describe('quantizeImage', () => {
     expect(color.hex).toMatch(/^#[0-9a-f]{6}$/);
     expect(typeof color.ratio).toBe('number');
     expect(color.locked).toBe(false);
+  });
+
+  it('preserves locked color id and properties', () => {
+    const pixels: number[] = [];
+    for (let i = 0; i < 16; i++) {
+      pixels.push(i % 2 === 0 ? 255 : 0, 0, i % 2 === 0 ? 0 : 255, 255);
+    }
+    const img = makeImageData(pixels, 4, 4);
+    const locked: Color = { id: 'my-red', hex: '#ff0000', locked: true, ratio: 50, mixRecipe: '' };
+    const result = quantizeImage(img, 2, [locked]);
+    const found = result.find(c => c.id === 'my-red');
+    expect(found).toBeDefined();
+    expect(found!.locked).toBe(true);
+    expect(found!.hex).toBe('#ff0000');
+    expect(typeof found!.ratio).toBe('number');
   });
 });

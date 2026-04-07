@@ -32,10 +32,7 @@ export function PaletteTabContent() {
   const { filters, preIndexingBlur } = useFilterContext();
   const {
     palette,
-    samplingColorId,
     isAddingColor,
-    onSampleColor,
-    onCancelSampleColor,
     onAddNewColor,
     onCancelAddingColor,
   } = usePaletteContext();
@@ -80,7 +77,7 @@ export function PaletteTabContent() {
           overlayChildren={
             <>
               <MarqueeSelectOverlay {...overlayProps.marquee} />
-              {isAddingColor ? (
+              {isAddingColor && (
                 <SamplerOverlay
                   {...overlayProps.sampler}
                   canvasRef={filteredRef}
@@ -88,15 +85,7 @@ export function PaletteTabContent() {
                   onSample={onAddNewColor}
                   onCancel={onCancelAddingColor}
                 />
-              ) : samplingColorId ? (
-                <SamplerOverlay
-                  {...overlayProps.sampler}
-                  canvasRef={filteredRef}
-                  sampleAt={engine.getColorAt.bind(engine)}
-                  onSample={onSampleColor}
-                  onCancel={onCancelSampleColor}
-                />
-              ) : null}
+              )}
             </>
           }
         >

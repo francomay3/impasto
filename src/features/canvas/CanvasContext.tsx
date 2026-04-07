@@ -5,8 +5,6 @@ interface CanvasContextValue {
   sourceImage: RawImage | null;
   filteredCanvasRef: RefObject<HTMLCanvasElement | null>;
   indexedCanvasRef: RefObject<HTMLCanvasElement | null>;
-  showLabels: boolean;
-  onToggleLabels: () => void;
 }
 
 const CanvasContext = createContext<CanvasContextValue | null>(null);

@@ -147,7 +147,7 @@ describe('DragState transitions', () => {
     it('remains idle when isSampling is true', () => {
       const engine = new CanvasEngine()
       engine.setSourceData([makePin()], makeImage())
-      engine.startSamplingColor('c1')
+      engine.activateEyedropper()
       engine.handlePinMouseDown('c1', new MouseEvent('mousedown', { clientX: 50, clientY: 50 }), makeRect())
       expect(engine.getSnapshot().drag.type).toBe('none')
     })

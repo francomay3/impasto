@@ -4,11 +4,7 @@ import type { Color, ColorGroup, ColorSample } from '../../types';
 interface PaletteContextValue {
   palette: Color[];
   groups: ColorGroup[];
-  samplingColorId: string | null;
   isAddingColor: boolean;
-  onStartSampling: (id: string) => void;
-  onSampleColor: (sample: ColorSample, hex: string) => void;
-  onCancelSampleColor: () => void;
   onAddNewColor: (sample: ColorSample, hex: string) => void;
   onCancelAddingColor: () => void;
   onRenameColor: (id: string, name: string) => void;

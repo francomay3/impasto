@@ -3,12 +3,10 @@ import type { ColorSample } from '../../../types';
 type EyedropperState =
   | { type: 'idle' }
   | { type: 'adding_color' }
-  | { type: 'sampling_color'; colorId: string }
   | { type: 'sampling_levels'; filterId: string; point: 'black' | 'white' };
 
 export type EyedropperResult =
   | { type: 'new_color'; sample: ColorSample; hex: string }
-  | { type: 'sample_color'; colorId: string; sample: ColorSample; hex: string }
   | { type: 'sample_levels'; filterId: string; point: 'black' | 'white'; sample: ColorSample; hex: string };
 
 export interface EyedropperEngineAdapter {
@@ -42,10 +40,6 @@ export class EyedropperController {
 
   activate(): void { this.setState({ type: 'adding_color' }); }
 
-  startSamplingColor(colorId: string): void {
-    this.setState({ type: 'sampling_color', colorId });
-  }
-
   startSamplingLevels(filterId: string, point: 'black' | 'white'): void {
     this.setState({ type: 'sampling_levels', filterId, point });
   }
@@ -62,8 +56,6 @@ export class EyedropperController {
     let result: EyedropperResult;
     if (state.type === 'adding_color') {
       result = { type: 'new_color', sample: s, hex };
-    } else if (state.type === 'sampling_color') {
-      result = { type: 'sample_color', colorId: state.colorId, sample: s, hex };
     } else {
       result = { type: 'sample_levels', filterId: state.filterId, point: state.point, sample: s, hex };
     }

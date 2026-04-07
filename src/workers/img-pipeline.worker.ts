@@ -1,5 +1,5 @@
 import type { FilterInstance } from '../types';
-import type { WasmExports } from '../wasm/img_ops/img_ops';
+import type { InitOutput } from '../wasm/img_ops/img_ops';
 import imgOpsWasmUrl from '../wasm/img_ops/img_ops_bg.wasm?url';
 
 type WasmMod = typeof import('../wasm/img_ops/img_ops.js');
@@ -12,7 +12,7 @@ type Input = {
 };
 
 let mod: WasmMod | null = null;
-let wasmExports: WasmExports | null = null;
+let wasmExports: InitOutput | null = null;
 
 const ready = import('../wasm/img_ops/img_ops.js').then(async (m) => {
   wasmExports = await m.default({ module_or_path: imgOpsWasmUrl });

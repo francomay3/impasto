@@ -8,10 +8,8 @@ import { useEditorStore } from './editorStore';
 
 interface Params {
   state: ProjectState;
-  samplingColorId: string | null;
   interaction: Pick<InteractionAPI, 'activateEyedropper' | 'selectTool' | 'completeSample' | 'toggleMarquee'>;
   handleAddColorAtPosition: (sample: ColorSample, hex: string) => string;
-  handleSample: (sample: ColorSample, hex: string) => void;
   handleDeleteColor: (id: string) => void;
   handleImageLoadBitmap: (bitmap: ImageBitmap) => void;
   setActiveTab: (tab: string) => void;
@@ -21,10 +19,8 @@ interface Params {
 
 export function useEditorHandlers({
   state,
-  samplingColorId,
   interaction,
   handleAddColorAtPosition,
-  handleSample,
   handleDeleteColor,
   handleImageLoadBitmap,
   setActiveTab,
@@ -56,15 +52,6 @@ export function useEditorHandlers({
     [handleAddColorAtPosition, interaction]
   );
 
-  const handleSampleWithSelect = useCallback(
-    (sample: ColorSample, hex: string) => {
-      const id = samplingColorId;
-      handleSample(sample, hex);
-      if (id) useEditorStore.getState().setSelectedColorIds(new Set([id]));
-    },
-    [samplingColorId, handleSample]
-  );
-
   const handleDeleteSelectedColors = useCallback(() => {
     const ids = useEditorStore.getState().selectedColorIds;
     ids.forEach((id) => handleDeleteColor(id));
@@ -91,7 +78,6 @@ export function useEditorHandlers({
     handleFileSelected,
     handleEnterAddColorMode,
     handleAddNewColor,
-    handleSampleWithSelect,
     handleDeleteSelectedColors,
     handleToggleSelectTool,
     handleToggleMarqueeTool,

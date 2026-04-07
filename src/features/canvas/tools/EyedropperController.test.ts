@@ -20,13 +20,6 @@ describe('EyedropperController', () => {
     expect(ctrl.isActive()).toBe(true);
   });
 
-  it('startSamplingColor() enters sampling_color state', () => {
-    const ctrl = new EyedropperController(makeEngine(), vi.fn());
-    ctrl.startSamplingColor('color-1');
-    expect(ctrl.getState()).toEqual({ type: 'sampling_color', colorId: 'color-1' });
-    expect(ctrl.isActive()).toBe(true);
-  });
-
   it('startSamplingLevels() enters sampling_levels state', () => {
     const ctrl = new EyedropperController(makeEngine(), vi.fn());
     ctrl.startSamplingLevels('filter-1', 'black');
@@ -53,19 +46,6 @@ describe('EyedropperController', () => {
       expect(result.type).toBe('new_color');
       expect(result.hex).toBe('#aabbcc');
       expect(result.sample).toEqual({ x: 50, y: 75, radius: 30 });
-    });
-
-    it('emits sample_color result with colorId after startSamplingColor()', () => {
-      const onSample = vi.fn();
-      const ctrl = new EyedropperController(makeEngine('#123456'), onSample);
-      ctrl.startSamplingColor('color-42');
-      ctrl.sample(10, 20);
-      const result = onSample.mock.calls[0][0] as EyedropperResult;
-      expect(result.type).toBe('sample_color');
-      if (result.type === 'sample_color') {
-        expect(result.colorId).toBe('color-42');
-        expect(result.hex).toBe('#123456');
-      }
     });
 
     it('emits sample_levels result with filterId and point after startSamplingLevels()', () => {

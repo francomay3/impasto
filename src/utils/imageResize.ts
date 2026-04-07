@@ -1,3 +1,5 @@
+import heic2any from 'heic2any';
+
 const MAX_PIXELS = 2_000_000;
 
 function toBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
@@ -16,14 +18,31 @@ export function withWebpExtension(filename: string): string {
   return `${base}.webp`;
 }
 
+export function isHeic(file: File): boolean {
+  return (
+    file.type === 'image/heic' ||
+    file.type === 'image/heif' ||
+    /\.heic$/i.test(file.name) ||
+    /\.heif$/i.test(file.name)
+  );
+}
+
+async function toDecodableBlob(file: File): Promise<Blob> {
+  if (!isHeic(file)) return file;
+  const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+  return Array.isArray(result) ? result[0] : result;
+}
+
 /**
  * Prepares an image file for use in the editor:
+ * - Converts HEIC/HEIF to JPEG first (browsers can't decode HEIC natively)
  * - Shrinks to at most 2 megapixels (preserving aspect ratio)
  * - Converts to WebP at 0.85 quality
  * Returns a resized ImageBitmap and a corresponding WebP File.
  */
 export async function prepareImage(file: File): Promise<{ bitmap: ImageBitmap; webpFile: File }> {
-  const original = await createImageBitmap(file);
+  const source = await toDecodableBlob(file);
+  const original = await createImageBitmap(source);
   const { width, height } = original;
   const pixels = width * height;
 

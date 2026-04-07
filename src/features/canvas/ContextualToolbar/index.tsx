@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
-import { Group, Switch, Text } from '@mantine/core';
+import { Divider, Group, Switch, Text } from '@mantine/core';
 import { RotateCcw, SplitSquareHorizontal } from 'lucide-react';
+import { ZoomControls } from './ZoomControls';
 import { useEngine } from '../engine/EngineContext';
 import { useFilterContext } from '../../filters/FilterContext';
 import { useEditorStore } from '../../editor/editorStore';
@@ -132,17 +133,19 @@ interface Props {
 export function ContextualToolbar({ tab, filterTool = 'pan' }: Props) {
   return (
     <div style={barStyle} data-testid="contextual-toolbar" onClick={(e) => e.stopPropagation()}>
-      <Group gap={4}>
+      <Group gap={8} align="center">
+        <ZoomControls />
+        <Divider orientation="vertical" />
         {tab === 'filters' && <FilterToolOptions filterTool={filterTool} />}
         {tab === 'palette' && <PaletteToolOptions />}
       </Group>
 
-      <Group gap={2}>
+      <Group gap={8} align="center">
         {tab === 'filters' && (
-          <>
+          <Group gap={2}>
             <SlimButton leftSection={<SplitSquareHorizontal size={12} />}>Compare</SlimButton>
             <SlimButton leftSection={<RotateCcw size={12} />}>Reset</SlimButton>
-          </>
+          </Group>
         )}
         {tab === 'palette' && (
           <Group gap={12}>

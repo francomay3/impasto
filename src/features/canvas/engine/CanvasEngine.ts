@@ -28,7 +28,7 @@ export class CanvasEngine {
     drag: { type: 'none' },
     pipeline: { status: 'idle', error: null },
   };
-  private _toolSnapshot: ToolState & { selectionMode: SelectionMode } = { activeTool: 'select', isSampling: false, samplingColorId: null, samplingLevels: null, samplingRadius: 30, selectionMode: 'new' };
+  private _toolSnapshot: ToolState & { selectionMode: SelectionMode } = { activeTool: 'select', isSampling: false, samplingLevels: null, samplingRadius: 30, selectionMode: 'new' };
   private listeners = new Set<Listener>();
   private viewportListeners = new Set<ViewportListener>();
   private panHandler = new PanHandler();
@@ -77,13 +77,22 @@ export class CanvasEngine {
   getColorAt(x: number, y: number, radius: number): string { return this.pipeline.getColorAt(x, y, radius); }
   setSourceData(palette: Color[], image: RawImage | null): void { this.palette = palette; this.setSourceImage(image); }
 
-  handleWheel(e: WheelEvent, rect: DOMRect): void {
+  private viewportSize: { w: number; h: number } | null = null;
+
+  private zoomAtPoint(zoomIn: boolean, cx: number, cy: number): void {
     const prev = this.state.viewport;
-    const newScale = applyZoomStep(prev.scale, e.deltaY < 0);
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    this.commit({ scale: newScale, panX: panOnZoom(mx, prev.panX, prev.scale, newScale), panY: panOnZoom(my, prev.panY, prev.scale, newScale) });
+    const s = applyZoomStep(prev.scale, zoomIn);
+    this.commit({ scale: s, panX: panOnZoom(cx, prev.panX, prev.scale, s), panY: panOnZoom(cy, prev.panY, prev.scale, s) });
   }
+
+  handleWheel(e: WheelEvent, rect: DOMRect): void {
+    e.preventDefault();
+    this.zoomAtPoint(e.deltaY < 0, e.clientX - rect.left, e.clientY - rect.top);
+  }
+
+  setViewportSize(w: number, h: number): void { this.viewportSize = { w, h }; }
+  zoomIn(): void { const c = this.viewportSize; this.zoomAtPoint(true, c ? c.w / 2 : 0, c ? c.h / 2 : 0); }
+  zoomOut(): void { const c = this.viewportSize; this.zoomAtPoint(false, c ? c.w / 2 : 0, c ? c.h / 2 : 0); }
 
   handleMouseDown(e: MouseEvent, canvasRect: DOMRect): void {
     if (e.button === 1) { this.handlePanStart(e); return; }
@@ -141,7 +150,6 @@ export class CanvasEngine {
   selectTool(id: 'select' | 'marquee'): void { this.toolController.selectTool(id); }
   activateEyedropper(): void { this.toolController.activateEyedropper(); }
   toggleMarquee(): void { this.toolController.toggleMarquee(); }
-  startSamplingColor(colorId: string): void { this.toolController.startSamplingColor(colorId); }
   startSamplingLevels(filterId: string, point: 'black' | 'white'): void { this.toolController.startSamplingLevels(filterId, point); }
   completeSample(): void { this.toolController.completeSample(); }
   cancel(): void { this.toolController.cancel(); }

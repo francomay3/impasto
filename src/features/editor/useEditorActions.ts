@@ -54,7 +54,6 @@ export function useEditorActions({
     addSampledColor: project.addSampledColor,
     removeColor: project.removeColor,
     updateFilter: project.updateFilter,
-    samplingColorId: interaction.samplingColorId,
     completeSample: interaction.completeSample,
     cancelSample: interaction.cancel,
     samplingLevels: interaction.samplingLevels,
@@ -82,10 +81,8 @@ export function useEditorActions({
 
   const editorHandlers = useEditorHandlers({
     state: project.state,
-    samplingColorId: interaction.samplingColorId,
     interaction,
     handleAddColorAtPosition: imageHandlers.handleAddColorAtPosition,
-    handleSample: imageHandlers.handleSample,
     handleDeleteColor: imageHandlers.handleDeleteColor,
     handleImageLoadBitmap: imageHandlers.handleImageLoadBitmap,
     setActiveTab,

@@ -14,11 +14,7 @@ const noop = () => {};
 const mockPaletteContext = {
   palette: [],
   groups: [],
-  samplingColorId: null,
   isAddingColor: false,
-  onStartSampling: noop,
-  onSampleColor: noop,
-  onCancelSampleColor: noop,
   onAddNewColor: noop,
   onCancelAddingColor: noop,
   onRenameColor: noop,

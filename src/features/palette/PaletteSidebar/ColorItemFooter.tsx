@@ -1,11 +1,11 @@
 import { Box, Text, Badge, Menu, ActionIcon, Tooltip } from '@mantine/core';
-import { Crosshair, X, Folder, Plus, Eye, EyeOff } from 'lucide-react';
+import { X, Folder, Plus, Eye, EyeOff } from 'lucide-react';
 import type { Color } from '../../../types';
 import { usePaletteContext } from '../PaletteContext';
 import { useEditorStore } from '../../editor/editorStore';
 
 export function ColorItemFooter({ color }: { color: Color }) {
-  const { groups, onSetColorGroup, onAddGroup, onStartSampling, onDeleteColor } =
+  const { groups, onSetColorGroup, onAddGroup, onDeleteColor } =
     usePaletteContext();
   const hiddenPinIds = useEditorStore(s => s.hiddenPinIds);
   const toggleHiddenPin = useEditorStore(s => s.toggleHiddenPin);
@@ -92,17 +92,6 @@ export function ColorItemFooter({ color }: { color: Color }) {
             </ActionIcon>
           </Tooltip>
         )}
-        <Tooltip label="Sample from image">
-          <ActionIcon
-            size="sm"
-            variant="subtle"
-            color="blue"
-            title="Sample from image"
-            onClick={() => onStartSampling(color.id)}
-          >
-            <Crosshair size={13} />
-          </ActionIcon>
-        </Tooltip>
         <Tooltip label="Delete color">
           <ActionIcon
             size="sm"

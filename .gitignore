@@ -37,3 +37,6 @@ src/wasm/
 
 # Coverage
 /coverage/
+
+# Firebase CLI cache
+.firebase/

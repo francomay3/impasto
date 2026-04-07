@@ -23,7 +23,7 @@ export function usePaletteContextValue({
   interaction,
 }: Options) {
   const { updateColor } = project;
-  const { samplingColorId, startSamplingColor, cancel } = interaction;
+  const { cancel } = interaction;
   const activePaletteTool = useEditorStore((s) => s.activePaletteTool);
 
   const onRenameColor = useCallback(
@@ -40,11 +40,7 @@ export function usePaletteContextValue({
     () => ({
       palette: project.state.palette,
       groups: project.state.groups ?? [],
-      samplingColorId,
       isAddingColor: activePaletteTool === 'eyedropper',
-      onStartSampling: startSamplingColor,
-      onSampleColor: editorHandlers.handleSampleWithSelect,
-      onCancelSampleColor: imageHandlers.handleCancelSample,
       onAddNewColor: editorHandlers.handleAddNewColor,
       onCancelAddingColor: cancel,
       onRenameColor,
@@ -63,11 +59,7 @@ export function usePaletteContextValue({
     [
       project.state.palette,
       project.state.groups,
-      samplingColorId,
       activePaletteTool,
-      startSamplingColor,
-      editorHandlers.handleSampleWithSelect,
-      imageHandlers.handleCancelSample,
       editorHandlers.handleAddNewColor,
       cancel,
       onRenameColor,

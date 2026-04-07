@@ -1,6 +1,14 @@
 import type { RawImage } from '../types';
 import { normalizeHex, isUsableColor } from './colorUtils';
 
+export function downloadCanvas(canvas: HTMLCanvasElement, filename = 'image.png'): void {
+  const url = canvas.toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+}
+
 export function drawRawImage(canvas: HTMLCanvasElement, source: RawImage): void {
   canvas.width = source.width;
   canvas.height = source.height;
