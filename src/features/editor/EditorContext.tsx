@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { SaveStatus } from './useSaveStatus';
+import type { FilterToolId } from '../../tools';
 
 interface EditorContextValue {
   projectName: string;
@@ -16,6 +17,8 @@ interface EditorContextValue {
   onRedo: () => void;
   activeTab: string;
   onSetActiveTab: (tab: string) => void;
+  activeFilterTool: FilterToolId;
+  onSetActiveFilterTool: (tool: FilterToolId) => void;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);

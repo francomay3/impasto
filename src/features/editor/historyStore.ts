@@ -1,7 +1,7 @@
 import type { ProjectState, RawImage } from '../../types';
 
 export type ImageId = string;
-export type Snapshot = Omit<ProjectState, 'sourceImage'> & { imageId: ImageId | null };
+export type Snapshot = ProjectState & { imageId: ImageId | null };
 
 export const MAX_HISTORY = 50;
 export const MAX_IMAGES = 2;
@@ -33,19 +33,22 @@ export function addImage(
 
 export function toSnapshot(
   state: ProjectState,
+  image: RawImage | null,
   store: Map<ImageId, RawImage>,
   order: ImageId[],
   past: Snapshot[],
   prevImageId: ImageId | null
 ): Snapshot {
-  const { sourceImage, ...rest } = state;
-  if (!sourceImage) return { ...rest, imageId: null };
-  if (prevImageId && store.get(prevImageId) === sourceImage)
-    return { ...rest, imageId: prevImageId };
-  return { ...rest, imageId: addImage(store, order, past, sourceImage) };
+  if (!image) return { ...state, imageId: null };
+  if (prevImageId && store.get(prevImageId) === image)
+    return { ...state, imageId: prevImageId };
+  return { ...state, imageId: addImage(store, order, past, image) };
 }
 
-export function fromSnapshot(snapshot: Snapshot, store: Map<ImageId, RawImage>): ProjectState {
-  const { imageId, ...rest } = snapshot;
-  return { ...rest, sourceImage: imageId ? (store.get(imageId) ?? null) : null };
+export function fromSnapshot(
+  snapshot: Snapshot,
+  store: Map<ImageId, RawImage>
+): { state: ProjectState; image: RawImage | null } {
+  const { imageId, ...state } = snapshot;
+  return { state, image: imageId ? (store.get(imageId) ?? null) : null };
 }

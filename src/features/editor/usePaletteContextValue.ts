@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 import type { useProjectState } from './useProjectState';
 import type { useImageHandlers } from './useImageHandlers';
 import type { useEditorHandlers } from './useEditorHandlers';
-import type { InteractionAPI } from '../canvas/engine/useToolState';
+import type { InteractionAPI } from '../canvas/engine/toolStateManager';
+import { useEditorStore } from './editorStore';
 
 type Project = ReturnType<typeof useProjectState>;
 type ImageHandlers = ReturnType<typeof useImageHandlers>;
@@ -22,7 +23,8 @@ export function usePaletteContextValue({
   interaction,
 }: Options) {
   const { updateColor } = project;
-  const { samplingColorId, activeTool, startSamplingColor, cancel } = interaction;
+  const { samplingColorId, startSamplingColor, cancel } = interaction;
+  const activePaletteTool = useEditorStore((s) => s.activePaletteTool);
 
   const onRenameColor = useCallback(
     (id: string, name: string) => updateColor(id, { name }),
@@ -39,7 +41,7 @@ export function usePaletteContextValue({
       palette: project.state.palette,
       groups: project.state.groups ?? [],
       samplingColorId,
-      isAddingColor: activeTool === 'eyedropper',
+      isAddingColor: activePaletteTool === 'eyedropper',
       onStartSampling: startSamplingColor,
       onSampleColor: editorHandlers.handleSampleWithSelect,
       onCancelSampleColor: imageHandlers.handleCancelSample,
@@ -62,7 +64,7 @@ export function usePaletteContextValue({
       project.state.palette,
       project.state.groups,
       samplingColorId,
-      activeTool,
+      activePaletteTool,
       startSamplingColor,
       editorHandlers.handleSampleWithSelect,
       imageHandlers.handleCancelSample,

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import type { ProjectState, RawImage } from '../../types';
+import type { ProjectState } from '../../types';
 import { useProjectFilters } from './useProjectFilters';
 import { useProjectGroups } from './useProjectGroups';
 import { useProjectPaletteActions } from './useProjectPaletteActions';
@@ -31,10 +31,9 @@ export function useProjectState({ initialState, onSave }: ProjectStateOptions) {
   const groups = useProjectGroups({ stateRef, saveAndSet });
 
   const setImage = useCallback(
-    (image: RawImage) => {
+    () => {
       saveAndSet({
         ...stateRef.current,
-        sourceImage: image,
         palette: [],
         groups: [],
         filters: [],

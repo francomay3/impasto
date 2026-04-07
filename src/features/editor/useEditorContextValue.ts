@@ -3,12 +3,14 @@ import type { useProjectState } from './useProjectState';
 import type { useEditorHandlers } from './useEditorHandlers';
 import type { SaveStatus } from './useSaveStatus';
 import type { ReplaceImageModalRef } from './ReplaceImageModal';
+import type { FilterToolId } from '../../tools';
 
 type Project = ReturnType<typeof useProjectState>;
 type EditorHandlers = ReturnType<typeof useEditorHandlers>;
 
 interface Options {
   project: Project;
+  hasImage: boolean;
   editorHandlers: EditorHandlers;
   saveStatus: SaveStatus;
   canUndo: boolean;
@@ -16,6 +18,8 @@ interface Options {
   isLoading: boolean;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  activeFilterTool: FilterToolId;
+  onSetActiveFilterTool: (tool: FilterToolId) => void;
   setExportModalOpen: (v: boolean) => void;
   replaceRef: RefObject<ReplaceImageModalRef | null>;
   handleUndo: () => void;
@@ -24,6 +28,7 @@ interface Options {
 
 export function useEditorContextValue({
   project,
+  hasImage,
   editorHandlers,
   saveStatus,
   canUndo,
@@ -31,6 +36,8 @@ export function useEditorContextValue({
   isLoading,
   activeTab,
   setActiveTab,
+  activeFilterTool,
+  onSetActiveFilterTool,
   setExportModalOpen,
   replaceRef,
   handleUndo,
@@ -42,7 +49,7 @@ export function useEditorContextValue({
   return useMemo(
     () => ({
       projectName: project.state.name,
-      hasImage: !!project.state.sourceImage,
+      hasImage,
       saveStatus,
       canUndo,
       canRedo,
@@ -55,10 +62,12 @@ export function useEditorContextValue({
       onRedo: handleRedo,
       activeTab,
       onSetActiveTab: setActiveTab,
+      activeFilterTool,
+      onSetActiveFilterTool,
     }),
     [
       project.state.name,
-      project.state.sourceImage,
+      hasImage,
       saveStatus,
       canUndo,
       canRedo,
@@ -71,6 +80,8 @@ export function useEditorContextValue({
       handleRedo,
       activeTab,
       setActiveTab,
+      activeFilterTool,
+      onSetActiveFilterTool,
     ]
   );
 }

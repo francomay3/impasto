@@ -20,7 +20,6 @@ function makeState(overrides: Partial<ProjectState> = {}): ProjectState {
   return {
     id: 'test-id',
     name: 'Test',
-    sourceImage: null,
     palette: [],
     groups: [],
     paletteSize: 8,

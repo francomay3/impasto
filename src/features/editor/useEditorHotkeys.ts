@@ -5,7 +5,8 @@ import { HOTKEYS } from '../../hotkeys';
 import type { FilterType } from '../../types';
 import { useContextMenuStore } from '../../shared/contextMenuStore';
 import { buildFilterMenuItems } from '../filters/FilterPanel/filterMenuData';
-import type { InteractionAPI } from '../canvas/engine/useToolState';
+import type { InteractionAPI } from '../canvas/engine/toolStateManager';
+import { useEditorStore } from './editorStore';
 
 interface Params {
   onUndo: () => void;
@@ -63,8 +64,8 @@ export function useEditorHotkeys({
   // Escape must use a capture-phase listener because some React components call
   // e.stopPropagation() (which in React 18 also calls nativeEvent.stopPropagation()),
   // preventing the event from reaching document.documentElement where useHotkeys listens.
-  const escapeRef = useRef({ onClearSelection, cancel: interaction.cancel, onResetFilterTool });
-  useEffect(() => { escapeRef.current = { onClearSelection, cancel: interaction.cancel, onResetFilterTool }; });
+  const escapeRef = useRef({ onClearSelection, onResetFilterTool, cancel: interaction.cancel });
+  useEffect(() => { escapeRef.current = { onClearSelection, onResetFilterTool, cancel: interaction.cancel }; });
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -78,6 +79,7 @@ export function useEditorHotkeys({
       ) return;
       escapeRef.current.onClearSelection();
       escapeRef.current.cancel();
+      useEditorStore.getState().setActivePaletteTool('select');
       escapeRef.current.onResetFilterTool();
     };
     document.addEventListener('keydown', handler, true);

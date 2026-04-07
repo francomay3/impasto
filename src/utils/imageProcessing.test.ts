@@ -103,7 +103,7 @@ describe('applyFilters', () => {
 
   it('hue-saturation: applying zero values leaves pixels unchanged', () => {
     const img = makeRealImageData([200, 100, 50, 255], 1, 1);
-    const result = applyFilters(img, [filter('hue-saturation', { saturation: 0, temperature: 0, tint: 0 })]);
+    const result = applyFilters(img, [filter('hue-saturation', { hue: 0, saturation: 0, lightness: 0 })]);
     expect(result.data[0]).toBe(200);
     expect(result.data[1]).toBe(100);
     expect(result.data[2]).toBe(50);

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { useProjectState } from './useProjectState';
 import type { useImageHandlers } from './useImageHandlers';
-import type { InteractionAPI } from '../canvas/engine/useToolState';
+import type { InteractionAPI } from '../canvas/engine/toolStateManager';
 
 type Project = ReturnType<typeof useProjectState>;
 type ImageHandlers = ReturnType<typeof useImageHandlers>;
@@ -24,6 +24,7 @@ export function useFilterContextValue({ project, imageHandlers, interaction }: O
       onAddFilter: project.addFilter,
       onDuplicateFilter: project.duplicateFilter,
       onRemoveFilter: project.removeFilter,
+      onToggleFilter: project.toggleFilter,
       onUpdateFilter: project.updateFilter,
       onPreviewFilter: project.updateFilterPreview,
       onReorderFilters: project.reorderFilters,
@@ -39,6 +40,7 @@ export function useFilterContextValue({ project, imageHandlers, interaction }: O
       project.addFilter,
       project.duplicateFilter,
       project.removeFilter,
+      project.toggleFilter,
       project.updateFilter,
       project.updateFilterPreview,
       project.reorderFilters,

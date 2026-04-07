@@ -73,6 +73,16 @@ export function useProjectFilters({ stateRef, saveAndSet, set }: FilterCore) {
     [set, stateRef]
   );
 
+  const toggleFilter = useCallback(
+    (id: string) => {
+      const filters = stateRef.current.filters.map((f) =>
+        f.id === id ? { ...f, enabled: f.enabled === false ? true : false } : f
+      );
+      saveAndSet({ ...stateRef.current, filters, updatedAt: new Date().toISOString() });
+    },
+    [saveAndSet, stateRef]
+  );
+
   const reorderFilters = useCallback(
     (filters: FilterInstance[]) => {
       saveAndSet({ ...stateRef.current, filters, updatedAt: new Date().toISOString() });
@@ -91,6 +101,7 @@ export function useProjectFilters({ stateRef, saveAndSet, set }: FilterCore) {
     addFilter,
     duplicateFilter,
     removeFilter,
+    toggleFilter,
     updateFilter,
     updateFilterPreview,
     reorderFilters,

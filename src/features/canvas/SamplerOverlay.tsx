@@ -1,8 +1,6 @@
 import { useRef, useEffect, useLayoutEffect, useCallback, type RefObject } from 'react';
 import { Box } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
-import { sampleCircleAverage } from '../../utils/imageProcessing';
-import { rgbToHex } from '../../utils/colorUtils';
 import { HOTKEYS } from '../../hotkeys';
 import type { ColorSample } from '../../types';
 
@@ -10,12 +8,13 @@ interface Props {
   onSample: (sample: ColorSample, hex: string) => void;
   onCancel: () => void;
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  sampleAt: (cx: number, cy: number, radius: number) => string;
   radius: number;
   setRadius: (r: number) => void;
   viewportScale: number;
 }
 
-export function SamplerOverlay({ onSample, onCancel, canvasRef, radius, setRadius, viewportScale }: Props) {
+export function SamplerOverlay({ onSample, onCancel, canvasRef, sampleAt, radius, setRadius, viewportScale }: Props) {
   const overlayRef = useRef<HTMLCanvasElement>(null);
   // Imperatively tracked — avoids React re-renders on every mousemove.
   const mouseClientRef = useRef({ x: -9999, y: -9999 });
@@ -77,16 +76,12 @@ export function SamplerOverlay({ onSample, onCancel, canvasRef, radius, setRadiu
     e.stopPropagation();
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
     const canvasRect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / canvasRect.width;
-    const scaleY = canvas.height / canvasRect.height;
     const cx = (e.clientX - canvasRect.left) * scaleX;
-    const cy = (e.clientY - canvasRect.top) * scaleY;
+    const cy = (e.clientY - canvasRect.top) * (canvas.height / canvasRect.height);
     const radiusInImagePixels = radius * scaleX;
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const [r, g, b] = sampleCircleAverage(imageData, cx, cy, radiusInImagePixels);
-    onSample({ x: cx, y: cy, radius: radiusInImagePixels }, rgbToHex(r, g, b));
+    onSample({ x: cx, y: cy, radius: radiusInImagePixels }, sampleAt(cx, cy, radiusInImagePixels));
   };
 
   return (

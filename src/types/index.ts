@@ -9,6 +9,13 @@ export type ColorSample = {
   radius: number;
 };
 
+export type CropRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type Color = {
   id: string;
   hex: string;
@@ -25,15 +32,33 @@ export type Pigment = {
   rgb: string;
 };
 
-export type FilterType = 'brightness-contrast' | 'hue-saturation' | 'levels' | 'blur';
+export type FilterType =
+  | 'brightness-contrast'
+  | 'hue-saturation'
+  | 'white-balance'
+  | 'vibrance'
+  | 'color-balance'
+  | 'levels'
+  | 'blur';
 
 export type BrightnessContrastParams = { brightness: number; contrast: number };
-export type HueSaturationParams = { saturation: number; temperature: number; tint: number };
+export type HueSaturationParams = { hue: number; saturation: number; lightness: number };
+export type WhiteBalanceParams = { temperature: number; tint: number };
+export type VibranceParams = { vibrance: number; saturation: number };
+export type ColorBalanceParams = {
+  shadowsR: number; shadowsG: number; shadowsB: number;
+  midtonesR: number; midtonesG: number; midtonesB: number;
+  highlightsR: number; highlightsG: number; highlightsB: number;
+  preserveLuminosity: number; // 0 | 1
+};
 export type LevelsParams = { blackPoint: number; whitePoint: number };
 export type BlurParams = { blur: number };
 export type FilterParams =
   | BrightnessContrastParams
   | HueSaturationParams
+  | WhiteBalanceParams
+  | VibranceParams
+  | ColorBalanceParams
   | LevelsParams
   | BlurParams;
 
@@ -41,18 +66,30 @@ export type FilterInstance = {
   id: string;
   type: FilterType;
   params: FilterParams;
+  enabled?: boolean;
 };
 
 export const DEFAULT_FILTER_PARAMS: Record<FilterType, FilterParams> = {
   'brightness-contrast': { brightness: 0, contrast: 0 },
-  'hue-saturation': { saturation: 0, temperature: 0, tint: 0 },
+  'hue-saturation': { hue: 0, saturation: 0, lightness: 0 },
+  'white-balance': { temperature: 0, tint: 0 },
+  'vibrance': { vibrance: 0, saturation: 0 },
+  'color-balance': {
+    shadowsR: 0, shadowsG: 0, shadowsB: 0,
+    midtonesR: 0, midtonesG: 0, midtonesB: 0,
+    highlightsR: 0, highlightsG: 0, highlightsB: 0,
+    preserveLuminosity: 1,
+  },
   levels: { blackPoint: 0, whitePoint: 255 },
   blur: { blur: 0 },
 };
 
 export const FILTER_LABELS: Record<FilterType, string> = {
   'brightness-contrast': 'Brightness / Contrast',
-  'hue-saturation': 'Hue / Saturation',
+  'hue-saturation': 'Hue / Saturation / Lightness',
+  'white-balance': 'White Balance',
+  'vibrance': 'Vibrance',
+  'color-balance': 'Color Balance',
   levels: 'Levels',
   blur: 'Blur',
 };
@@ -83,7 +120,6 @@ export function createRawImage(
 export type ProjectState = {
   id: string;
   name: string;
-  sourceImage: RawImage | null;
   imageStorageUrl?: string;
   palette: Color[];
   groups: ColorGroup[];
@@ -99,7 +135,6 @@ export type ProjectState = {
 export const DEFAULT_PROJECT_STATE: ProjectState = {
   id: '',
   name: 'Untitled Project',
-  sourceImage: null,
   palette: [],
   groups: [],
   paletteSize: 8,

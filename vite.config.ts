@@ -20,13 +20,14 @@ export default defineConfig({
   resolve: { alias: pakoAlias },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     coverage: {
       provider: 'v8',
       reporter: ['lcov', 'text', 'html'],
       include: ['src/**/*.ts'],
       exclude: [
         'src/**/*.test.ts',
+        'src/**/*.test.tsx',
         'src/**/*.d.ts',
         'src/main.tsx',
         'src/firebase.ts',

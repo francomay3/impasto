@@ -1,7 +1,7 @@
+import { useSyncExternalStore } from 'react';
 import { Group, Switch, Text } from '@mantine/core';
 import { RotateCcw, SplitSquareHorizontal } from 'lucide-react';
 import { useEngine } from '../engine/EngineContext';
-import { useToolState } from '../engine/useToolState';
 import { useFilterContext } from '../../filters/FilterContext';
 import { useEditorStore } from '../../editor/editorStore';
 import { usePaletteContext } from '../../palette/PaletteContext';
@@ -20,9 +20,8 @@ const barStyle: React.CSSProperties = {
 
 const CROP_RATIOS = ['Free', '1:1', '4:3', '16:9', '3:2'];
 
-function FilterToolOptions() {
-  const activeFilterTool = useEditorStore((s) => s.activeFilterTool);
-  if (activeFilterTool !== 'crop') return null;
+function FilterToolOptions({ filterTool }: { filterTool: 'pan' | 'crop' | 'rotate' }) {
+  if (filterTool !== 'crop') return null;
   return (
     <Group gap={2}>
       {CROP_RATIOS.map((r) => <SlimButton key={r}>{r}</SlimButton>)}
@@ -34,9 +33,10 @@ function FilterToolOptions() {
 
 function PaletteToolOptions() {
   const engine = useEngine();
-  const { activeTool, samplingRadius, setSamplingRadius, selectionMode, setSelectionMode } = useToolState(engine);
+  const { samplingRadius, selectionMode } = useSyncExternalStore(engine.subscribe.bind(engine), engine.getToolState.bind(engine));
+  const activeTool = useEditorStore((s) => s.activePaletteTool);
+  const setSelectedColorIds = useEditorStore((s) => s.setSelectedColorIds);
   const { palette } = usePaletteContext();
-  const setSelectedColorIds = useEditorStore(s => s.setSelectedColorIds);
 
   if (activeTool === 'select') {
     const sampledIds = palette.filter((c) => c.sample).map((c) => c.id);
@@ -54,14 +54,14 @@ function PaletteToolOptions() {
         <SlimButton
           variant={selectionMode === 'add' ? 'light' : 'subtle'}
           color={selectionMode === 'add' ? 'primary' : 'gray'}
-          onClick={() => setSelectionMode('add')}
+          onClick={() => engine.setSelectionMode('add')}
         >
           Add to Selection
         </SlimButton>
         <SlimButton
           variant={selectionMode === 'subtract' ? 'light' : 'subtle'}
           color={selectionMode === 'subtract' ? 'primary' : 'gray'}
-          onClick={() => setSelectionMode('subtract')}
+          onClick={() => engine.setSelectionMode('subtract')}
         >
           Subtract
         </SlimButton>
@@ -78,7 +78,7 @@ function PaletteToolOptions() {
         <SlimNumberInput
           data-testid="sampling-radius-input"
           value={samplingRadius}
-          onChange={(v) => typeof v === 'number' && setSamplingRadius(v)}
+          onChange={(v) => typeof v === 'number' && engine.setSamplingRadius(v)}
           min={1}
           max={200}
           suffix="px"
@@ -97,11 +97,7 @@ function PaletteMixToggle() {
   return (
     <Switch
       size="xs"
-      label={
-        <Text size="xs" c="dimmed">
-          Show mixes
-        </Text>
-      }
+      label={<Text size="xs" c="dimmed">Show mixes</Text>}
       checked={showMixedColors}
       onChange={(e) => setShowMixedColors(e.currentTarget.checked)}
     />
@@ -130,13 +126,14 @@ function PaletteBlurInput() {
 
 interface Props {
   tab: 'filters' | 'palette';
+  filterTool?: 'pan' | 'crop' | 'rotate';
 }
 
-export function ContextualToolbar({ tab }: Props) {
+export function ContextualToolbar({ tab, filterTool = 'pan' }: Props) {
   return (
-    <div style={barStyle} data-testid="contextual-toolbar">
+    <div style={barStyle} data-testid="contextual-toolbar" onClick={(e) => e.stopPropagation()}>
       <Group gap={4}>
-        {tab === 'filters' && <FilterToolOptions />}
+        {tab === 'filters' && <FilterToolOptions filterTool={filterTool} />}
         {tab === 'palette' && <PaletteToolOptions />}
       </Group>
 

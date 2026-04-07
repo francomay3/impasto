@@ -1,7 +1,8 @@
-import type { RefObject } from 'react';
-import type { ProjectState } from '../../types';
+import { useState, useLayoutEffect, useCallback, useEffect } from 'react';
+import type { MutableRefObject } from 'react';
+import type { ProjectState, RawImage } from '../../types';
 import type { CanvasEngine } from '../canvas/engine/CanvasEngine';
-import type { InteractionAPI } from '../canvas/engine/useToolState';
+import type { InteractionAPI } from '../canvas/engine/toolStateManager';
 import type { ReplaceImageModalRef } from './ReplaceImageModal';
 import type { useProjectState } from './useProjectState';
 import type { useHistory } from './useHistory';
@@ -20,20 +21,34 @@ interface Params {
   engine: CanvasEngine;
   history: History;
   save: (s: ProjectState) => void;
+  initialImage?: RawImage | null;
+  sourceImageRef: MutableRefObject<RawImage | null>;
   onThumbnailColors?: (colors: string[]) => void;
   onNewImageFile?: (file: File) => void;
   setActiveTab: (tab: string) => void;
-  replaceRef: RefObject<ReplaceImageModalRef | null>;
+  onResetFilterTool: () => void;
+  replaceRef: MutableRefObject<ReplaceImageModalRef | null>;
 }
 
 export function useEditorActions({
   project, interaction, engine, history, save,
-  onThumbnailColors, onNewImageFile, setActiveTab, replaceRef,
+  initialImage, sourceImageRef,
+  onThumbnailColors, onNewImageFile, setActiveTab, onResetFilterTool, replaceRef,
 }: Params) {
+  const [sourceImage, setSourceImage] = useState<RawImage | null>(initialImage ?? null);
+  useLayoutEffect(() => { sourceImageRef.current = sourceImage; });
+
+  const onImageLoaded = useCallback((image: RawImage) => {
+    engine.setSourceImage(image);
+    setSourceImage(image);
+  }, [engine]);
+
   const imageHandlers = useImageHandlers({
     state: project.state,
+    sourceImage,
     pipeline: engine.pipeline,
     setImage: project.setImage,
+    onImageLoaded,
     updateColor: project.updateColor,
     setPalette: project.updateDerivedPalette,
     addSampledColor: project.addSampledColor,
@@ -47,10 +62,21 @@ export function useEditorActions({
     saveThumbnailColors: onThumbnailColors,
   });
 
+  // Load initial image into the canvas pipeline once on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (initialImage) imageHandlers.handleImageRestore(initialImage); }, []);
+
+  const onImageRestore = useCallback((image: RawImage | null) => {
+    engine.setSourceImage(image);
+    setSourceImage(image);
+    imageHandlers.handleImageRestore(image);
+  }, [engine, imageHandlers]);
+
   const { handleUndo, handleRedo } = useUndoRedo({
     historyUndo: history.undo,
     historyRedo: history.redo,
     restoreState: project.restoreState,
+    onImageRestore,
     save,
   });
 
@@ -77,9 +103,9 @@ export function useEditorActions({
     onPasteFile: editorHandlers.handlePasteFile,
     onToggleSelectTool: editorHandlers.handleToggleSelectTool,
     onToggleMarqueeTool: editorHandlers.handleToggleMarqueeTool,
-    onResetFilterTool: () => useEditorStore.getState().setActiveFilterTool('pan'),
+    onResetFilterTool,
     interaction,
   });
 
-  return { imageHandlers, editorHandlers, handleUndo, handleRedo };
+  return { imageHandlers, editorHandlers, handleUndo, handleRedo, sourceImage };
 }

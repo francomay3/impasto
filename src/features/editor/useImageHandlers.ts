@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { useDebouncedValue } from '@mantine/hooks';
-import type { FilterInstance, ColorSample } from '../../types';
+import type { FilterInstance, RawImage, ColorSample } from '../../types';
 import type { CanvasPipeline } from '../canvas/engine/pipeline';
 import type { useProjectState } from './useProjectState';
 import { sampleCircleAverage } from '../../utils/imageProcessing';
@@ -13,8 +13,10 @@ type ProjectActions = ReturnType<typeof useProjectState>;
 
 interface Options {
   state: ProjectActions['state'];
+  sourceImage: RawImage | null;
   pipeline: Pipeline;
   setImage: ProjectActions['setImage'];
+  onImageLoaded: (image: RawImage) => void;
   updateColor: ProjectActions['updateColor'];
   setPalette: ProjectActions['updateDerivedPalette'];
   addSampledColor: ProjectActions['addSampledColor'];
@@ -29,27 +31,25 @@ interface Options {
 }
 
 export function useImageHandlers({
-  state, pipeline, setImage, updateColor, setPalette, addSampledColor,
-  removeColor, updateFilter, samplingColorId,
+  state, sourceImage, pipeline, setImage, onImageLoaded, updateColor, setPalette,
+  addSampledColor, removeColor, updateFilter, samplingColorId,
   completeSample, cancelSample, samplingLevels, resetTransform, saveThumbnailColors,
 }: Options) {
   const lastImageDataRef = useRef<ImageData | null>(null);
-  const justLoadedImageRef = useRef<object | null>(null);
   const [debouncedFilters] = useDebouncedValue(state.filters, 300);
   const saveThumbnailColorsRef = useRef(saveThumbnailColors);
 
-  // Refs so effects and callbacks can access fresh values without extra deps.
   const pipelineRef = useRef(pipeline);
   const resetTransformRef = useRef(resetTransform);
   const debouncedFiltersRef = useRef(debouncedFilters);
-  const sourceImageRef = useRef(state.sourceImage);
+  const sourceImageRef = useRef(sourceImage);
   const filtersRef = useRef(state.filters);
   useLayoutEffect(() => {
     saveThumbnailColorsRef.current = saveThumbnailColors;
     pipelineRef.current = pipeline;
     resetTransformRef.current = resetTransform;
     debouncedFiltersRef.current = debouncedFilters;
-    sourceImageRef.current = state.sourceImage;
+    sourceImageRef.current = sourceImage;
     filtersRef.current = state.filters;
   });
 
@@ -71,18 +71,6 @@ export function useImageHandlers({
   const deriveAndRenderRef = useRef(deriveAndRender);
   useLayoutEffect(() => { deriveAndRenderRef.current = deriveAndRender; });
 
-  // Runs when the source image is replaced externally (e.g. project load).
-  // Uses refs for pipeline/filters/deriveAndRender so filter changes don't re-trigger this.
-  useEffect(() => {
-    const image = state.sourceImage;
-    if (!image) return;
-    if (image === justLoadedImageRef.current) { justLoadedImageRef.current = null; return; }
-    resetTransformRef.current?.();
-    pipelineRef.current.loadImage(image);
-    const imageData = pipelineRef.current.applyFilterPipeline(debouncedFiltersRef.current as FilterInstance[]);
-    if (imageData) deriveAndRenderRef.current(imageData);
-  }, [state.sourceImage]);
-
   // Runs when filters change (debounced). Uses refs for pipeline/sourceImage/deriveAndRender.
   useEffect(() => {
     if (!sourceImageRef.current) return;
@@ -90,17 +78,25 @@ export function useImageHandlers({
     if (imageData) deriveAndRenderRef.current(imageData);
   }, [debouncedFilters]);
 
+  const handleImageRestore = useCallback((image: RawImage | null) => {
+    if (!image) return;
+    resetTransformRef.current?.();
+    pipelineRef.current.loadImage(image);
+    const imageData = pipelineRef.current.applyFilterPipeline(debouncedFiltersRef.current as FilterInstance[]);
+    if (imageData) deriveAndRenderRef.current(imageData);
+  }, []);
+
   const handleImageLoadBitmap = useCallback(
     (bitmap: ImageBitmap) => {
       resetTransformRef.current?.();
       const rawImage = pipelineRef.current.loadBitmap(bitmap);
-      justLoadedImageRef.current = rawImage;
-      setImage(rawImage);
+      onImageLoaded(rawImage);
+      setImage();
       const imageData = pipelineRef.current.applyFilterPipeline(filtersRef.current as FilterInstance[]);
       if (imageData) deriveAndRenderRef.current(imageData);
       bitmap.close();
     },
-    [setImage]
+    [setImage, onImageLoaded]
   );
 
   const handleAddColorAtPosition = useCallback(
@@ -130,6 +126,7 @@ export function useImageHandlers({
 
   return {
     handleImageLoadBitmap,
+    handleImageRestore,
     handleAddColorAtPosition,
     handleDeleteColor,
     ...samplingHandlers,

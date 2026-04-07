@@ -4,6 +4,7 @@ import type { Color } from '../../../types';
 
 vi.mock('../../../utils/imageProcessing', () => ({
   applyFilters: vi.fn((data: unknown) => data),
+  sampleCircleAverage: vi.fn(() => [255, 128, 0, 255]),
 }));
 vi.mock('../../../utils/kMeansWrapper', () => ({
   quantizeImage: vi.fn(() => [
@@ -121,6 +122,36 @@ describe('CanvasPipeline', () => {
       const onChange = vi.fn();
       new CanvasPipeline(onChange, () => null, el);
       expect(onChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getColorAt', () => {
+    it('returns #000000 when no image has been loaded (canvas width = 0)', () => {
+      const { el } = makeCanvas();
+      const pipeline = new CanvasPipeline(undefined, () => null, el);
+      expect(pipeline.getColorAt(1, 1, 5)).toBe('#000000');
+    });
+
+    it('returns hex from sampled pixels on the source canvas', () => {
+      const { el, ctx } = makeCanvas();
+      el.width = 10;
+      el.height = 10;
+      const pipeline = new CanvasPipeline(undefined, () => null, el);
+      const result = pipeline.getColorAt(5, 5, 2);
+      expect(ctx.getImageData).toHaveBeenCalledWith(0, 0, 10, 10);
+      expect(result).toBe('#ff8000');
+    });
+
+    it('prefers the filtered canvas over the source canvas when present', () => {
+      const { el: sourceEl } = makeCanvas();
+      sourceEl.width = 10;
+      sourceEl.height = 10;
+      const { el: filteredEl, ctx: filteredCtx } = makeCanvas();
+      filteredEl.width = 10;
+      filteredEl.height = 10;
+      const pipeline = new CanvasPipeline(undefined, () => filteredEl, sourceEl);
+      pipeline.getColorAt(5, 5, 2);
+      expect(filteredCtx.getImageData).toHaveBeenCalled();
     });
   });
 });

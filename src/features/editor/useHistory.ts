@@ -1,10 +1,9 @@
 import { useRef, useState, useCallback } from 'react';
-import type { ProjectState } from '../../types';
+import type { ProjectState, RawImage } from '../../types';
 import { type Snapshot, MAX_HISTORY, toSnapshot, fromSnapshot } from './historyStore';
 import type { ImageId } from './historyStore';
-import type { RawImage } from '../../types';
 
-export function useHistory(initialState: ProjectState) {
+export function useHistory(initialState: ProjectState, initialImage: RawImage | null = null) {
   const initStore = new Map<ImageId, RawImage>();
   const initOrder: ImageId[] = [];
   const initPast: Snapshot[] = [];
@@ -12,14 +11,14 @@ export function useHistory(initialState: ProjectState) {
   const order = useRef(initOrder);
   const past = useRef(initPast);
   const future = useRef<Snapshot[]>([]);
-  const present = useRef<Snapshot>(toSnapshot(initialState, initStore, initOrder, initPast, null));
+  const present = useRef<Snapshot>(toSnapshot(initialState, initialImage, initStore, initOrder, initPast, null));
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const push = useCallback((state: ProjectState) => {
+  const push = useCallback((state: ProjectState, image: RawImage | null) => {
     const snap = toSnapshot(
-      state,
+      state, image,
       store.current,
       order.current,
       past.current,
@@ -34,7 +33,7 @@ export function useHistory(initialState: ProjectState) {
   }, []);
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const undo = useCallback((): ProjectState | null => {
+  const undo = useCallback((): { state: ProjectState; image: RawImage | null } | null => {
     if (!past.current.length) return null;
     const prev = past.current[past.current.length - 1];
     future.current = [present.current, ...future.current];
@@ -46,7 +45,7 @@ export function useHistory(initialState: ProjectState) {
   }, []);
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const redo = useCallback((): ProjectState | null => {
+  const redo = useCallback((): { state: ProjectState; image: RawImage | null } | null => {
     if (!future.current.length) return null;
     const next = future.current[0];
     past.current = [...past.current, present.current];

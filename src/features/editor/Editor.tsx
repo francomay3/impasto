@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { AppShell, Center, Loader } from '@mantine/core';
+import type { FilterToolId } from '../../tools';
 import { useProjectState } from './useProjectState';
 import { useHistory } from './useHistory';
 import { useSaveStatus } from './useSaveStatus';
-import { useToolState } from '../canvas/engine/useToolState';
+import type { InteractionAPI } from '../canvas/engine/toolStateManager';
 import { AppHeader } from './AppHeader';
 import { ExportModal } from './ExportModal';
 import { EditorTabs } from './EditorTabs';
@@ -21,10 +22,11 @@ import { useEditorActions } from './useEditorActions';
 import { CanvasEngine } from '../canvas/engine/CanvasEngine';
 import { EngineProvider } from '../canvas/engine/EngineContext';
 import { ReplaceImageModal, type ReplaceImageModalRef } from './ReplaceImageModal';
-import type { ProjectState } from '../../types';
+import type { ProjectState, RawImage } from '../../types';
 
 interface AppProps {
   initialState: ProjectState;
+  initialImage?: RawImage | null;
   isLoading?: boolean;
   onSave: (state: ProjectState) => void | Promise<void>;
   onNewImageFile?: (file: File) => void;
@@ -33,6 +35,7 @@ interface AppProps {
 
 export default function Editor({
   initialState,
+  initialImage,
   isLoading,
   onSave,
   onNewImageFile,
@@ -40,35 +43,54 @@ export default function Editor({
 }: AppProps) {
   const filteredCanvasRef = useRef<HTMLCanvasElement>(null);
   const [engine] = useState(() => new CanvasEngine(filteredCanvasRef));
-  const history = useHistory(initialState);
+  const sourceImageRef = useRef<RawImage | null>(initialImage ?? null);
+  const history = useHistory(initialState, initialImage ?? null);
   const { status: saveStatus, save } = useSaveStatus(onSave);
   const onStateChange = useCallback(
-    (s: ProjectState) => { history.push(s); save(s); },
+    (s: ProjectState) => { history.push(s, sourceImageRef.current); save(s); },
     [history, save]
   );
   const project = useProjectState({ initialState, onSave: onStateChange });
   const indexedCanvasRef = useRef<HTMLCanvasElement>(null);
-  const interaction = useToolState(engine);
+  const toolSnap = useSyncExternalStore(engine.subscribe.bind(engine), engine.getToolState.bind(engine));
+  const interaction: InteractionAPI = {
+    ...toolSnap,
+    selectTool: engine.selectTool.bind(engine),
+    activateEyedropper: engine.activateEyedropper.bind(engine),
+    toggleMarquee: engine.toggleMarquee.bind(engine),
+    startSamplingColor: engine.startSamplingColor.bind(engine),
+    startSamplingLevels: engine.startSamplingLevels.bind(engine),
+    completeSample: engine.completeSample.bind(engine),
+    cancel: engine.cancel.bind(engine),
+    setSamplingRadius: engine.setSamplingRadius.bind(engine),
+    setSelectionMode: engine.setSelectionMode.bind(engine),
+    setActiveTool: engine.setActiveTool.bind(engine),
+  };
   const replaceRef = useRef<ReplaceImageModalRef>(null);
   const [activeTab, setActiveTab] = useState('filters');
+  const [activeFilterTool, setActiveFilterTool] = useState<FilterToolId>('pan');
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
   const selectColor = useEditorStore((s) => s.selectColor);
 
-  const { imageHandlers, editorHandlers, handleUndo, handleRedo } = useEditorActions({
+  const { imageHandlers, editorHandlers, handleUndo, handleRedo, sourceImage } = useEditorActions({
     project, interaction, engine, history, save,
-    onThumbnailColors, onNewImageFile, setActiveTab, replaceRef,
+    initialImage, sourceImageRef,
+    onThumbnailColors, onNewImageFile, setActiveTab,
+    onResetFilterTool: () => setActiveFilterTool('pan'),
+    replaceRef,
   });
 
   const paletteValue = usePaletteContextValue({ project, imageHandlers, editorHandlers, interaction });
   const filterValue = useFilterContextValue({ project, imageHandlers, interaction });
   const onToggleLabels = useCallback(() => setShowLabels((v) => !v), []);
   const canvasValue = useMemo(
-    () => ({ sourceImage: project.state.sourceImage, filteredCanvasRef, indexedCanvasRef, showLabels, onToggleLabels }),
-    [project.state.sourceImage, filteredCanvasRef, indexedCanvasRef, showLabels, onToggleLabels]
+    () => ({ sourceImage, filteredCanvasRef, indexedCanvasRef, showLabels, onToggleLabels }),
+    [sourceImage, filteredCanvasRef, indexedCanvasRef, showLabels, onToggleLabels]
   );
   const editorValue = useEditorContextValue({
     project,
+    hasImage: !!sourceImage,
     editorHandlers,
     saveStatus,
     canUndo: history.canUndo,
@@ -76,6 +98,8 @@ export default function Editor({
     isLoading: !!isLoading,
     activeTab,
     setActiveTab,
+    activeFilterTool,
+    onSetActiveFilterTool: setActiveFilterTool,
     setExportModalOpen,
     replaceRef,
     handleUndo,

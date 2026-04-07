@@ -84,6 +84,7 @@ export function PaletteTabContent() {
                 <SamplerOverlay
                   {...overlayProps.sampler}
                   canvasRef={filteredRef}
+                  sampleAt={engine.getColorAt.bind(engine)}
                   onSample={onAddNewColor}
                   onCancel={onCancelAddingColor}
                 />
@@ -91,6 +92,7 @@ export function PaletteTabContent() {
                 <SamplerOverlay
                   {...overlayProps.sampler}
                   canvasRef={filteredRef}
+                  sampleAt={engine.getColorAt.bind(engine)}
                   onSample={onSampleColor}
                   onCancel={onCancelSampleColor}
                 />

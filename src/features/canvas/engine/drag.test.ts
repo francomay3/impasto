@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { CanvasEngine } from './CanvasEngine'
-import type { Color } from '../../../types'
+import type { Color, RawImage } from '../../../types'
 
 vi.mock('../../editor/editorStore', () => ({
   useEditorStore: {
@@ -9,12 +9,14 @@ vi.mock('../../editor/editorStore', () => ({
       hiddenPinIds: new Set<string>(),
       selectedColorIds: new Set<string>(),
       setSelectedColorIds: vi.fn(),
+      setActivePaletteTool: vi.fn(),
     })),
   },
 }))
 
 const makeRect = (): DOMRect =>
   ({ left: 0, top: 0, width: 100, height: 100, right: 100, bottom: 100, x: 0, y: 0, toJSON: () => {} } as DOMRect)
+const makeImage = (width = 100, height = 100): RawImage => ({ data: new Uint8ClampedArray(width * height * 4), width, height })
 
 describe('DragState transitions', () => {
   beforeEach(() => {
@@ -79,7 +81,7 @@ describe('DragState transitions', () => {
     it('idle → marquee after mousedown + sufficient mousemove', () => {
       const engine = new CanvasEngine()
       engine.selectTool('marquee')
-      engine.setSourceData([], { width: 100, height: 100 })
+      engine.setSourceData([], makeImage())
       engine.handleMouseDown(new MouseEvent('mousedown', { button: 0, clientX: 10, clientY: 10 }), makeRect())
       window.dispatchEvent(new MouseEvent('mousemove', { clientX: 20, clientY: 20 }))
       const { drag } = engine.getSnapshot()
@@ -89,7 +91,7 @@ describe('DragState transitions', () => {
     it('marquee state contains start and current coords', () => {
       const engine = new CanvasEngine()
       engine.selectTool('marquee')
-      engine.setSourceData([], { width: 100, height: 100 })
+      engine.setSourceData([], makeImage())
       engine.handleMouseDown(new MouseEvent('mousedown', { button: 0, clientX: 10, clientY: 10 }), makeRect())
       window.dispatchEvent(new MouseEvent('mousemove', { clientX: 30, clientY: 25 }))
       const { drag } = engine.getSnapshot()
@@ -103,7 +105,7 @@ describe('DragState transitions', () => {
     it('marquee → none on mouseup', () => {
       const engine = new CanvasEngine()
       engine.selectTool('marquee')
-      engine.setSourceData([], { width: 100, height: 100 })
+      engine.setSourceData([], makeImage())
       engine.handleMouseDown(new MouseEvent('mousedown', { button: 0, clientX: 10, clientY: 10 }), makeRect())
       window.dispatchEvent(new MouseEvent('mousemove', { clientX: 20, clientY: 20 }))
       window.dispatchEvent(new MouseEvent('mouseup', { clientX: 20, clientY: 20 }))
@@ -113,7 +115,7 @@ describe('DragState transitions', () => {
     it('does not set marquee drag for tiny movements (< 4px)', () => {
       const engine = new CanvasEngine()
       engine.selectTool('marquee')
-      engine.setSourceData([], { width: 100, height: 100 })
+      engine.setSourceData([], makeImage())
       engine.handleMouseDown(new MouseEvent('mousedown', { button: 0, clientX: 10, clientY: 10 }), makeRect())
       window.dispatchEvent(new MouseEvent('mousemove', { clientX: 11, clientY: 10 }))
       expect(engine.getSnapshot().drag).toEqual({ type: 'none' })
@@ -128,7 +130,7 @@ describe('DragState transitions', () => {
 
     it('starts pin drag in select mode (regression: was blocked by tool guard)', () => {
       const engine = new CanvasEngine()
-      engine.setSourceData([makePin()], { width: 100, height: 100 })
+      engine.setSourceData([makePin()], makeImage())
       engine.selectTool('select')
       engine.handlePinMouseDown('c1', new MouseEvent('mousedown', { clientX: 50, clientY: 50 }), makeRect())
       expect(engine.getSnapshot().drag.type).toBe('pin')
@@ -136,7 +138,7 @@ describe('DragState transitions', () => {
 
     it('starts pin drag in marquee mode (regression: was blocked by tool guard)', () => {
       const engine = new CanvasEngine()
-      engine.setSourceData([makePin()], { width: 100, height: 100 })
+      engine.setSourceData([makePin()], makeImage())
       engine.selectTool('marquee')
       engine.handlePinMouseDown('c1', new MouseEvent('mousedown', { clientX: 50, clientY: 50 }), makeRect())
       expect(engine.getSnapshot().drag.type).toBe('pin')
@@ -144,7 +146,7 @@ describe('DragState transitions', () => {
 
     it('remains idle when isSampling is true', () => {
       const engine = new CanvasEngine()
-      engine.setSourceData([makePin()], { width: 100, height: 100 })
+      engine.setSourceData([makePin()], makeImage())
       engine.startSamplingColor('c1')
       engine.handlePinMouseDown('c1', new MouseEvent('mousedown', { clientX: 50, clientY: 50 }), makeRect())
       expect(engine.getSnapshot().drag.type).toBe('none')

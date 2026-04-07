@@ -13,7 +13,6 @@ import { ImageUploader } from '../../canvas/ImageUploader';
 import { useEditorContext } from '../EditorContext';
 import { useCanvasContext } from '../../canvas/CanvasContext';
 import { useEngine } from '../../canvas/engine/EngineContext';
-import { useToolState } from '../../canvas/engine/useToolState';
 import { ContextualToolbar } from '../../canvas/ContextualToolbar';
 
 interface Props {
@@ -21,19 +20,17 @@ interface Props {
 }
 
 export function EditorTabs({ height = '100%' }: Props) {
-  const { activeTab, onSetActiveTab, onFileSelected } = useEditorContext();
+  const { activeTab, onSetActiveTab, onFileSelected, activeFilterTool, onSetActiveFilterTool } = useEditorContext();
   const { sourceImage } = useCanvasContext();
   const engine = useEngine();
-  const { activeTool, setActiveTool } = useToolState(engine);
-
-  const activeFilterTool = useEditorStore((s) => s.activeFilterTool);
-  const setActiveFilterTool = useEditorStore((s) => s.setActiveFilterTool);
+  const activeTool = useEditorStore((s) => s.activePaletteTool);
+  const setActiveTool = engine.setActiveTool.bind(engine);
 
   const filterToolRailItems: ToolRailItem[] = FILTER_TOOLS.map((tool) => ({
     icon: <tool.icon size={16} />,
     label: tool.label,
     active: activeFilterTool === tool.id,
-    onClick: () => setActiveFilterTool(tool.id),
+    onClick: () => onSetActiveFilterTool(tool.id),
   }));
 
   const toolRailItems: ToolRailItem[] = TOOLS.map((tool) => ({
@@ -105,7 +102,7 @@ export function EditorTabs({ height = '100%' }: Props) {
 
       <Tabs.Panel value="filters" style={{ flex: 1, overflow: 'hidden' }}>
         <TabLayout
-          toolbar={<ContextualToolbar tab="filters" />}
+          toolbar={<ContextualToolbar tab="filters" filterTool={activeFilterTool} />}
           rail={<ToolRail items={filterToolRailItems} />}
           aside={
             <ErrorBoundary label="Filter panel" compact>

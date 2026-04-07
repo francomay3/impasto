@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { FilterToolId } from '../../tools';
+import type { ToolId } from '../../tools';
 
 interface EditorStore {
   selectedColorIds: Set<string>;
@@ -17,9 +17,9 @@ interface EditorStore {
   setGroupPinsVisible: (colorIds: string[], visible: boolean) => void;
   // Display actions
   setShowMixedColors: (show: boolean) => void;
-  // Filter tool
-  activeFilterTool: FilterToolId;
-  setActiveFilterTool: (tool: FilterToolId) => void;
+  // Palette tool
+  activePaletteTool: ToolId;
+  setActivePaletteTool: (tool: ToolId) => void;
 }
 
 export const useEditorStore = create<EditorStore>((set) => ({
@@ -64,6 +64,6 @@ export const useEditorStore = create<EditorStore>((set) => ({
 
   setShowMixedColors: (show) => set({ showMixedColors: show }),
 
-  activeFilterTool: 'pan',
-  setActiveFilterTool: (tool) => set({ activeFilterTool: tool }),
+  activePaletteTool: 'select',
+  setActivePaletteTool: (tool) => set({ activePaletteTool: tool }),
 }));

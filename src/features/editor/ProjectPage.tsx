@@ -12,10 +12,12 @@ import {
 import { uploadProjectImage, getProjectImageUrl } from '../../services/ImageStorageService';
 import Editor from './Editor';
 import { DEFAULT_PROJECT_STATE, createRawImage } from '../../types';
-import type { ProjectState } from '../../types';
+import type { ProjectState, RawImage } from '../../types';
 import { queryKeys } from '../../lib/queryKeys';
 
-async function resolveProject(userId: string, projectId: string) {
+type ResolvedProject = { state: ProjectState; image: RawImage | null };
+
+async function resolveProject(userId: string, projectId: string): Promise<ResolvedProject | null> {
   const project = await getFirestoreProject(userId, projectId);
   if (!project) return null;
 
@@ -31,10 +33,10 @@ async function resolveProject(userId: string, projectId: string) {
     ctx.drawImage(bitmap, 0, 0);
     const { data, width, height } = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
     bitmap.close();
-    return { ...project, sourceImage: createRawImage(data, width, height) };
+    return { state: project, image: createRawImage(data, width, height) };
   }
 
-  return project;
+  return { state: project, image: null };
 }
 
 export function ProjectPage() {
@@ -72,9 +74,9 @@ export function ProjectPage() {
       if (isTestMode || !user || !id) return;
       const url = await uploadProjectImage(user.uid, id, file);
       await saveFirestoreImageUrl(user.uid, id, url);
-      queryClient.setQueryData<ProjectState | null>(
+      queryClient.setQueryData<ResolvedProject | null>(
         queryKeys.project(user.uid, id),
-        (prev) => prev ? { ...prev, imageStorageUrl: url } : prev
+        (prev) => prev ? { ...prev, state: { ...prev.state, imageStorageUrl: url } } : prev
       );
     },
     [isTestMode, user, id, queryClient]
@@ -89,12 +91,14 @@ export function ProjectPage() {
   );
 
   const isLoading_ = !isTestMode && isLoading;
-  const initialState = isTestMode ? DEFAULT_PROJECT_STATE : (project ?? DEFAULT_PROJECT_STATE);
+  const initialState = isTestMode ? DEFAULT_PROJECT_STATE : (project?.state ?? DEFAULT_PROJECT_STATE);
+  const initialImage = isTestMode ? null : (project?.image ?? null);
 
   return (
     <Editor
       key={isLoading_ ? 'loading' : 'loaded'}
       initialState={initialState}
+      initialImage={initialImage}
       isLoading={isLoading_}
       onSave={onSave}
       onNewImageFile={onNewImageFile}

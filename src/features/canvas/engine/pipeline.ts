@@ -1,6 +1,7 @@
 import type { FilterInstance, Color, RawImage } from '../../../types';
 import { createRawImage } from '../../../types';
-import { applyFilters } from '../../../utils/imageProcessing';
+import { applyFilters, sampleCircleAverage } from '../../../utils/imageProcessing';
+import { rgbToHex } from '../../../utils/colorUtils';
 import { quantizeImage } from '../../../utils/kMeansWrapper';
 import { findMixRecipe } from '../../../services/ColorMixer';
 
@@ -75,6 +76,17 @@ export class CanvasPipeline {
     filtered.getContext('2d')!.putImageData(imageData, 0, 0);
     this.setState({ status: 'ready', error: null });
     return imageData;
+  }
+
+  getColorAt(x: number, y: number, radius: number): string {
+    const filtered = this.getFilteredCanvas();
+    const canvas = filtered ?? this._sourceCanvas;
+    if (!canvas || canvas.width === 0) return '#000000';
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return '#000000';
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const [r, g, b] = sampleCircleAverage(imageData, x, y, radius);
+    return rgbToHex(r, g, b);
   }
 
   runQuantization(imageData: ImageData, k: number, lockedColors: Color[]): Color[] {

@@ -14,6 +14,7 @@ interface FilterContextValue {
   onAddFilter: (type: FilterType) => void;
   onDuplicateFilter: (id: string) => void;
   onRemoveFilter: (id: string) => void;
+  onToggleFilter: (id: string) => void;
   onUpdateFilter: (id: string, params: Record<string, number>) => void;
   onPreviewFilter: (id: string, params: Record<string, number>) => void;
   onReorderFilters: (filters: FilterInstance[]) => void;

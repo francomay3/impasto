@@ -16,6 +16,7 @@ export function FilterItem({ filter }: { filter: FilterInstance }) {
     filters,
     samplingLevels,
     onRemoveFilter,
+    onToggleFilter,
     onUpdateFilter,
     onPreviewFilter,
     onStartSamplingLevels,
@@ -91,6 +92,7 @@ export function FilterItem({ filter }: { filter: FilterInstance }) {
         attributes={attributes as unknown as Record<string, unknown>}
         listeners={listeners as Record<string, unknown> | undefined}
         onToggleExpand={() => setExpanded((v) => !v)}
+        onToggleEnabled={() => onToggleFilter(filter.id)}
         onRemove={() => onRemoveFilter(filter.id)}
       />
       <Collapse in={expanded}>

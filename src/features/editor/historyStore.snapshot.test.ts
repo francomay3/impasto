@@ -21,7 +21,6 @@ function makeState(overrides: Partial<ProjectState> = {}): ProjectState {
   return {
     id: 'test-id',
     name: 'Test',
-    sourceImage: null,
     palette: [],
     groups: [],
     paletteSize: 8,
@@ -44,81 +43,81 @@ describe('toSnapshot', () => {
     past = [];
   });
 
-  it('produces a snapshot with imageId: null when sourceImage is null', () => {
-    const state = makeState({ sourceImage: null });
-    const snap = toSnapshot(state, store, order, past, null);
+  it('produces a snapshot with imageId: null when image is null', () => {
+    const state = makeState();
+    const snap = toSnapshot(state, null, store, order, past, null);
     expect(snap.imageId).toBeNull();
   });
 
   it('stores the image and returns a snapshot with the new imageId', () => {
     const img = makeImage('x');
-    const state = makeState({ sourceImage: img });
-    const snap = toSnapshot(state, store, order, past, null);
+    const state = makeState();
+    const snap = toSnapshot(state, img, store, order, past, null);
     expect(typeof snap.imageId).toBe('string');
     expect(store.get(snap.imageId!)).toBe(img);
   });
 
   it('reuses the previous imageId when the image object has not changed', () => {
     const img = makeImage('x');
-    const state = makeState({ sourceImage: img });
-    const snap1 = toSnapshot(state, store, order, past, null);
-    const snap2 = toSnapshot(state, store, order, past, snap1.imageId);
+    const state = makeState();
+    const snap1 = toSnapshot(state, img, store, order, past, null);
+    const snap2 = toSnapshot(state, img, store, order, past, snap1.imageId);
     expect(snap2.imageId).toBe(snap1.imageId);
     expect(store.size).toBe(1);
   });
 
   it('snapshot does not contain sourceImage', () => {
     const img = makeImage('x');
-    const state = makeState({ sourceImage: img });
-    const snap = toSnapshot(state, store, order, past, null);
+    const state = makeState();
+    const snap = toSnapshot(state, img, store, order, past, null);
     expect('sourceImage' in snap).toBe(false);
   });
 });
 
 describe('fromSnapshot', () => {
-  it('resolves sourceImage from the store', () => {
+  it('resolves image from the store', () => {
     const img = makeImage('z');
     const store = new Map<ImageId, RawImage>([['img-id', img]]);
-    const snap = { ...makeState(), sourceImage: undefined, imageId: 'img-id' } as unknown as Snapshot;
-    const state = fromSnapshot(snap, store);
-    expect(state.sourceImage).toBe(img);
+    const snap = { ...makeState(), imageId: 'img-id' } as Snapshot;
+    const { image } = fromSnapshot(snap, store);
+    expect(image).toBe(img);
   });
 
-  it('returns null sourceImage when imageId is null', () => {
-    const snap = { ...makeState(), sourceImage: undefined, imageId: null } as unknown as Snapshot;
-    const state = fromSnapshot(snap, new Map());
-    expect(state.sourceImage).toBeNull();
+  it('returns null image when imageId is null', () => {
+    const snap = { ...makeState(), imageId: null } as Snapshot;
+    const { image } = fromSnapshot(snap, new Map());
+    expect(image).toBeNull();
   });
 
-  it('returns null sourceImage when imageId is not in store', () => {
-    const snap = { ...makeState(), sourceImage: undefined, imageId: 'missing' } as unknown as Snapshot;
-    const state = fromSnapshot(snap, new Map());
-    expect(state.sourceImage).toBeNull();
+  it('returns null image when imageId is not in store', () => {
+    const snap = { ...makeState(), imageId: 'missing' } as Snapshot;
+    const { image } = fromSnapshot(snap, new Map());
+    expect(image).toBeNull();
   });
 });
 
 describe('toSnapshot / fromSnapshot round-trip', () => {
-  it('reconstructs the original state', () => {
+  it('reconstructs the original state and image', () => {
     const img = makeImage('rt');
-    const original = makeState({ name: 'Round Trip', sourceImage: img });
+    const original = makeState({ name: 'Round Trip' });
     const store = new Map<ImageId, RawImage>();
     const order: ImageId[] = [];
     const past: Snapshot[] = [];
-    const snap = toSnapshot(original, store, order, past, null);
-    const restored = fromSnapshot(snap, store);
-    expect(restored.name).toBe('Round Trip');
-    expect(restored.sourceImage).toBe(img);
+    const snap = toSnapshot(original, img, store, order, past, null);
+    const { state, image } = fromSnapshot(snap, store);
+    expect(state.name).toBe('Round Trip');
+    expect(image).toBe(img);
   });
 
   it('round-trips a state with no image', () => {
-    const original = makeState({ name: 'No Image', sourceImage: null });
+    const original = makeState({ name: 'No Image' });
     const store = new Map<ImageId, RawImage>();
     const order: ImageId[] = [];
     const past: Snapshot[] = [];
-    const snap = toSnapshot(original, store, order, past, null);
-    const restored = fromSnapshot(snap, store);
-    expect(restored.sourceImage).toBeNull();
-    expect(restored.name).toBe('No Image');
+    const snap = toSnapshot(original, null, store, order, past, null);
+    const { state, image } = fromSnapshot(snap, store);
+    expect(image).toBeNull();
+    expect(state.name).toBe('No Image');
   });
 });
 

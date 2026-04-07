@@ -1,5 +1,5 @@
 import { Group, Box, Text, ActionIcon, Tooltip } from '@mantine/core';
-import { GripVertical, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { GripVertical, ChevronDown, ChevronUp, Trash2, Eye, EyeOff } from 'lucide-react';
 import type { FilterInstance } from '../../../types';
 import { FILTER_LABELS } from '../../../types';
 
@@ -10,6 +10,7 @@ interface Props {
   attributes: Record<string, unknown>;
   listeners: Record<string, unknown> | undefined;
   onToggleExpand: () => void;
+  onToggleEnabled: () => void;
   onRemove: () => void;
 }
 
@@ -20,8 +21,10 @@ export function FilterItemHeader({
   attributes,
   listeners,
   onToggleExpand,
+  onToggleEnabled,
   onRemove,
 }: Props) {
+  const enabled = filter.enabled !== false;
   return (
     <Group
       px="xs"
@@ -42,9 +45,20 @@ export function FilterItemHeader({
       >
         <GripVertical size={14} />
       </Box>
-      <Text size="xs" fw={500} style={{ flex: 1 }}>
+      <Text size="xs" fw={500} style={{ flex: 1, opacity: enabled ? 1 : 0.4 }}>
         {FILTER_LABELS[filter.type]}
       </Text>
+      <Tooltip label={enabled ? 'Disable filter' : 'Enable filter'} transitionProps={{ duration: 0 }}>
+        <ActionIcon
+          size="xs"
+          variant="subtle"
+          color={enabled ? 'gray' : 'dimmed'}
+          data-testid="filter-enable-toggle"
+          onClick={(e) => { e.stopPropagation(); onToggleEnabled(); }}
+        >
+          {enabled ? <Eye size={12} /> : <EyeOff size={12} />}
+        </ActionIcon>
+      </Tooltip>
       <ActionIcon
         size="xs"
         variant="subtle"

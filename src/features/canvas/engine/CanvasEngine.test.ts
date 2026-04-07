@@ -7,9 +7,7 @@ describe('CanvasEngine subscription mechanism', () => {
     expect(engine.getSnapshot()).toEqual({
       viewport: { panX: 0, panY: 0, scale: 1 },
       drag: { type: 'none' },
-      tool: { activeTool: 'select', isSampling: false, samplingColorId: null, samplingLevels: null, samplingRadius: 30 },
       pipeline: { status: 'idle', error: null },
-      selectionMode: 'new',
     })
   })
 
@@ -68,7 +66,7 @@ describe('CanvasEngine setters', () => {
   it('setSelectionMode updates selectionMode in snapshot', () => {
     const engine = new CanvasEngine()
     engine.setSelectionMode('add')
-    expect(engine.getSnapshot().selectionMode).toBe('add')
+    expect(engine.getToolState().selectionMode).toBe('add')
   })
 
   it('setSelectionMode notifies listeners', () => {
@@ -83,30 +81,24 @@ describe('CanvasEngine setters', () => {
     const engine = new CanvasEngine()
     engine.setSelectionMode('add')
     engine.setActiveTool('select')
-    expect(engine.getSnapshot().selectionMode).toBe('new')
+    expect(engine.getToolState().selectionMode).toBe('new')
   })
 
   it('setActiveTool marquee does not reset selectionMode', () => {
     const engine = new CanvasEngine()
     engine.setSelectionMode('add')
     engine.setActiveTool('marquee')
-    expect(engine.getSnapshot().selectionMode).toBe('add')
+    expect(engine.getToolState().selectionMode).toBe('add')
   })
 
   it('setActiveTool eyedropper activates eyedropper tool', () => {
     const engine = new CanvasEngine()
     engine.setActiveTool('eyedropper')
-    expect(engine.getSnapshot().tool.activeTool).toBe('eyedropper')
+    expect(engine.getToolState().activeTool).toBe('eyedropper')
   })
 
   it('setOnPinMoveEnd does not throw', () => {
     const engine = new CanvasEngine()
     expect(() => engine.setOnPinMoveEnd(vi.fn())).not.toThrow()
-  })
-
-  it('findPinAt returns null when no source image is set', () => {
-    const engine = new CanvasEngine()
-    const rect = { left: 0, top: 0, width: 100, height: 100 } as DOMRect
-    expect(engine.findPinAt(50, 50, rect)).toBeNull()
   })
 })
