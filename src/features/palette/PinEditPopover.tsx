@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Portal, Paper, TextInput, Button, Group, Stack, Text } from '@mantine/core';
 import { usePaletteContext } from './PaletteContext';
 import { PinEditGroupSection } from './PinEditGroupSection';
+import { clampToViewport } from '../../utils/geometry';
+import { resolveGroupOnSave } from '../../utils/groupFormLogic';
 
 const POPOVER_W = 220;
 const POPOVER_H_EST = 210;
@@ -39,26 +41,15 @@ export function PinEditPopover({ colorId, position, onClose }: Props) {
 
   if (!color) return null;
 
-  const left = Math.min(position.x + 4, window.innerWidth - POPOVER_W - 8);
-  const top = Math.min(position.y + 4, window.innerHeight - POPOVER_H_EST - 8);
+  const { left, top } = clampToViewport(position.x + 4, position.y + 4, POPOVER_W, POPOVER_H_EST);
 
   const handleSave = () => {
     const trimmed = name.trim();
     if (trimmed !== (color.name ?? '')) onRenameColor(colorId, trimmed);
 
-    let finalGroupId = groupId;
-    if (creatingGroup) {
-      const groupName = newGroupName.trim();
-      if (groupName) {
-        const id = crypto.randomUUID();
-        onAddGroup(id, groupName);
-        finalGroupId = id;
-      } else {
-        finalGroupId = null;
-      }
-    }
-    if (finalGroupId !== (color.groupId ?? null))
-      onSetColorGroup(colorId, finalGroupId ?? undefined);
+    const { finalGroupId, newGroup } = resolveGroupOnSave(creatingGroup, groupId, newGroupName);
+    if (newGroup) onAddGroup(newGroup.id, newGroup.name);
+    if (finalGroupId !== (color.groupId ?? null)) onSetColorGroup(colorId, finalGroupId ?? undefined);
     onClose();
   };
 

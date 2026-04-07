@@ -4,6 +4,7 @@ import type { User } from 'firebase/auth';
 interface AuthStore {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
 }
 
 const E2E_TEST_MODE = import.meta.env.VITE_E2E_TEST_MODE === 'true';
@@ -16,4 +17,5 @@ const TEST_USER = E2E_TEST_MODE && !E2E_SIGNED_OUT
 export const useAuthStore = create<AuthStore>(() => ({
   user: TEST_USER,
   loading: E2E_SIGNED_OUT ? false : !E2E_TEST_MODE,
+  isAdmin: false,
 }));

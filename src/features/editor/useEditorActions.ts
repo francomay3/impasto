@@ -77,6 +77,7 @@ export function useEditorActions({
     onPasteFile: editorHandlers.handlePasteFile,
     onToggleSelectTool: editorHandlers.handleToggleSelectTool,
     onToggleMarqueeTool: editorHandlers.handleToggleMarqueeTool,
+    onResetFilterTool: () => useEditorStore.getState().setActiveFilterTool('pan'),
     interaction,
   });
 

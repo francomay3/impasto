@@ -36,6 +36,22 @@ export function deltaELab(
   return Math.sqrt(dl * dl + da * da + db * db);
 }
 
+export function normalizeHex(hex: string): string {
+  const h = hex.replace('#', '');
+  return '#' + (h.length === 3 ? h.split('').map((c) => c + c).join('') : h.padEnd(6, '0').slice(0, 6));
+}
+
+export function isUsableColor(hex: string): boolean {
+  const v = parseInt(hex.replace('#', ''), 16);
+  const r = ((v >> 16) & 0xff) / 255;
+  const g = ((v >> 8) & 0xff) / 255;
+  const b = (v & 0xff) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const s = max === min ? 0 : l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
+  return l >= 0.1 && l <= 0.85 && s >= 0.15;
+}
+
 export function getPixelHex(canvas: HTMLCanvasElement, clientX: number, clientY: number): string | null {
   const rect = canvas.getBoundingClientRect();
   const x = clientX - rect.left;

@@ -9,6 +9,7 @@ import { useContextMenuStore } from '../../../shared/contextMenuStore';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
 import { FilterWidget } from './FilterWidget';
 import { FilterItemHeader } from './FilterItemHeader';
+import { swapFilters } from '../../../utils/filterItemLogic';
 
 export function FilterItem({ filter }: { filter: FilterInstance }) {
   const {
@@ -32,11 +33,7 @@ export function FilterItem({ filter }: { filter: FilterInstance }) {
   const openContextMenu = useCallback(
     ({ x, y }: { x: number; y: number }) => {
       const idx = filters.findIndex((f) => f.id === filter.id);
-      const swap = (a: number, b: number) => {
-        const next = [...filters];
-        [next[a], next[b]] = [next[b], next[a]];
-        onReorderFilters(next);
-      };
+      const swap = (a: number, b: number) => onReorderFilters(swapFilters(filters, a, b));
       openMenu({
         x,
         y,

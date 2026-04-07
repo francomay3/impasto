@@ -1,7 +1,8 @@
 import { Box, Stack, Tabs, Text, Title } from '@mantine/core';
 import { Layers, Palette, BarChart2, Grid, Scaling, Brush, ImageUp } from 'lucide-react';
 import { ToolRail, type ToolRailItem } from '../../canvas/ToolRail';
-import { TOOLS } from '../../../tools';
+import { TOOLS, FILTER_TOOLS } from '../../../tools';
+import { useEditorStore } from '../editorStore';
 import { FilterPanel } from '../../filters/FilterPanel';
 import { PaletteAside } from '../../palette/PaletteAside';
 import { ErrorBoundary } from '../../../shared/ErrorBoundary';
@@ -24,6 +25,16 @@ export function EditorTabs({ height = '100%' }: Props) {
   const { sourceImage } = useCanvasContext();
   const engine = useEngine();
   const { activeTool, setActiveTool } = useToolState(engine);
+
+  const activeFilterTool = useEditorStore((s) => s.activeFilterTool);
+  const setActiveFilterTool = useEditorStore((s) => s.setActiveFilterTool);
+
+  const filterToolRailItems: ToolRailItem[] = FILTER_TOOLS.map((tool) => ({
+    icon: <tool.icon size={16} />,
+    label: tool.label,
+    active: activeFilterTool === tool.id,
+    onClick: () => setActiveFilterTool(tool.id),
+  }));
 
   const toolRailItems: ToolRailItem[] = TOOLS.map((tool) => ({
     icon: <tool.icon size={16} />,
@@ -95,6 +106,7 @@ export function EditorTabs({ height = '100%' }: Props) {
       <Tabs.Panel value="filters" style={{ flex: 1, overflow: 'hidden' }}>
         <TabLayout
           toolbar={<ContextualToolbar tab="filters" />}
+          rail={<ToolRail items={filterToolRailItems} />}
           aside={
             <ErrorBoundary label="Filter panel" compact>
               <FilterPanel />

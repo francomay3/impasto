@@ -17,6 +17,7 @@ interface Params {
   onPasteFile: (file: File) => void;
   onToggleSelectTool: () => void;
   onToggleMarqueeTool: () => void;
+  onResetFilterTool: () => void;
   interaction: Pick<InteractionAPI, 'isSampling' | 'cancel'>;
 }
 
@@ -30,6 +31,7 @@ export function useEditorHotkeys({
   onPasteFile,
   onToggleSelectTool,
   onToggleMarqueeTool,
+  onResetFilterTool,
   interaction,
 }: Params) {
   const mousePos = useRef({ x: 0, y: 0 });
@@ -61,8 +63,8 @@ export function useEditorHotkeys({
   // Escape must use a capture-phase listener because some React components call
   // e.stopPropagation() (which in React 18 also calls nativeEvent.stopPropagation()),
   // preventing the event from reaching document.documentElement where useHotkeys listens.
-  const escapeRef = useRef({ onClearSelection, cancel: interaction.cancel });
-  useEffect(() => { escapeRef.current = { onClearSelection, cancel: interaction.cancel }; });
+  const escapeRef = useRef({ onClearSelection, cancel: interaction.cancel, onResetFilterTool });
+  useEffect(() => { escapeRef.current = { onClearSelection, cancel: interaction.cancel, onResetFilterTool }; });
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -76,6 +78,7 @@ export function useEditorHotkeys({
       ) return;
       escapeRef.current.onClearSelection();
       escapeRef.current.cancel();
+      escapeRef.current.onResetFilterTool();
     };
     document.addEventListener('keydown', handler, true);
     return () => document.removeEventListener('keydown', handler, true);

@@ -7,6 +7,7 @@ import { useContextMenuStore } from '../../../shared/contextMenuStore';
 import { useContextTrigger } from '../../../hooks/useContextTrigger';
 import { useEditorStore } from '../../editor/editorStore';
 import { GroupNameEditor } from './GroupNameEditor';
+import { areAllPinsHidden } from '../../../utils/groupHeaderLogic';
 
 interface Props {
   group: ColorGroup;
@@ -35,8 +36,7 @@ export function GroupHeader({
   const setGroupPinsVisible = useEditorStore(s => s.setGroupPinsVisible);
   const openMenu = useContextMenuStore(s => s.open);
 
-  const allPinsHidden =
-    sampleColorIds.length > 0 && sampleColorIds.every((id) => hiddenPinIds.has(id));
+  const allPinsHidden = areAllPinsHidden(sampleColorIds, hiddenPinIds);
 
   const { confirm: confirmDelete, confirmDialog } = useConfirmDialog({
     title: 'Delete group',

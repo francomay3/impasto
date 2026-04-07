@@ -4,8 +4,8 @@ import { useAuthStore } from './authStore';
 import { AuthScreen } from './AuthScreen';
 
 export function AuthGuard({ children }: { children: ReactNode }) {
-  const user = useAuthStore(s => s.user);
-  const loading = useAuthStore(s => s.loading);
+  const user = useAuthStore((s) => s.user);
+  const loading = useAuthStore((s) => s.loading);
 
   if (loading) {
     return (

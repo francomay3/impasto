@@ -14,11 +14,16 @@ import { Eye, EyeOff, Merge, Trash2, X } from 'lucide-react';
 import { useMergePins } from './useMergePins';
 import { useEditorStore } from '../editor/editorStore';
 import { usePaletteContext } from './PaletteContext';
+import { clampToViewport } from '../../utils/geometry';
+import { getSelectionState, buildGroupOptions } from '../../utils/selectionUtils';
 
 interface PopoverPos {
   x: number;
   y: number;
 }
+
+const DIALOG_W = 220;
+const DIALOG_H_EST = 280;
 
 export function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: () => void }) {
   const selectedColorIds = useEditorStore(s => s.selectedColorIds);
@@ -30,15 +35,9 @@ export function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: (
   const mergePins = useMergePins();
 
   const ids = [...selectedColorIds];
-  const canMerge = ids.length === 2 && ids.every((id) => palette.find((c) => c.id === id)?.sample);
-  const allHidden = ids.every((id) => hiddenPinIds.has(id));
-  const groupIds = [...new Set(ids.map((id) => palette.find((c) => c.id === id)?.groupId))];
-  const currentGroupId = groupIds.length === 1 ? (groupIds[0] ?? '__none__') : null;
-
-  const groupOptions = [
-    { value: '__none__', label: 'No group' },
-    ...groups.map((g) => ({ value: g.id, label: g.name })),
-  ];
+  const { canMerge, allHidden, currentGroupId } = getSelectionState(ids, palette, hiddenPinIds);
+  const groupOptions = buildGroupOptions(groups);
+  const { left, top } = clampToViewport(pos.x, pos.y, DIALOG_W, DIALOG_H_EST);
 
   const handleSetGroup = (value: string | null) => {
     const groupId = value === '__none__' ? undefined : (value ?? undefined);
@@ -60,11 +59,6 @@ export function SelectionGroupDialog({ pos, close }: { pos: PopoverPos; close: (
     selectColor(null);
     close();
   };
-
-  const DIALOG_W = 220;
-  const DIALOG_H_EST = 280;
-  const left = Math.min(pos.x, window.innerWidth - DIALOG_W - 8);
-  const top = Math.min(pos.y, window.innerHeight - DIALOG_H_EST - 8);
 
   return (
     <Paper

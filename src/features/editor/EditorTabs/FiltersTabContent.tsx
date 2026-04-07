@@ -8,19 +8,7 @@ import { useFilterContext } from '../../filters/FilterContext';
 import { useFilteredImage } from '../../filters/useFilteredImage';
 import { CanvasViewport } from '../../canvas/CanvasViewport';
 import { SamplerOverlay } from '../../canvas/SamplerOverlay';
-import type { RawImage } from '../../../types';
-
-function drawRawImage(canvas: HTMLCanvasElement, source: RawImage) {
-  canvas.width = source.width;
-  canvas.height = source.height;
-  canvas
-    .getContext('2d')!
-    .putImageData(
-      new ImageData(new Uint8ClampedArray(source.data), source.width, source.height),
-      0,
-      0
-    );
-}
+import { drawRawImage, drawImageDataToCanvas } from '../../../utils/canvasUtils';
 
 const labelStyle: React.CSSProperties = {
   position: 'absolute',
@@ -45,11 +33,7 @@ export function FiltersTabContent() {
   }, [sourceImage]);
 
   useEffect(() => {
-    const canvas = filteredCanvasRef.current;
-    if (!canvas || !filteredData) return;
-    canvas.width = filteredData.width;
-    canvas.height = filteredData.height;
-    canvas.getContext('2d')!.putImageData(filteredData, 0, 0);
+    if (filteredCanvasRef.current && filteredData) drawImageDataToCanvas(filteredCanvasRef.current, filteredData);
   }, [filteredData, filteredCanvasRef]);
 
   return (

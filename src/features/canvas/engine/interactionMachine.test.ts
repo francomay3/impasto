@@ -70,6 +70,40 @@ describe('interactionMachine', () => {
     expect(snap.value).toBe('sampling_levels')
     expect(snap.context.samplingLevels).toEqual({ filterId: 'f1', point: 'black' })
   })
+
+  it('CANCEL from marquee returns to select', () => {
+    const actor = startActor()
+    actor.send({ type: 'SELECT_TOOL', tool: 'marquee' })
+    actor.send({ type: 'CANCEL' })
+    expect(actor.getSnapshot().value).toBe('select')
+  })
+
+  it('START_SAMPLING_COLOR from marquee transitions to sampling_color', () => {
+    const actor = startActor()
+    actor.send({ type: 'SELECT_TOOL', tool: 'marquee' })
+    actor.send({ type: 'START_SAMPLING_COLOR', colorId: 'c1' })
+    const snap = actor.getSnapshot()
+    expect(snap.value).toBe('sampling_color')
+    expect(snap.context.samplingColorId).toBe('c1')
+  })
+
+  it('START_SAMPLING_LEVELS from marquee transitions to sampling_levels', () => {
+    const actor = startActor()
+    actor.send({ type: 'SELECT_TOOL', tool: 'marquee' })
+    actor.send({ type: 'START_SAMPLING_LEVELS', filterId: 'f2', point: 'white' })
+    const snap = actor.getSnapshot()
+    expect(snap.value).toBe('sampling_levels')
+    expect(snap.context.samplingLevels).toEqual({ filterId: 'f2', point: 'white' })
+  })
+
+  it('CANCEL from sampling_levels returns to select and clears samplingLevels', () => {
+    const actor = startActor()
+    actor.send({ type: 'START_SAMPLING_LEVELS', filterId: 'f1', point: 'black' })
+    actor.send({ type: 'CANCEL' })
+    const snap = actor.getSnapshot()
+    expect(snap.value).toBe('select')
+    expect(snap.context.samplingLevels).toBeNull()
+  })
 })
 
 describe('deriveToolState', () => {

@@ -41,5 +41,11 @@ export async function uploadProjectImage(
   const compressed = await compressToWebP(file);
   const r = imageRef(userId, projectId);
   await uploadBytes(r, compressed, { contentType: 'image/webp' });
-  return getDownloadURL(r);
+  return `users/${userId}/projects/${projectId}/image`;
+}
+
+/** Resolve a storage path (or legacy full URL) to a fresh download URL. */
+export async function getProjectImageUrl(pathOrUrl: string): Promise<string> {
+  if (pathOrUrl.startsWith('https://')) return pathOrUrl;
+  return getDownloadURL(ref(storage, pathOrUrl));
 }

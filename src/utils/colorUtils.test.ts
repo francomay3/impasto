@@ -80,3 +80,72 @@ describe('rgbToHex / hexToRgb round-trip', () => {
     });
   }
 });
+
+import { rgbToLab, deltaELab, labMidpoint, normalizeHex, isUsableColor } from './colorUtils';
+
+describe('rgbToLab', () => {
+  it('maps black to L=0', () => {
+    const [l] = rgbToLab(0, 0, 0);
+    expect(l).toBeCloseTo(0, 0);
+  });
+
+  it('maps white to L≈100', () => {
+    const [l] = rgbToLab(255, 255, 255);
+    expect(l).toBeCloseTo(100, 0);
+  });
+
+  it('returns a 3-tuple', () => {
+    const result = rgbToLab(128, 64, 192);
+    expect(result).toHaveLength(3);
+    result.forEach((v) => expect(typeof v).toBe('number'));
+  });
+});
+
+describe('deltaELab', () => {
+  it('returns 0 for identical colors', () => {
+    const lab: [number, number, number] = [50, 20, -10];
+    expect(deltaELab(lab, lab)).toBe(0);
+  });
+
+  it('is symmetric', () => {
+    const a: [number, number, number] = [50, 10, -5];
+    const b: [number, number, number] = [60, 20, 5];
+    expect(deltaELab(a, b)).toBeCloseTo(deltaELab(b, a), 10);
+  });
+});
+
+describe('labMidpoint', () => {
+  it('returns the midpoint of two Lab values', () => {
+    const a: [number, number, number] = [0, 0, 0];
+    const b: [number, number, number] = [100, 20, -40];
+    expect(labMidpoint(a, b)).toEqual([50, 10, -20]);
+  });
+});
+
+describe('normalizeHex', () => {
+  it('expands 3-digit shorthand', () => {
+    expect(normalizeHex('#abc')).toBe('#aabbcc');
+  });
+
+  it('passes through a full 6-digit hex unchanged', () => {
+    expect(normalizeHex('#ff0080')).toBe('#ff0080');
+  });
+});
+
+describe('isUsableColor', () => {
+  it('returns false for near-black', () => {
+    expect(isUsableColor('#0d0d0d')).toBe(false);
+  });
+
+  it('returns false for near-white', () => {
+    expect(isUsableColor('#f5f5f5')).toBe(false);
+  });
+
+  it('returns false for neutral gray (no saturation)', () => {
+    expect(isUsableColor('#808080')).toBe(false);
+  });
+
+  it('returns true for a vivid mid-tone color', () => {
+    expect(isUsableColor('#e05050')).toBe(true);
+  });
+});

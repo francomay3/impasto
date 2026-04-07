@@ -7,6 +7,7 @@ import useConfirmDialog from '../../shared/useConfirmDialog';
 import { ProjectCardPreview } from './ProjectCardPreview';
 import { RenameProjectModal } from './RenameProjectModal';
 import { useContextMenuStore } from '../../shared/contextMenuStore';
+import { formatProjectDate, getProjectRoute } from '../../utils/projectCardLogic';
 
 interface Props {
   project: ProjectState;
@@ -38,9 +39,9 @@ export function ProjectCard({ project, onDelete, onRename }: Props) {
   const openMenu = useContextMenuStore(s => s.open);
   const [hovered, setHovered] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
-  const date = new Date(project.updatedAt).toLocaleDateString();
-  const open = () => navigate(`/project/${project.id}`);
-  const openInNewTab = () => window.open(`/project/${project.id}`, '_blank');
+  const date = formatProjectDate(project.updatedAt);
+  const open = () => navigate(getProjectRoute(project.id));
+  const openInNewTab = () => window.open(getProjectRoute(project.id), '_blank');
 
   const { confirm, confirmDialog } = useConfirmDialog({
     title: 'Delete project',

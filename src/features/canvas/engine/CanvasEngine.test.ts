@@ -63,3 +63,50 @@ describe('CanvasEngine subscription mechanism', () => {
     expect(engine.getSnapshot()).toBe(engine.getSnapshot())
   })
 })
+
+describe('CanvasEngine setters', () => {
+  it('setSelectionMode updates selectionMode in snapshot', () => {
+    const engine = new CanvasEngine()
+    engine.setSelectionMode('add')
+    expect(engine.getSnapshot().selectionMode).toBe('add')
+  })
+
+  it('setSelectionMode notifies listeners', () => {
+    const engine = new CanvasEngine()
+    const listener = vi.fn()
+    engine.subscribe(listener)
+    engine.setSelectionMode('subtract')
+    expect(listener).toHaveBeenCalledTimes(1)
+  })
+
+  it('setActiveTool select resets selectionMode to new', () => {
+    const engine = new CanvasEngine()
+    engine.setSelectionMode('add')
+    engine.setActiveTool('select')
+    expect(engine.getSnapshot().selectionMode).toBe('new')
+  })
+
+  it('setActiveTool marquee does not reset selectionMode', () => {
+    const engine = new CanvasEngine()
+    engine.setSelectionMode('add')
+    engine.setActiveTool('marquee')
+    expect(engine.getSnapshot().selectionMode).toBe('add')
+  })
+
+  it('setActiveTool eyedropper activates eyedropper tool', () => {
+    const engine = new CanvasEngine()
+    engine.setActiveTool('eyedropper')
+    expect(engine.getSnapshot().tool.activeTool).toBe('eyedropper')
+  })
+
+  it('setOnPinMoveEnd does not throw', () => {
+    const engine = new CanvasEngine()
+    expect(() => engine.setOnPinMoveEnd(vi.fn())).not.toThrow()
+  })
+
+  it('findPinAt returns null when no source image is set', () => {
+    const engine = new CanvasEngine()
+    const rect = { left: 0, top: 0, width: 100, height: 100 } as DOMRect
+    expect(engine.findPinAt(50, 50, rect)).toBeNull()
+  })
+})

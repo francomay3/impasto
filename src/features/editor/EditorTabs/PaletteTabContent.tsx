@@ -1,6 +1,5 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { Box, Group, Loader, Text } from '@mantine/core';
-import chroma from 'chroma-js';
 import { useCanvasContext } from '../../canvas/CanvasContext';
 import { useFilterContext } from '../../filters/FilterContext';
 import { usePaletteContext } from '../../palette/PaletteContext';
@@ -9,6 +8,8 @@ import { useIndexedImage } from '../../../hooks/useIndexedImage';
 import { useMixedPalette } from '../../../hooks/useMixedPalette';
 import { useEditorStore } from '../editorStore';
 import { useExportSettings } from '../useExportSettings';
+import { getValidPaletteHexes, computeLabPalette } from '../../../utils/paletteComputation';
+import { drawImageDataToCanvas } from '../../../utils/canvasUtils';
 import { CanvasViewport } from '../../canvas/CanvasViewport';
 import { SamplePinsOverlay } from '../../canvas/SamplePinsOverlay';
 import { SamplerOverlay } from '../../canvas/SamplerOverlay';
@@ -47,15 +48,8 @@ export function PaletteTabContent() {
 
   const filteredData = useFilteredImage(sourceImage, filters);
 
-  const paletteHexes = useMemo(
-    () => palette.flatMap((c) => { try { chroma(c.hex); return [c.hex]; } catch { return []; } }),
-    [palette]
-  );
-
-  const labPalette = useMemo(
-    () => paletteHexes.map((hex) => { const [l, a, b] = chroma(hex).lab(); return { l, a, b }; }),
-    [paletteHexes]
-  );
+  const paletteHexes = useMemo(() => getValidPaletteHexes(palette), [palette]);
+  const labPalette = useMemo(() => computeLabPalette(paletteHexes), [paletteHexes]);
 
   const { data: mixedLabPalette, isLoading: isMixLoading } = useMixedPalette(
     paletteHexes, pigments, minPaintPercent, delta, showMixedColors
@@ -70,19 +64,11 @@ export function PaletteTabContent() {
   );
 
   useEffect(() => {
-    const canvas = filteredRef.current;
-    if (!canvas || !filteredData) return;
-    canvas.width = filteredData.width;
-    canvas.height = filteredData.height;
-    canvas.getContext('2d')!.putImageData(filteredData, 0, 0);
+    if (filteredRef.current && filteredData) drawImageDataToCanvas(filteredRef.current, filteredData);
   }, [filteredData]);
 
   useEffect(() => {
-    const canvas = indexedCanvasRef.current;
-    if (!canvas || !indexedData) return;
-    canvas.width = indexedData.width;
-    canvas.height = indexedData.height;
-    canvas.getContext('2d')!.putImageData(indexedData, 0, 0);
+    if (indexedCanvasRef.current && indexedData) drawImageDataToCanvas(indexedCanvasRef.current, indexedData);
   }, [indexedData, indexedCanvasRef]);
 
   return (

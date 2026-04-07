@@ -18,6 +18,20 @@ const barStyle: React.CSSProperties = {
   background: 'var(--mantine-color-dark-7)',
 };
 
+const CROP_RATIOS = ['Free', '1:1', '4:3', '16:9', '3:2'];
+
+function FilterToolOptions() {
+  const activeFilterTool = useEditorStore((s) => s.activeFilterTool);
+  if (activeFilterTool !== 'crop') return null;
+  return (
+    <Group gap={2}>
+      {CROP_RATIOS.map((r) => <SlimButton key={r}>{r}</SlimButton>)}
+      <SlimNumberInput placeholder="W" suffix="px" w={72} />
+      <SlimNumberInput placeholder="H" suffix="px" w={72} />
+    </Group>
+  );
+}
+
 function PaletteToolOptions() {
   const engine = useEngine();
   const { activeTool, samplingRadius, setSamplingRadius, selectionMode, setSelectionMode } = useToolState(engine);
@@ -121,7 +135,10 @@ interface Props {
 export function ContextualToolbar({ tab }: Props) {
   return (
     <div style={barStyle} data-testid="contextual-toolbar">
-      <Group gap={4}>{tab === 'palette' && <PaletteToolOptions />}</Group>
+      <Group gap={4}>
+        {tab === 'filters' && <FilterToolOptions />}
+        {tab === 'palette' && <PaletteToolOptions />}
+      </Group>
 
       <Group gap={2}>
         {tab === 'filters' && (

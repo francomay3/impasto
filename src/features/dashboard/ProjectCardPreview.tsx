@@ -1,30 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ProjectState } from '../../types';
-
-function normalizeHex(hex: string): string {
-  const h = hex.replace('#', '');
-  return (
-    '#' +
-    (h.length === 3
-      ? h
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : h.padEnd(6, '0').slice(0, 6))
-  );
-}
-
-function isUsable(hex: string) {
-  const v = parseInt(hex.replace('#', ''), 16);
-  const r = ((v >> 16) & 0xff) / 255;
-  const g = ((v >> 8) & 0xff) / 255;
-  const b = (v & 0xff) / 255;
-  const max = Math.max(r, g, b),
-    min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  const s = max === min ? 0 : l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
-  return l >= 0.1 && l <= 0.85 && s >= 0.15;
-}
+import { useProjectImageUrl } from '../../hooks/useProjectImageUrl';
+import { drawPaletteThumbnail } from '../../utils/canvasUtils';
 
 function PaletteThumbnail({ thumbnailColors }: { thumbnailColors: string[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,33 +11,7 @@ function PaletteThumbnail({ thumbnailColors }: { thumbnailColors: string[] }) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    const W = canvas.width;
-    const H = canvas.height;
-
-    ctx.fillStyle = '#1a1b1e';
-    ctx.fillRect(0, 0, W, H);
-
-    const usable = thumbnailColors.filter(isUsable);
-    const hexes = usable.length > 0 ? usable : thumbnailColors.length > 0 ? thumbnailColors : ['#444'];
-    const shuffled = [...hexes].sort(() => Math.random() - 0.5);
-
-    shuffled.forEach((hex) => {
-      const normalized = normalizeHex(hex);
-      const blobs = 3 + Math.floor(Math.random() * 5);
-      for (let i = 0; i < blobs; i++) {
-        const x = Math.random() * W;
-        const y = Math.random() * H;
-        const r = 30 + Math.random() * 80;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-        g.addColorStop(0, normalized + '99');
-        g.addColorStop(1, normalized + '00');
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    });
+    drawPaletteThumbnail(ctx, canvas.width, canvas.height, thumbnailColors);
   }, [thumbnailColors]);
 
   return (
@@ -80,13 +31,14 @@ function PaletteThumbnail({ thumbnailColors }: { thumbnailColors: string[] }) {
 
 export function ProjectCardPreview({ project }: { project: ProjectState }) {
   const [loaded, setLoaded] = useState(false);
+  const imageUrl = useProjectImageUrl(project.imageStorageUrl);
 
   return (
     <>
       {!loaded && <PaletteThumbnail thumbnailColors={project.thumbnailColors ?? []} />}
-      {project.imageStorageUrl && (
+      {imageUrl && (
         <img
-          src={project.imageStorageUrl}
+          src={imageUrl}
           alt={project.name}
           onLoad={() => setLoaded(true)}
           style={{

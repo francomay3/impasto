@@ -10,6 +10,7 @@ import { usePaletteDnd } from './usePaletteDnd';
 import { useSortPalette } from './useSortPalette';
 import { usePaletteContext } from '../PaletteContext';
 import { useEditorStore } from '../../editor/editorStore';
+import { createGroupEntry, getUngroupedColors } from '../paletteUtils';
 
 export function PaletteSidebar() {
   const {
@@ -29,8 +30,8 @@ export function PaletteSidebar() {
   const [newGroupId, setNewGroupId] = useState<string | null>(null);
 
   const handleAddGroup = () => {
-    const id = crypto.randomUUID();
-    onAddGroup(id, `Group ${groups.length + 1}`);
+    const { id, name } = createGroupEntry(groups.length);
+    onAddGroup(id, name);
     setNewGroupId(id);
   };
 
@@ -59,9 +60,7 @@ export function PaletteSidebar() {
     });
   };
 
-  const ungroupedColors = displayPalette.filter(
-    (c) => !c.groupId || !groups.find((g) => g.id === c.groupId)
-  );
+  const ungroupedColors = getUngroupedColors(displayPalette, groups);
   const isDraggingColor = draggingType === 'color';
 
   return (

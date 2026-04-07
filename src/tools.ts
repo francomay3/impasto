@@ -1,5 +1,5 @@
 import type React from 'react';
-import { MousePointer2 } from 'lucide-react';
+import { MousePointer2, Hand, Crop, RotateCw } from 'lucide-react';
 import { RectangleSelect } from './shared/icons/RectangleSelect';
 import { EyedropperAdd } from './shared/icons/EyedropperAdd';
 import { HOTKEYS } from './hotkeys';
@@ -14,6 +14,20 @@ interface Tool {
   shortcut: string;
   cursor: string;
 }
+
+export type FilterToolId = 'pan' | 'crop' | 'rotate';
+
+interface FilterTool {
+  id: FilterToolId;
+  icon: React.ComponentType<{ size?: number }>;
+  label: string;
+}
+
+export const FILTER_TOOLS: FilterTool[] = [
+  { id: 'pan', icon: Hand, label: 'Pan' },
+  { id: 'crop', icon: Crop, label: 'Crop' },
+  { id: 'rotate', icon: RotateCw, label: 'Rotate horizon' },
+];
 
 export const TOOLS: Tool[] = [
   { id: 'select', icon: MousePointer2, label: 'Select Mode', shortcut: HOTKEYS.TOOL_SELECT, cursor: 'default' },

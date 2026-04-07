@@ -9,7 +9,7 @@ import {
   saveFirestoreImageUrl,
   saveFirestoreThumbnailColors,
 } from '../../services/FirestoreService';
-import { uploadProjectImage } from '../../services/ImageStorageService';
+import { uploadProjectImage, getProjectImageUrl } from '../../services/ImageStorageService';
 import Editor from './Editor';
 import { DEFAULT_PROJECT_STATE, createRawImage } from '../../types';
 import type { ProjectState } from '../../types';
@@ -20,7 +20,8 @@ async function resolveProject(userId: string, projectId: string) {
   if (!project) return null;
 
   if (project.imageStorageUrl) {
-    const res = await fetch(project.imageStorageUrl);
+    const url = await getProjectImageUrl(project.imageStorageUrl);
+    const res = await fetch(url);
     const blob = await res.blob();
     const bitmap = await createImageBitmap(blob);
     const canvas = document.createElement('canvas');
