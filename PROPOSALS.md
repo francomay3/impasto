@@ -19,6 +19,7 @@ Konva provides all three via `Konva.Transformer` (crop/rotate handles) and `Konv
 The `CanvasEngine` creates and owns the `Konva.Stage` internally. Nothing outside the engine touches the stage directly. Components mount a `<div>` and hand it to `engine.mount(div)` — that is their only canvas interaction.
 
 This is the only scalable arrangement:
+
 - Conventions (like "don't touch the stage directly") erode over time; ownership enforced by `private` does not.
 - All rendering mutations go through engine methods, so there is a single source of truth.
 - The engine is fully testable without React — pass a real `HTMLDivElement`, inspect layer nodes.
@@ -59,15 +60,15 @@ Each renderer holds one `Konva.Layer` and a `Map<id, Konva.Node>`. It exposes on
 
 ### What disappears
 
-| Current file / class | Fate |
-|---|---|
-| `SamplePinsOverlay.tsx` (SVG) | Deleted — replaced by `PinRenderer` |
-| `SamplerOverlay.tsx` (2D canvas crosshair) | Deleted — replaced by a `Konva.Circle` node in UILayer |
-| `MarqueeSelectOverlay.tsx` | Deleted — replaced by a `Konva.Rect` node managed by `MarqueeController` |
-| `viewport.ts` (pan/zoom math) | Mostly deleted — Konva stage handles transforms; pure math utilities kept if needed |
-| `hitTest.ts` | Deleted — Konva handles hit detection natively |
-| `panHandler.ts` | Deleted — stage-level drag replaces this |
-| Parts of `drag.ts` | Pan and marquee drag move to Konva; pin drag becomes a Konva `dragend` event |
+| Current file / class                       | Fate                                                                                |
+| ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `SamplePinsOverlay.tsx` (SVG)              | Deleted — replaced by `PinRenderer`                                                 |
+| `SamplerOverlay.tsx` (2D canvas crosshair) | Deleted — replaced by a `Konva.Circle` node in UILayer                              |
+| `MarqueeSelectOverlay.tsx`                 | Deleted — replaced by a `Konva.Rect` node managed by `MarqueeController`            |
+| `viewport.ts` (pan/zoom math)              | Mostly deleted — Konva stage handles transforms; pure math utilities kept if needed |
+| `hitTest.ts`                               | Deleted — Konva handles hit detection natively                                      |
+| `panHandler.ts`                            | Deleted — stage-level drag replaces this                                            |
+| Parts of `drag.ts`                         | Pan and marquee drag move to Konva; pin drag becomes a Konva `dragend` event        |
 
 ### What stays exactly as-is
 
@@ -85,7 +86,7 @@ The `ENGINE_REFACTOR_PLAN.md` phases 1–4 are complete. Phases 5–7 are pendin
 
 - **Phase 5** — move `activeTool` to `editorStore`, remove `activeFilterTool`
 - **Phase 6** — wire `EyedropperController`, `MarqueeController`, `SelectController` into the live UI
-- **Phase 7** — cleanup, knip, full typecheck pass
+- **Phase 7** — cleanup, knip, full project-check pass
 
 **Complete phases 5–7 before starting the Konva migration.** Attempting both in parallel means wiring controllers into an architecture that is about to be replaced. The clean foundation phases 5–7 produce (tool state in the store, controllers decoupled from rendering) is exactly what makes the Konva migration safe and incremental.
 
@@ -148,7 +149,7 @@ The `ENGINE_REFACTOR_PLAN.md` phases 1–4 are complete. Phases 5–7 are pendin
 - Delete `hitTest.ts` (now unused)
 - Delete remaining parts of `drag.ts` replaced by Konva
 - Run `knip`, fix all dead exports
-- Run `npm run typecheck`
+- Run `bun project-check`
 - Run full test suite; update tests that inspected SVG nodes to inspect Konva layer nodes instead
 
 ---

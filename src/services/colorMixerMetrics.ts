@@ -2,6 +2,7 @@ import chroma from 'chroma-js';
 import mixbox from '../utils/mixbox';
 
 export function ciede2000(hex1: string, hex2: string): number {
+  // eslint-disable-next-line import/no-named-as-default-member
   return chroma.deltaE(hex1, hex2);
 }
 

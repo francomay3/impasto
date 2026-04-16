@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FilterInstance, RawImage } from '../../types';
 import { useWorkerBackpressure } from '../../hooks/useWorkerBackpressure';
+import { filterChainsEqual, findDirtyFilterIndex } from '../../lib/filterChainIncremental';
 import ImgPipelineWorker from '../../workers/img-pipeline.worker?worker';
 
 const WARN_PIXELS = 1920 * 1080;
@@ -22,6 +23,10 @@ export function useFilteredImage(sourceImage: RawImage | null, filters: FilterIn
     onMessage: ({ steps, dirtyIndex }) => {
       const source = sourceRef.current!;
       const currentFilters = filtersRef.current;
+      const completedFor = sentFiltersRef.current;
+      if (!filterChainsEqual(completedFor, currentFilters)) {
+        return;
+      }
       for (let i = 0; i < steps.length; i++) {
         cacheRef.current[dirtyIndex + 1 + i] = new Uint8Array(steps[i]);
       }
@@ -47,18 +52,8 @@ export function useFilteredImage(sourceImage: RawImage | null, filters: FilterIn
       return;
     }
 
-    // Find the first filter that changed (deep compare via JSON).
     const prev = prevFiltersRef.current;
-    let dirtyIndex = Math.min(prev.length, currentFilters.length);
-    for (let i = 0; i < dirtyIndex; i++) {
-      if (
-        prev[i].type !== currentFilters[i].type ||
-        JSON.stringify(prev[i].params) !== JSON.stringify(currentFilters[i].params)
-      ) {
-        dirtyIndex = i;
-        break;
-      }
-    }
+    const dirtyIndex = findDirtyFilterIndex(prev, currentFilters);
 
     const filtersToApply = currentFilters.slice(dirtyIndex);
 

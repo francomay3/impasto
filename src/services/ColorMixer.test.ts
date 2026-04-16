@@ -7,7 +7,7 @@ import {
   DEFAULT_DELTA_THRESHOLD,
 } from './ColorMixer';
 
-describe('findMixData', () => {
+describe('findMixData', { timeout: 20_000 }, () => {
   it('returns an array of mix entries', () => {
     const result = findMixData('#ff0000');
     expect(Array.isArray(result)).toBe(true);

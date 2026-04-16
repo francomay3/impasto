@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { rgbToHex, hexToRgb } from './colorUtils';
+import { rgbToHex, hexToRgb ,
+  rgbToLab,
+  linearRgbToLab,
+  srgbByteToLinear,
+  deltaELab,
+  labMidpoint,
+  normalizeHex,
+  isUsableColor,
+} from './colorUtils';
 
 describe('rgbToHex', () => {
   it('converts pure red', () => {
@@ -81,7 +89,6 @@ describe('rgbToHex / hexToRgb round-trip', () => {
   }
 });
 
-import { rgbToLab, deltaELab, labMidpoint, normalizeHex, isUsableColor } from './colorUtils';
 
 describe('rgbToLab', () => {
   it('maps black to L=0', () => {
@@ -98,6 +105,19 @@ describe('rgbToLab', () => {
     const result = rgbToLab(128, 64, 192);
     expect(result).toHaveLength(3);
     result.forEach((v) => expect(typeof v).toBe('number'));
+  });
+
+  it('matches linearRgbToLab after sRGB gamma removal', () => {
+    const cases: [number, number, number][] = [
+      [255, 0, 0],
+      [0, 255, 0],
+      [128, 64, 192],
+    ];
+    for (const [r, g, b] of cases) {
+      expect(rgbToLab(r, g, b)).toEqual(
+        linearRgbToLab(srgbByteToLinear(r), srgbByteToLinear(g), srgbByteToLinear(b)),
+      );
+    }
   });
 });
 
@@ -147,5 +167,10 @@ describe('isUsableColor', () => {
 
   it('returns true for a vivid mid-tone color', () => {
     expect(isUsableColor('#e05050')).toBe(true);
+  });
+
+  it('returns true for a saturated dark color (l <= 0.5 branch)', () => {
+    // r≈0.75, g≈0.19, b≈0.19 → l≈0.47, s≈0.60 — exercises the (max-min)/(max+min) saturation path
+    expect(isUsableColor('#c03030')).toBe(true);
   });
 });

@@ -49,7 +49,13 @@ function computeBestMix(
   if (bestDelta < deltaThreshold) return bestMix;
 
   for (const n of [2, 3, 4]) {
-    const { mix, delta } = findBestNPigments(targetHex, n, pigments, minPaintPercent);
+    const { mix, delta } = findBestNPigments(
+      targetHex,
+      n,
+      pigments,
+      minPaintPercent,
+      deltaThreshold
+    );
     if (delta < bestDelta) {
       bestDelta = delta;
       bestMix = mix;

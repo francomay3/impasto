@@ -53,6 +53,7 @@ export const CanvasViewport = forwardRef<HTMLCanvasElement, Props>(function Canv
     if (!el) return;
     const handler = (e: WheelEvent) => {
       if (isSampling && e.altKey) return;
+      e.preventDefault();
       onWheel(e, el.getBoundingClientRect());
     };
     el.addEventListener('wheel', handler, { passive: false });

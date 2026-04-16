@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthGuard } from '../features/auth/AuthGuard';
 import { AdminGuard } from '../features/admin/AdminGuard';
 import { AdminPage } from '../features/admin/AdminPage';
+import { DevPage } from '../features/dev/DevPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { ProjectPage } from '../features/editor/ProjectPage';
 import { ContextMenuPortal } from '../shared/ContextMenuPortal';
@@ -12,6 +13,22 @@ export function AppRouter() {
     <BrowserRouter>
       <ContextMenuPortal />
       <Routes>
+        <Route
+          path="/dev"
+          element={
+            <ErrorBoundary>
+              <DevPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/dev/:id"
+          element={
+            <ErrorBoundary>
+              <DevPage />
+            </ErrorBoundary>
+          }
+        />
         <Route
           path="*"
           element={

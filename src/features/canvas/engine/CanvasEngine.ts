@@ -86,7 +86,6 @@ export class CanvasEngine {
   }
 
   handleWheel(e: WheelEvent, rect: DOMRect): void {
-    e.preventDefault();
     this.zoomAtPoint(e.deltaY < 0, e.clientX - rect.left, e.clientY - rect.top);
   }
 

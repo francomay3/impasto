@@ -22,7 +22,10 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "paths": {
+      "@impasto/engine/*": ["./src/REFACTOR/ImpastoEngine/*"]
+    }
   },
   "include": ["src"]
 }

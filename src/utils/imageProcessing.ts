@@ -120,8 +120,15 @@ export function applyFilters(imageData: ImageData, filters: FilterInstance[]): I
   }, imageData);
 }
 
+/** RGBA bitmap buffer (browser {@link ImageData} is compatible). */
+type RgbaRaster = {
+  width: number;
+  height: number;
+  data: Uint8ClampedArray;
+};
+
 export function sampleCircleAverage(
-  imageData: ImageData,
+  imageData: RgbaRaster,
   cx: number,
   cy: number,
   radius: number

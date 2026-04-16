@@ -111,22 +111,9 @@ pub fn hue_saturation(pixels: &mut [u8], p: HueSaturationParams) {
     let hue_shift = p.hue / 360.0;
     let sat_shift = p.saturation / 100.0;
     let light_shift = p.lightness / 100.0;
-    // Fast path: no hue rotation → skip the HSL round-trip entirely.
-    // Saturation uses direct luminance blend; lightness shifts all channels uniformly.
-    if hue_shift == 0.0 {
-        let sat_mul = (p.saturation + 100.0) / 100.0;
-        let light_add = p.lightness * 2.55; // map [-100,100] → [-255,255]
-        for chunk in pixels.chunks_exact_mut(4) {
-            let r = chunk[0] as f32;
-            let g = chunk[1] as f32;
-            let b = chunk[2] as f32;
-            let gray = 0.299 * r + 0.587 * g + 0.114 * b;
-            chunk[0] = (gray + sat_mul * (r - gray) + light_add).clamp(0.0, 255.0) as u8;
-            chunk[1] = (gray + sat_mul * (g - gray) + light_add).clamp(0.0, 255.0) as u8;
-            chunk[2] = (gray + sat_mul * (b - gray) + light_add).clamp(0.0, 255.0) as u8;
-        }
-        return;
-    }
+    // Always go through HSL so hue == 0 matches the limit of hue != 0 (the old luminance “fast path”
+    // used different saturation math and caused a visible jump when crossing zero, especially with
+    // more filters chained after this one).
     for chunk in pixels.chunks_exact_mut(4) {
         let (mut h, mut s, mut l) = rgb_to_hsl(chunk[0] as f32, chunk[1] as f32, chunk[2] as f32);
         h = (h + hue_shift).rem_euclid(1.0);
@@ -211,4 +198,78 @@ pub fn levels(pixels: &mut [u8], p: LevelsParams) {
 pub fn blur(pixels: &mut [u8], width: u32, height: u32, sigma: f32) {
     let blurred = img_blur::gaussian_blur(pixels, width, height, sigma);
     pixels.copy_from_slice(&blurred);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn run_hue_sat(src: &[u8], p: HueSaturationParams) -> Vec<u8> {
+        let mut out = src.to_vec();
+        hue_saturation(&mut out, p);
+        out
+    }
+
+    fn max_channel_diff(a: &[u8], b: &[u8]) -> i16 {
+        a.iter()
+            .zip(b.iter())
+            .map(|(x, y)| (*x as i16 - *y as i16).abs())
+            .max()
+            .unwrap_or(0)
+    }
+
+    /// Regression: a separate `hue == 0` fast path used different saturation math than the HSL loop,
+    /// so scrubbing hue across zero caused a visible jump. Hue0 must stay on the same path as hue 0.
+    #[test]
+    fn hue_saturation_continuous_across_zero_with_nonzero_saturation() {
+        let base: Vec<u8> = vec![
+            200, 100, 50, 255, //
+            50, 180, 220, 255, //
+            128, 128, 128, 255, //
+            255, 0, 0, 255, //
+            20, 40, 200, 255, //
+        ];
+        let sat = 35.0_f32;
+        let out_zero = run_hue_sat(
+            &base,
+            HueSaturationParams {
+                hue: 0.0,
+                saturation: sat,
+                lightness: 0.0,
+            },
+        );
+
+        for eps in [0.05_f32, -0.05_f32] {
+            let out_near = run_hue_sat(
+                &base,
+                HueSaturationParams {
+                    hue: eps,
+                    saturation: sat,
+                    lightness: 0.0,
+                },
+            );
+            let d = max_channel_diff(&out_zero, &out_near);
+            assert!(
+                d <= 4,
+                "expected hue=0 and hue={eps}° (sat={sat}) to match within a few levels (got max diff {d}); \
+ a divergent hue==0 fast path likely regressed"
+            );
+        }
+    }
+
+    #[test]
+    fn hue_saturation_full_rotation_is_no_op_for_hue() {
+        let base: Vec<u8> = vec![90, 120, 60, 255, 40, 40, 200, 255];
+        let p0 = HueSaturationParams {
+            hue: 0.0,
+            saturation: 10.0,
+            lightness: -5.0,
+        };
+        let p360 = HueSaturationParams {
+            hue: 360.0,
+            saturation: 10.0,
+            lightness: -5.0,
+        };
+        assert_eq!(run_hue_sat(&base, p0), run_hue_sat(&base, p360));
+    }
 }

@@ -1,1 +1,4 @@
-{"ignore": ["src/utils/mixbox.d.ts"]}
+{
+  "ignore": ["src/utils/mixbox.d.ts"],
+  "ignoreFiles": ["src/REFACTOR/**"]
+}

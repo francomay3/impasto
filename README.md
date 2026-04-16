@@ -24,21 +24,21 @@ Upload a reference photo, sample colors from it, and get precise acrylic/oil pai
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| UI framework | React 19 + TypeScript (strict) |
-| Build | Vite 8 |
-| Routing | React Router 7 |
-| Components | Mantine 8 |
-| State management | Zustand 5 (editor state) + React Query 5 (server state) |
-| Tool interactions | XState 5 (state machine) |
-| Drag-and-drop | dnd-kit |
-| Color math | Chroma.js |
-| Performance-critical paths | Rust compiled to WASM via wasm-pack |
-| Backend | Firebase (Auth, Firestore, Cloud Storage) |
-| PDF generation | React PDF Renderer |
-| Unit tests | Vitest |
-| E2E tests | Playwright |
+| Layer                      | Technology                                              |
+| -------------------------- | ------------------------------------------------------- |
+| UI framework               | React 19 + TypeScript (strict)                          |
+| Build                      | Vite 8                                                  |
+| Routing                    | React Router 7                                          |
+| Components                 | Mantine 8                                               |
+| State management           | Zustand 5 (editor state) + React Query 5 (server state) |
+| Tool interactions          | XState 5 (state machine)                                |
+| Drag-and-drop              | dnd-kit                                                 |
+| Color math                 | Chroma.js                                               |
+| Performance-critical paths | Rust compiled to WASM via wasm-pack                     |
+| Backend                    | Firebase (Auth, Firestore, Cloud Storage)               |
+| PDF generation             | React PDF Renderer                                      |
+| Unit tests                 | Vitest                                                  |
+| E2E tests                  | Playwright                                              |
 
 ---
 
@@ -95,10 +95,10 @@ Five Zustand stores manage local UI state (selected color IDs, active tool, hidd
 ### Setup
 
 ```bash
-npm install
+bun install
 cp .env.example .env
 # Fill in your Firebase credentials in .env
-npm run dev
+bun run dev
 ```
 
 ### WASM modules
@@ -106,7 +106,7 @@ npm run dev
 Pre-compiled WASM modules are checked in under `src/wasm/`. To rebuild them from source (requires Rust + wasm-pack):
 
 ```bash
-npm run build:wasm
+bun build:wasm
 ```
 
 ---
@@ -114,18 +114,18 @@ npm run build:wasm
 ## Scripts
 
 ```bash
-npm run dev              # Start dev server with HMR
-npm run build            # Production build
-npm run typecheck        # TypeScript + ESLint + knip + file length checks
-npm run lint             # ESLint only
-npm run knip             # Detect unused exports and dead code
-npm run test:unit        # Unit tests (Vitest)
-npm run test             # E2E tests (Playwright, headless)
-npm run test:headed      # E2E tests with browser visible
-npm run test:report      # Open HTML test report
+bun dev              # Start dev server with HMR
+bun build            # Production build
+bun project-check        # TypeScript + ESLint + knip + file length checks
+bun lint             # ESLint only
+bun knip             # Detect unused exports and dead code
+bun test:unit        # Unit tests (Vitest)
+bun test             # E2E tests (Playwright, headless)
+bun test:headed      # E2E tests with browser visible
+bun test:report      # Open HTML test report
 ```
 
-> Use `npm run typecheck` (not bare `tsc`) — the project uses a split tsconfig setup where bare `tsc --noEmit` is a silent no-op.
+> Use `bun project-check` (not bare `tsc`) — the project uses a split tsconfig setup where bare `tsc --noEmit` is a silent no-op.
 
 ---
 

@@ -74,7 +74,9 @@ export function findBestNPigments(
   targetHex: string,
   n: number,
   pigments: Pigment[],
-  minPaintPercent: number
+  minPaintPercent: number,
+  /** When set, stop searching pigment combos once delta falls below this (same units as `ciede2000`). */
+  earlyExitDelta?: number
 ): { mix: PigmentMix; delta: number } {
   let bestDelta = Infinity;
   let bestMix: PigmentMix = [];
@@ -102,6 +104,7 @@ export function findBestNPigments(
         parts: Math.max(1, Math.round(finalWeights[i] * 100)),
       }));
     }
+    if (earlyExitDelta !== undefined && bestDelta < earlyExitDelta) break;
   }
 
   return { mix: bestMix, delta: bestDelta };

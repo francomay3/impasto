@@ -9,6 +9,12 @@
 - Add packages: `bun add <package>`
 - Execute binaries: `bunx <binary>`
 
+## Comments and spacing
+
+Leaving comments in source files is **wanted**: explain non-obvious intent, invariants, tradeoffs, and anything that would save the next reader (human or agent) a trip through git history.
+
+**Comments and blank lines do not count toward the effective line limit** used by `project-check` (the file-length step only counts lines that contain non-comment code). Prefer readability: use extra newlines to group sections and add as many comments as genuinely help maintainability, without worrying about inflating “lines of code.”
+
 ## No business logic in components or hooks
 
 **All business logic must live in plain TypeScript files (classes, functions, state machines). React components and hooks are only allowed to wire things together and render.**
