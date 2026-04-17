@@ -1,31 +1,32 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, TS, Serialize, Deserialize)]
 pub struct BrightnessContrastParams {
     pub brightness: f32,
     pub contrast: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, TS, Serialize, Deserialize)]
 pub struct HueSaturationParams {
     pub hue: f32,
     pub saturation: f32,
     pub lightness: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, TS, Serialize, Deserialize)]
 pub struct WhiteBalanceParams {
     pub temperature: f32,
     pub tint: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, TS, Serialize, Deserialize)]
 pub struct VibranceParams {
     pub vibrance: f32,
     pub saturation: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, TS, Serialize, Deserialize)]
 pub struct ColorBalanceParams {
     #[serde(rename = "shadowsR")] pub shadows_r: f32,
     #[serde(rename = "shadowsG")] pub shadows_g: f32,
@@ -39,7 +40,7 @@ pub struct ColorBalanceParams {
     #[serde(rename = "preserveLuminosity")] pub preserve_luminosity: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, TS, Serialize, Deserialize)]
 pub struct LevelsParams {
     #[serde(rename = "blackPoint")]
     pub black_point: f32,
@@ -47,7 +48,7 @@ pub struct LevelsParams {
     pub white_point: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, TS, Serialize, Deserialize)]
 pub struct BlurParams {
     pub blur: f32,
 }

@@ -1,6 +1,8 @@
 mod filters;
 mod pipeline;
 
+pub use pipeline::FilterInstance;
+
 use std::cell::RefCell;
 use wasm_bindgen::prelude::*;
 

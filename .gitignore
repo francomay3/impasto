@@ -18,7 +18,9 @@ dist-ssr
 /target/
 crates/*/target/
 crates/*/Cargo.lock
-src/wasm/
+# wasm-pack output (tracked separately from ts-rs bindings)
+src/wasm/img_ops/
+src/wasm/img_index/
 
 # Editor directories and files
 .vscode/*

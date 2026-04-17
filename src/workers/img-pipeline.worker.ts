@@ -1,4 +1,4 @@
-import type { FilterInstance } from '../types';
+import type { FilterInstance } from '../wasm/generated/FilterInstance';
 import type { InitOutput } from '../wasm/img_ops/img_ops';
 import imgOpsWasmUrl from '../wasm/img_ops/img_ops_bg.wasm?url';
 

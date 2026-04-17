@@ -4,6 +4,7 @@ import type { ViewportPhysics } from '../../../viewport/ViewportPhysics';
 import { Viewport, type ICanvasViewport } from '../../../viewport/Viewport';
 import { type ViewportCanvasInputHost, type ViewportSurfaceId } from '../host/viewportInputPolicy';
 import { drawViewportCanvas } from '../render/viewportCanvasRenderer';
+import { CanvasRafScheduler } from '../render/canvasRafScheduler';
 import { ViewportCanvasResizer } from '../render/viewportCanvasResizer';
 import { ViewportCanvasPointerBridge } from '../host/viewportCanvasPointerBridge';
 
@@ -20,6 +21,8 @@ export abstract class ViewportCanvasBase extends Viewport implements ICanvasView
   /** Holds the latest {@link RawImage} pixels; never inserted in the document. */
   private readonly _sourceCanvas: HTMLCanvasElement;
   private readonly _resizer: ViewportCanvasResizer;
+  /** Coalesces layout/sync invalidations from image + transform updates to one RAF per frame. */
+  private readonly _rafScheduler = new CanvasRafScheduler();
   private readonly _pointerBridge: ViewportCanvasPointerBridge;
   private _displayDpr = 1;
 
@@ -64,6 +67,7 @@ export abstract class ViewportCanvasBase extends Viewport implements ICanvasView
         this.redrawDisplay();
       },
     );
+    this._rafScheduler.start(() => this._resizer.syncAndRedraw());
   }
 
   get canvas(): HTMLCanvasElement {
@@ -73,12 +77,14 @@ export abstract class ViewportCanvasBase extends Viewport implements ICanvasView
   dispose(): void {
     this._unsubscribeTools();
     this._pointerBridge.dispose();
+    // Tear down RAF before resizer so a pending frame cannot call into disposed resizer state.
+    this._rafScheduler.dispose();
     this._resizer.dispose();
   }
 
   setImage(next: RawImage): void {
     drawRawImage(this._sourceCanvas, next);
-    queueMicrotask(() => this._resizer.syncAndRedraw());
+    this._rafScheduler.markDirty();
   }
 
   /**
@@ -90,7 +96,7 @@ export abstract class ViewportCanvasBase extends Viewport implements ICanvasView
   }
 
   override notifyTransformChange(): void {
-    this._resizer.syncAndRedraw();
+    this._rafScheduler.markDirty();
   }
 
   private syncPointerChrome(): void {

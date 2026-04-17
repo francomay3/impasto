@@ -6,6 +6,8 @@ import { useImpastoEngine } from '../core/ImpastoEngineContext';
 import type { ViewportTransform } from '../viewport/models';
 import type { ViewportSurfaceId } from '../viewports/canvas/host/viewportInputPolicy';
 import { clientPointToImagePixel } from '../viewports/canvas/space/viewportCanvasSpace';
+import { throttle } from '../infra/throttle';
+import { INPUT_THROTTLE_MS } from '../core/engineConstants';
 
 type DragSession = {
   readonly pointerId: number;
@@ -43,6 +45,8 @@ export function useColorPinOverlayImageDrag(
 
   const sessionRef = useRef<DragSession | null>(null);
   const [isDraggingPins, setIsDraggingPins] = useState(false);
+  // Holds the cancel function for the active drag's throttled move handler.
+  const cancelMoveThrottleRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     return () => {
@@ -50,6 +54,8 @@ export function useColorPinOverlayImageDrag(
       if (!sess) {
         return;
       }
+      cancelMoveThrottleRef.current?.();
+      cancelMoveThrottleRef.current = null;
       window.removeEventListener('pointermove', sess.onWindowPointerMove);
       window.removeEventListener('pointerup', sess.onWindowPointerUp);
       window.removeEventListener('pointercancel', sess.onWindowPointerUp);
@@ -115,7 +121,7 @@ export function useColorPinOverlayImageDrag(
       }
       setIsDraggingPins(true);
 
-      const onWindowPointerMove = (ev: PointerEvent): void => {
+      const onWindowPointerMove = throttle((ev: PointerEvent): void => {
         const sess = sessionRef.current;
         if (!sess || ev.pointerId !== sess.pointerId) {
           return;
@@ -134,13 +140,16 @@ export function useColorPinOverlayImageDrag(
           extent.height,
         );
         engineRef.current.colorPins.repositionMany(updates);
-      };
+      }, INPUT_THROTTLE_MS);
+      cancelMoveThrottleRef.current = onWindowPointerMove.cancel;
 
       const onWindowPointerUp = (ev: PointerEvent): void => {
         const sess = sessionRef.current;
         if (!sess || ev.pointerId !== sess.pointerId) {
           return;
         }
+        cancelMoveThrottleRef.current?.();
+        cancelMoveThrottleRef.current = null;
         window.removeEventListener('pointermove', sess.onWindowPointerMove);
         window.removeEventListener('pointerup', sess.onWindowPointerUp);
         window.removeEventListener('pointercancel', sess.onWindowPointerUp);

@@ -9,7 +9,7 @@
 
 import type { FilterInstance, RawImage } from '../../../types';
 import { createRawImage } from '../../../types';
-import type { FilterWorkerInput } from './filterChainWorkerProtocol';
+import type { FilterInstance as WasmFilterInstance, FilterWorkerInput } from './filterChainWorkerProtocol';
 import type { FilterChainImageDep, FilterChainRunnerState } from './filterChainRunnerTypes';
 import type { FilterPassCache } from './filterPassCache';
 
@@ -81,7 +81,8 @@ export function runFilterPass(host: RunFilterPassHost): void {
     pixels: pixelsCopy,
     width: source.width,
     height: source.height,
-    filters: filtersToApply,
+    // App `FilterInstance` keeps `params` as an uncorrelated union; runtime JSON matches WASM.
+    filters: filtersToApply as unknown as WasmFilterInstance[],
     dirtyIndex,
   };
   w.postMessage(input, [pixelsCopy.buffer]);

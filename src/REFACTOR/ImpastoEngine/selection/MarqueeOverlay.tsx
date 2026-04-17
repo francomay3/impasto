@@ -1,5 +1,7 @@
 import { Box, useMantineTheme } from '@mantine/core';
 import { useLayoutEffect, useState, type CSSProperties } from 'react';
+import { throttle } from '../infra/throttle';
+import { INPUT_THROTTLE_MS } from '../core/engineConstants';
 import { useImpastoEngine } from '../core/ImpastoEngineContext';
 import { useImpastoMarqueeDraft } from '../hooks/useImpastoMarqueeDraft';
 import { useImpastoViewportTransform } from '../hooks/useImpastoViewportTransform';
@@ -25,12 +27,12 @@ export function MarqueeOverlay() {
   const canvas = engine.viewports[surface].canvas;
 
   useLayoutEffect(() => {
-    const ro = new ResizeObserver(() => {
-      bumpResize((n) => n + 1);
-    });
+    const throttledBump = throttle(() => bumpResize((n) => n + 1), INPUT_THROTTLE_MS);
+    const ro = new ResizeObserver(throttledBump);
     ro.observe(canvas);
     return () => {
       ro.disconnect();
+      throttledBump.cancel();
     };
   }, [canvas]);
 

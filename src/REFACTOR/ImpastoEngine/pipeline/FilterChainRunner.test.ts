@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRawImage } from '../../../types';
 import type { FilterInstance, RawImage } from '../../../types';
 import { FilterChainRunner } from './FilterChainRunner';
@@ -32,6 +32,11 @@ function imageDepFromGetter(get: () => RawImage | null) {
 describe('FilterChainRunner', () => {
   beforeEach(() => {
     workerCtx.created.length = 0;
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('syncFromImageDep with null source emits 1×1 blank, idle state, and resets cache for a later image', () => {
@@ -149,7 +154,13 @@ describe('FilterChainRunner', () => {
       }),
     );
 
+    // Stale result is discarded; the retry is deferred until the throttle window closes.
     expect(onOut).not.toHaveBeenCalled();
+    expect(w.postMessage).toHaveBeenCalledTimes(1);
+
+    // Advance past the INPUT_THROTTLE_MS window so the trailing scheduleFilterPass fires.
+    vi.advanceTimersByTime(50);
+
     expect(w.postMessage).toHaveBeenCalledTimes(2);
 
     const secondCall = w.postMessage.mock.calls[1]![0] as {
@@ -203,9 +214,11 @@ describe('FilterChainRunner', () => {
     w.postMessage.mockClear();
     onOut.mockClear();
 
-    // Second setFilters with the exact same filter chain → cache hit, no worker message.
+    // Second setFilters with the exact same filter chain — throttled, so advance past the window.
     runner.setFilters([f]);
+    vi.advanceTimersByTime(50);
 
+    // Cache hit: no re-post to worker, but output is re-emitted synchronously from the cache.
     expect(w.postMessage).not.toHaveBeenCalled();
     expect(onOut).toHaveBeenCalledTimes(1);
     expect(runner.getState().status).toBe('ready');

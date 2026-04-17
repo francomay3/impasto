@@ -5,6 +5,8 @@
 
 import { getImpastoTool, impastoToolOrder } from './impastoToolRegistry';
 import type { ImpastoToolUiConfig } from './toolConfigParams';
+import { throttle, type ThrottledFn } from '../infra/throttle';
+import { INPUT_THROTTLE_MS } from '../core/engineConstants';
 
 export type ImpastoToolId = 'pan' | 'sample-color' | 'marquee-select';
 
@@ -24,6 +26,11 @@ export class ToolState {
   private _activeTool: ImpastoToolId = 'pan';
   private _internals: Record<ImpastoToolId, unknown> = this.buildInitialInternals();
   private _snapshot: ImpastoToolsState = this.rebuildSnapshot();
+  // Only param changes are throttled; tool switches (setActiveTool) emit immediately.
+  private readonly _throttledEmitForParams: ThrottledFn<[]> = throttle(
+    () => this.emit(),
+    INPUT_THROTTLE_MS,
+  );
 
   getState(): ImpastoToolsState {
     return this._snapshot;
@@ -55,7 +62,9 @@ export class ToolState {
       return;
     }
     this._internals = { ...this._internals, [tool]: result.next };
-    this.commitSnapshot();
+    // Update snapshot immediately so getState() always returns the current value.
+    this._snapshot = this.rebuildSnapshot();
+    this._throttledEmitForParams();
   }
 
   private buildInitialInternals(): Record<ImpastoToolId, unknown> {

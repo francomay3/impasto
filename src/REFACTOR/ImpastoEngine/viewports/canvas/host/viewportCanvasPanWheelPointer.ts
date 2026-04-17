@@ -22,6 +22,8 @@ import {
   type ViewportSurfaceId,
 } from './viewportInputPolicy';
 import type { ViewportCanvasPanDragState } from '../render/viewportCanvasRenderer';
+import { throttle, type ThrottledFn } from '../../../infra/throttle';
+import { INPUT_THROTTLE_MS } from '../../../core/engineConstants';
 
 type ViewportCanvasPanWheelPointerDeps = {
   canvas: HTMLCanvasElement;
@@ -42,9 +44,21 @@ type ViewportCanvasPanWheelPointerDeps = {
 export class ViewportCanvasPanWheelPointer {
   private panDrag: ViewportCanvasPanDragState | null = null;
   private readonly deps: ViewportCanvasPanWheelPointerDeps;
+  private readonly _throttledPanMove: ThrottledFn<[PointerEvent]>;
 
   constructor(deps: ViewportCanvasPanWheelPointerDeps) {
     this.deps = deps;
+    this._throttledPanMove = throttle((e: PointerEvent) => {
+      const drag = this.panDrag;
+      if (!drag) return;
+      const next = nextViewportTransformAfterPanMove(
+        drag.startT, drag.startX, drag.startY, e.clientX, e.clientY,
+      );
+      this.deps.proposeTransform(next);
+      if (this.deps.isSampleRingActive()) {
+        this.deps.updateReticleForPanMove(e);
+      }
+    }, INPUT_THROTTLE_MS);
   }
 
   getPanDrag(): ViewportCanvasPanDragState | null {
@@ -87,19 +101,14 @@ export class ViewportCanvasPanWheelPointer {
   consumePointerMoveIfActive(e: PointerEvent): boolean {
     const drag = this.panDrag;
     if (!drag || e.pointerId !== drag.pointerId) return false;
+    // preventDefault must fire synchronously; the expensive work is throttled.
     e.preventDefault();
-    const next = nextViewportTransformAfterPanMove(
-      drag.startT,
-      drag.startX,
-      drag.startY,
-      e.clientX,
-      e.clientY,
-    );
-    this.deps.proposeTransform(next);
-    if (this.deps.isSampleRingActive()) {
-      this.deps.updateReticleForPanMove(e);
-    }
+    this._throttledPanMove(e);
     return true;
+  }
+
+  dispose(): void {
+    this._throttledPanMove.cancel();
   }
 
   consumePointerUpIfActive(e: PointerEvent): boolean {

@@ -11,6 +11,8 @@
  */
 
 import type { ViewportCanvasInputHost, ViewportSurfaceId } from './viewportInputPolicy';
+import { throttle, type ThrottledFn } from '../../../infra/throttle';
+import { INPUT_THROTTLE_MS } from '../../../core/engineConstants';
 
 type ViewportCanvasMarqueePointerSessionDeps = {
   canvas: HTMLCanvasElement;
@@ -26,9 +28,14 @@ type ViewportCanvasMarqueePointerSessionDeps = {
 export class ViewportCanvasMarqueePointerSession {
   private drag: { pointerId: number } | null = null;
   private readonly deps: ViewportCanvasMarqueePointerSessionDeps;
+  private readonly _throttledMarqueeMove: ThrottledFn<[PointerEvent]>;
 
   constructor(deps: ViewportCanvasMarqueePointerSessionDeps) {
     this.deps = deps;
+    this._throttledMarqueeMove = throttle((e: PointerEvent) => {
+      const { x, y } = this.deps.imageFromClient(e.clientX, e.clientY);
+      this.deps.inputHost.marqueeDragMove?.({ surface: this.deps.surface, imageX: x, imageY: y });
+    }, INPUT_THROTTLE_MS);
   }
 
   /**
@@ -50,10 +57,14 @@ export class ViewportCanvasMarqueePointerSession {
   consumePointerMoveIfActive(e: PointerEvent): boolean {
     const d = this.drag;
     if (!d || e.pointerId !== d.pointerId) return false;
+    // preventDefault must fire synchronously; the expensive work is throttled.
     e.preventDefault();
-    const { x, y } = this.deps.imageFromClient(e.clientX, e.clientY);
-    this.deps.inputHost.marqueeDragMove?.({ surface: this.deps.surface, imageX: x, imageY: y });
+    this._throttledMarqueeMove(e);
     return true;
+  }
+
+  dispose(): void {
+    this._throttledMarqueeMove.cancel();
   }
 
   /**

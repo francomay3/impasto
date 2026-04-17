@@ -1,3 +1,6 @@
+/** LAB palette entry JSON (`{ l, a, b }`); generated from Rust to match `img_index`. */
+export type { IndexedPaletteLab } from '../../../wasm/generated/IndexedPaletteLab';
+
 /** Message shape posted to `img-index.worker` from {@link IndexedPassRunner}. */
 export interface IndexedPassWorkerInput {
   pixels: Uint8Array;

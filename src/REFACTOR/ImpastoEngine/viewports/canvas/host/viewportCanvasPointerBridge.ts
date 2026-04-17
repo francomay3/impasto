@@ -123,6 +123,8 @@ export class ViewportCanvasPointerBridge {
     this.canvas.removeEventListener('pointerup', this.onPointerUp);
     this.canvas.removeEventListener('pointercancel', this.onPointerUp);
     this.canvas.removeEventListener('wheel', this.onWheel);
+    this._panWheel.dispose();
+    this._marquee.dispose();
     this._reticle.dispose();
   }
 

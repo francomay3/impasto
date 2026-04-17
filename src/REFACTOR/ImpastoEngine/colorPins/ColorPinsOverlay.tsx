@@ -1,6 +1,8 @@
 import { Menu, Portal } from '@mantine/core';
 import { GitMerge, PlusCircle, Trash2 } from 'lucide-react';
 import { useCallback, useLayoutEffect, useState, type CSSProperties } from 'react';
+import { throttle } from '../infra/throttle';
+import { INPUT_THROTTLE_MS } from '../core/engineConstants';
 import { ColorPinSwatch } from './ColorPinSwatch';
 import { useImpastoEngine } from '../core/ImpastoEngineContext';
 import { useImpastoColorPins } from './useImpastoColorPins';
@@ -42,12 +44,12 @@ export function ColorPinsOverlay() {
   const canvas = engine.viewports[surface].canvas;
 
   useLayoutEffect(() => {
-    const ro = new ResizeObserver(() => {
-      bumpResize((n) => n + 1);
-    });
+    const throttledBump = throttle(() => bumpResize((n) => n + 1), INPUT_THROTTLE_MS);
+    const ro = new ResizeObserver(throttledBump);
     ro.observe(canvas);
     return () => {
       ro.disconnect();
+      throttledBump.cancel();
     };
   }, [canvas]);
 

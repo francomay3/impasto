@@ -1,16 +1,18 @@
 use palette::Lab;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use crate::lut::PaletteLut;
 
-#[derive(Deserialize)]
-struct RawLab {
-    l: f32,
-    a: f32,
-    b: f32,
+/// One palette entry as JSON `{ "l", "a", "b" }` in CIE Lab (same scale as `apply_index` in `lib.rs`).
+#[derive(Debug, Clone, TS, Serialize, Deserialize)]
+pub struct IndexedPaletteLab {
+    pub l: f32,
+    pub a: f32,
+    pub b: f32,
 }
 
 pub fn parse_palette(json: &str) -> Option<Vec<Lab>> {
-    let raw: Vec<RawLab> = serde_json::from_str(json).ok()?;
+    let raw: Vec<IndexedPaletteLab> = serde_json::from_str(json).ok()?;
     Some(raw.into_iter().map(|c| Lab::new(c.l, c.a, c.b)).collect())
 }
 

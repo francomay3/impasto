@@ -1,9 +1,13 @@
+import { throttle, type ThrottledFn } from '../../../infra/throttle';
+import { INPUT_THROTTLE_MS } from '../../../core/engineConstants';
+
 /**
  * Manages display canvas backing-store size from host layout and device pixel ratio.
  */
 export class ViewportCanvasResizer {
   private _resizeObserver: ResizeObserver | null = null;
   private _resizeObservedParent: Element | null = null;
+  private _throttledSync: ThrottledFn<[]> | null = null;
 
   private readonly displayCanvas: HTMLCanvasElement;
   private readonly sourceCanvas: HTMLCanvasElement;
@@ -58,6 +62,7 @@ export class ViewportCanvasResizer {
   }
 
   dispose(): void {
+    this._throttledSync?.cancel();
     this._resizeObserver?.disconnect();
     this._resizeObserver = null;
     this._resizeObservedParent = null;
@@ -66,9 +71,9 @@ export class ViewportCanvasResizer {
   private ensureResizeObserver(parent: Element): void {
     if (this._resizeObservedParent === parent && this._resizeObserver) return;
     this._resizeObserver?.disconnect();
-    this._resizeObserver = new ResizeObserver(() => {
-      this.syncAndRedraw();
-    });
+    this._throttledSync?.cancel();
+    this._throttledSync = throttle(() => this.syncAndRedraw(), INPUT_THROTTLE_MS);
+    this._resizeObserver = new ResizeObserver(this._throttledSync);
     this._resizeObserver.observe(parent);
     this._resizeObservedParent = parent;
   }
