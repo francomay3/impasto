@@ -8,6 +8,5 @@ export function useImpastoColorPins(): readonly ColorPin[] {
   return useSyncExternalStore(
     (onStoreChange) => engine.colorPins.subscribe(onStoreChange),
     () => engine.colorPins.getAll(),
-    () => engine.colorPins.getAll(),
   );
 }

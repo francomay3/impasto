@@ -6,7 +6,6 @@ export function useImpastoSelection(): readonly SelectionEntry[] {
   const engine = useImpastoEngine();
   return useSyncExternalStore(
     (onStoreChange) => engine.selection.subscribe(onStoreChange),
-    () => engine.selection.getAll(),
-    () => engine.selection.getAll(),
+    () => engine.selection.getAll()
   );
 }

@@ -8,6 +8,5 @@ export function useImpastoToolsState(): ImpastoToolsState {
   return useSyncExternalStore(
     (onStoreChange) => engine.tools.subscribe(onStoreChange),
     () => engine.tools.getState(),
-    () => engine.tools.getState(),
   );
 }

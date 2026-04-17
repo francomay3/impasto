@@ -9,7 +9,6 @@ export function useImpastoPipelineFilters(): FilterInstance[] {
 
   return useSyncExternalStore(
     (onStoreChange) => filters.subscribe(onStoreChange),
-    () => filters.getFilters(),
-    () => filters.getFilters(),
+    () => filters.getFilters()
   );
 }

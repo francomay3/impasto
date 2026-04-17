@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ColorPin } from './ColorPinState';
 import { repositionUpdatesForPointerImageDelta } from './colorPinImageDrag';
+import { colorPinIdsFromSelection } from './resolveColorPinContextScope';
 import { useImpastoEngine } from '../core/ImpastoEngineContext';
 import type { ViewportTransform } from '../viewport/models';
 import type { ViewportSurfaceId } from '../viewports/canvas/host/viewportInputPolicy';
 import { clientPointToImagePixel } from '../viewports/canvas/space/viewportCanvasSpace';
-
-type SelectionLike = { readonly kind: string; readonly id: string };
-
-function colorPinIdsFromSelection(entries: readonly SelectionLike[]): readonly string[] {
-  return entries.filter((e) => e.kind === 'colorPin').map((e) => e.id);
-}
 
 type DragSession = {
   readonly pointerId: number;

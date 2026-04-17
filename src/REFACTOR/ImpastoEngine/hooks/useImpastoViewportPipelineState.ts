@@ -7,7 +7,6 @@ export function useImpastoViewportPipelineState(): ViewportPipelineState {
 
   return useSyncExternalStore(
     (onStoreChange) => engine.pipeline.subscribe(() => onStoreChange()),
-    () => engine.pipeline.getState(),
-    () => engine.pipeline.getState(),
+    () => engine.pipeline.getState()
   );
 }
