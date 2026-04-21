@@ -13,7 +13,7 @@ const {
   mockUploadBytes,
   mockGetDownloadURL,
   mockRef,
-  mockRawImageToPngBlob,
+  mockRawImageToWebpBlob,
 } = vi.hoisted(() => ({
   mockDoc: vi.fn(),
   mockGetDoc: vi.fn(),
@@ -22,7 +22,7 @@ const {
   mockUploadBytes: vi.fn(),
   mockGetDownloadURL: vi.fn(),
   mockRef: vi.fn(),
-  mockRawImageToPngBlob: vi.fn(),
+  mockRawImageToWebpBlob: vi.fn(),
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -38,8 +38,8 @@ vi.mock('firebase/storage', () => ({
   getDownloadURL: (...args: unknown[]) => mockGetDownloadURL(...args),
 }));
 
-vi.mock('./rawImageToPngBlob', () => ({
-  rawImageToPngBlob: (...args: unknown[]) => mockRawImageToPngBlob(...args),
+vi.mock('./rawImageToWebpBlob', () => ({
+  rawImageToWebpBlob: (...args: unknown[]) => mockRawImageToWebpBlob(...args),
 }));
 
 import { FirestoreStorageAdapter } from './FirestoreStorageAdapter';
@@ -57,7 +57,7 @@ describe('FirestoreStorageAdapter', () => {
     mockDeleteObject.mockResolvedValue(undefined);
     mockUploadBytes.mockResolvedValue(undefined);
     mockGetDownloadURL.mockResolvedValue('https://example.com/download.png');
-    mockRawImageToPngBlob.mockResolvedValue(new Blob(['x'], { type: 'image/png' }));
+    mockRawImageToWebpBlob.mockResolvedValue(new Blob(['x'], { type: 'image/webp' }));
     mockDoc.mockImplementation((_d, ...segments: string[]) => ({ __path: segments.join('/') }));
     mockRef.mockImplementation((_s, pathOrUrl: string) => ({ __pathOrUrl: pathOrUrl }));
   });
@@ -125,6 +125,66 @@ describe('FirestoreStorageAdapter', () => {
     expect(payload.filters).not.toBe(dto.filters);
   });
 
+  it('save includes pigmentSettings in the Firestore payload when present in the DTO', async () => {
+    // Regression: the adapter was building its own payload object and omitting pigmentSettings,
+    // so deselecting a pigment showed the saving indicator but the change never reached Firestore.
+    const dto: ImpastoProjectDto = {
+      schemaVersion: 1,
+      pins: [],
+      filters: [],
+      indexConfig: { blurSigma: 4 },
+      pigmentSettings: {
+        enabledNames: ['Titanium White', 'Ivory Black'],
+        minPaintPercent: 5,
+        deltaThreshold: 2,
+      },
+      imageUrl: null,
+    };
+
+    const adapter = new FirestoreStorageAdapter(db, storage, TEST_USER_ID);
+    await adapter.save('proj-pigments', dto);
+
+    const [, payload] = mockSetDoc.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(payload.pigmentSettings).toEqual(dto.pigmentSettings);
+    // Must be a deep clone, not the same reference.
+    expect(payload.pigmentSettings).not.toBe(dto.pigmentSettings);
+  });
+
+  it('save includes groups in the Firestore payload when present in the DTO', async () => {
+    const dto: ImpastoProjectDto = {
+      schemaVersion: 1,
+      pins: [],
+      filters: [],
+      indexConfig: { blurSigma: 4 },
+      groups: [{ id: 'g1', name: 'Warm tones', colorIds: ['c1', 'c2'] }],
+      imageUrl: null,
+    };
+
+    const adapter = new FirestoreStorageAdapter(db, storage, TEST_USER_ID);
+    await adapter.save('proj-groups', dto);
+
+    const [, payload] = mockSetDoc.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(payload.groups).toEqual(dto.groups);
+    expect(payload.groups).not.toBe(dto.groups);
+  });
+
+  it('save omits pigmentSettings and groups from the payload when absent in the DTO', async () => {
+    const dto: ImpastoProjectDto = {
+      schemaVersion: 1,
+      pins: [],
+      filters: [],
+      indexConfig: { blurSigma: 4 },
+      imageUrl: null,
+    };
+
+    const adapter = new FirestoreStorageAdapter(db, storage, TEST_USER_ID);
+    await adapter.save('proj-no-optional', dto);
+
+    const [, payload] = mockSetDoc.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect('pigmentSettings' in payload).toBe(false);
+    expect('groups' in payload).toBe(false);
+  });
+
   it('uploadImage targets deterministic user-scoped Storage path under the project id', async () => {
     const data = new Uint8ClampedArray(4);
     data.set([255, 0, 0, 255]);
@@ -134,10 +194,10 @@ describe('FirestoreStorageAdapter', () => {
     const url = await adapter.uploadImage('pid-99', image);
 
     expect(url).toBe('https://example.com/download.png');
-    expect(mockRawImageToPngBlob).toHaveBeenCalledWith(image);
+    expect(mockRawImageToWebpBlob).toHaveBeenCalledWith(image);
     expect(mockRef).toHaveBeenCalledWith(
       storage,
-      `users/${TEST_USER_ID}/${IMPASTO_ENGINE_PROJECTS_COLLECTION}/pid-99/source.png`,
+      `users/${TEST_USER_ID}/${IMPASTO_ENGINE_PROJECTS_COLLECTION}/pid-99/source.webp`,
     );
     expect(mockUploadBytes).toHaveBeenCalledTimes(1);
     expect(mockGetDownloadURL).toHaveBeenCalledTimes(1);

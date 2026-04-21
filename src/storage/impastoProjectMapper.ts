@@ -1,6 +1,6 @@
 import type { ImpastoDocumentSnapshot } from '../engine/core/impastoDocumentSnapshot';
 import type { ImpastoProjectDto, PigmentSettings } from './impastoProjectDto';
-import { PIGMENTS, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD } from '../services/ColorMixer';
+import { DEFAULT_PIGMENT_NAMES, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD } from '../services/ColorMixer';
 
 /**
  * Extracts pigment settings from a DTO, filling defaults when the field is absent
@@ -8,7 +8,7 @@ import { PIGMENTS, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD } from '..
  */
 export function dtoToPigmentSettings(dto: ImpastoProjectDto): PigmentSettings {
   return dto.pigmentSettings ?? {
-    enabledNames: PIGMENTS.map((p) => p.name),
+    enabledNames: [...DEFAULT_PIGMENT_NAMES],
     minPaintPercent: DEFAULT_MIN_PAINT_PERCENT,
     deltaThreshold: DEFAULT_DELTA_THRESHOLD,
   };

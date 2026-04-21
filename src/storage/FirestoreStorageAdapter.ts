@@ -50,6 +50,10 @@ export class FirestoreStorageAdapter implements IStorageAdapter, IProjectMetadat
       pins: structuredClone(dto.pins),
       filters: structuredClone(dto.filters),
       indexConfig: structuredClone(dto.indexConfig),
+      // groups and pigmentSettings are optional fields added after the initial schema —
+      // spread conditionally so setDoc doesn't write undefined into Firestore.
+      ...(dto.groups != null ? { groups: structuredClone(dto.groups) } : {}),
+      ...(dto.pigmentSettings != null ? { pigmentSettings: structuredClone(dto.pigmentSettings) } : {}),
       imageUrl: dto.imageUrl,
     };
     const undefinedPaths = pathsToUndefinedValues(payload);

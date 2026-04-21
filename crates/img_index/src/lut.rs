@@ -1,17 +1,14 @@
 use palette::{IntoColor, Lab, Srgb};
-use palette::color_difference::Ciede2000;
 
 /// Grid resolution per channel. 32^3 = 32 768 cells.
 const RES: usize = 32;
 
 /// Pre-computed sRGB → palette lookup table.
 ///
-/// Most pixels hit the fast path (cached RGB). Cells on a Voronoi boundary
-/// between two palette colors are marked `ambiguous` and fall back to an exact
-/// per-pixel search using squared Euclidean Lab distance, eliminating
-/// quantisation artefacts at colour transitions. The fallback avoids all trig
-/// (no atan2/sin/cos/pow), so it is ~10× faster than CIEDE2000 while still
-/// being perceptually accurate enough for boundary disambiguation.
+/// Both the build step and the boundary fallback use squared Euclidean Lab
+/// distance. Using the same metric throughout keeps the Voronoi boundaries
+/// consistent — mixing CIEDE2000 (build) with sq-Euclidean (fallback) produced
+/// wavy artifact bands because the two metrics have different decision surfaces.
 pub struct PaletteLut {
     data: Vec<[u8; 3]>,
     ambiguous: Vec<bool>,
@@ -37,8 +34,8 @@ impl PaletteLut {
                         .copied()
                         .enumerate()
                         .min_by(|(_, x), (_, y)| {
-                            lab.difference(*x)
-                                .partial_cmp(&lab.difference(*y))
+                            lab_sq_dist(lab, *x)
+                                .partial_cmp(&lab_sq_dist(lab, *y))
                                 .unwrap_or(std::cmp::Ordering::Equal)
                         })
                         .unwrap();

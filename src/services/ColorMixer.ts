@@ -24,6 +24,19 @@ export const PIGMENTS: Pigment[] = [
 export const DEFAULT_MIN_PAINT_PERCENT = 2;
 export const DEFAULT_DELTA_THRESHOLD = 4;
 
+/** Core palette enabled for new projects and as a fallback for legacy documents. */
+export const DEFAULT_PIGMENT_NAMES: readonly string[] = [
+  'Titanium White',
+  'Ivory Black',
+  'Cadmium Yellow',
+  'Cadmium Red',
+  'Quinacridone Magenta',
+  'Ultramarine Blue',
+  'Cobalt Blue',
+  'Sap Green',
+  'Burnt Sienna',
+];
+
 export type MixEntry = { name: string; rgb: string; parts: number };
 
 function gcd(a: number, b: number): number {

@@ -1,4 +1,4 @@
-import { clampImagePointInsideRaster } from '../infra/imageRect';
+import { clampImagePointInsideRaster, isPointInsideImageExtents } from '../infra/imageRect';
 import { cloneColorPinSnapshot } from '../core/colorPinHistorySnapshot';
 import { samplePinColorFromFilteredImage } from './indexedPaletteFromColorPins';
 import type { ColorPinAddPayload } from './ColorPinState';
@@ -22,6 +22,11 @@ export function buildPlacementAdd(host: ColorPinPlacementApiHost): (payload: Col
     host.commitDrag();
     const extents = host.getPlacementExtents();
     if (!extents) {
+      return;
+    }
+    // Reject clicks outside the half-open raster; clamping alone would map edge-straddling picks onto existing
+    // pins (e.g. x === width on a 1×1 image) and silently duplicate placements.
+    if (!isPointInsideImageExtents(payload.imageX, payload.imageY, extents.width, extents.height)) {
       return;
     }
     const { x, y } = clampImagePointInsideRaster(payload.imageX, payload.imageY, extents.width, extents.height);

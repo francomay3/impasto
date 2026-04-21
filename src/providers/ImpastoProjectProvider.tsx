@@ -22,7 +22,7 @@ import { impastoEngineProjectSourceImageStoragePath } from '../storage/firestore
 import { FirestoreStorageAdapter } from '../storage/FirestoreStorageAdapter';
 import { PersistenceGlue, type PersistenceStatus } from '../storage/PersistenceGlue';
 import { ProjectPigmentsState } from '../storage/ProjectPigmentsState';
-import { PIGMENTS, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD } from '../services/ColorMixer';
+import { DEFAULT_PIGMENT_NAMES, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD } from '../services/ColorMixer';
 import { logEditorStartupPhase } from '../utils/editorStartupTiming';
 import type { HydrationPhase } from './hydrationPhase';
 
@@ -66,7 +66,7 @@ export function ImpastoProjectProvider({
   const [pigmentsState] = useState(
     () =>
       new ProjectPigmentsState({
-        enabledNames: PIGMENTS.map((p) => p.name),
+        enabledNames: [...DEFAULT_PIGMENT_NAMES],
         minPaintPercent: DEFAULT_MIN_PAINT_PERCENT,
         deltaThreshold: DEFAULT_DELTA_THRESHOLD,
       }),
