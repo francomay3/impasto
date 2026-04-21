@@ -6,20 +6,38 @@ import { DashboardHeader } from './DashboardHeader';
 import { ProjectGrid } from './ProjectGrid';
 import { UpgradeModal } from './UpgradeModal';
 import { ErrorBoundary } from '../../shared/ErrorBoundary';
-
-const FREE_PROJECT_LIMIT = 10;
+import { FREE_PROJECT_LIMIT } from './freeProjectLimit';
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { projects, loading, hasAnyProject, isCreating, create, remove, rename } = useProjects();
+  const {
+    projects,
+    orphanId,
+    loading,
+    hasAnyProject,
+    isCreating,
+    create,
+    remove,
+    rename,
+  } = useProjects();
   const [search, setSearch] = useState('');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !hasAnyProject) {
-      create().then((id) => navigate(`/project/${id}`, { replace: true }));
+    if (loading) return;
+
+    // Empty Firestore → seed first project (handled in useProjects / Firestore).
+    if (!hasAnyProject) {
+      create().then((id) => navigate(`/projectv2/${id}`, { replace: true }));
+      return;
     }
-  }, [loading, hasAnyProject, create, navigate]);
+
+    // `projects` hides rows without `imageStorageUrl`; `hasAnyProject` does not — send the user
+    // to the orphan so they are not stuck on an empty grid.
+    if (projects.length === 0 && orphanId != null) {
+      navigate(`/projectv2/${orphanId}`, { replace: true });
+    }
+  }, [loading, hasAnyProject, projects.length, orphanId, create, navigate]);
 
   const handleCreate = async () => {
     if (projects.length >= FREE_PROJECT_LIMIT) {
@@ -27,7 +45,7 @@ export function DashboardPage() {
       return;
     }
     const id = await create();
-    navigate(`/project/${id}`);
+    navigate(`/projectv2/${id}`);
   };
 
   const filtered = search

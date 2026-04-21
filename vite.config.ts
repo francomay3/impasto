@@ -2,6 +2,7 @@
 import path from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // pako is not a top-level dep — it lives inside browserify-zlib (a @react-pdf/pdfkit dep).
 // Rolldown can't resolve the deep pako/* imports, so we alias them explicitly.
@@ -16,7 +17,12 @@ const pakoAlias = ['zstream', 'deflate', 'inflate', 'constants'].reduce<Record<s
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Run `bun run analyze` to generate dist/bundle-analysis.html
+    process.env.ANALYZE === 'true' &&
+      visualizer({ open: true, filename: 'dist/bundle-analysis.html', gzipSize: true, brotliSize: true }),
+  ],
   resolve: {
     alias: {
       ...pakoAlias,

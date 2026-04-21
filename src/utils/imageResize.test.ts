@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 
+// Prevents the real heic2any (which spawns a Worker and references `window`) from loading in Node.
 vi.mock('heic2any', () => ({ default: vi.fn() }));
 
-import heic2any from 'heic2any';
 import { withWebpExtension, isHeic, prepareImage } from './imageResize';
 
 describe('withWebpExtension', () => {
@@ -69,6 +69,8 @@ describe('prepareImage', () => {
 
   it('converts HEIC files via heic2any before processing', async () => {
     const heicBlob = new Blob(['heic'], { type: 'image/jpeg' });
+    // Dynamic import returns the vi.mock'd module — same instance imageResize.ts will receive.
+    const { default: heic2any } = await import('heic2any');
     (heic2any as ReturnType<typeof vi.fn>).mockResolvedValueOnce(heicBlob);
     vi.stubGlobal('createImageBitmap',
       vi.fn().mockResolvedValueOnce({ width: 100, height: 100, close: vi.fn() })

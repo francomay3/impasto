@@ -16,10 +16,10 @@ describe('formatProjectDate', () => {
 
 describe('getProjectRoute', () => {
   it('returns the project path with the given id', () => {
-    expect(getProjectRoute('abc123')).toBe('/project/abc123');
+    expect(getProjectRoute('abc123')).toBe('/projectv2/abc123');
   });
 
   it('works with any string id', () => {
-    expect(getProjectRoute('my-project-id')).toBe('/project/my-project-id');
+    expect(getProjectRoute('my-project-id')).toBe('/projectv2/my-project-id');
   });
 });

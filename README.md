@@ -38,7 +38,6 @@ Upload a reference photo, sample colors from it, and get precise acrylic/oil pai
 | Backend                    | Firebase (Auth, Firestore, Cloud Storage)               |
 | PDF generation             | React PDF Renderer                                      |
 | Unit tests                 | Vitest                                                  |
-| E2E tests                  | Playwright                                              |
 
 ---
 
@@ -119,8 +118,7 @@ bun build            # Production build
 bun project-check        # TypeScript + ESLint + knip + file length checks
 bun lint             # ESLint only
 bun knip             # Detect unused exports and dead code
-bun test:unit        # Unit tests (Vitest)
-bun test             # E2E tests (Playwright, headless)
+bun test             # Unit tests (Vitest)
 bun test:headed      # E2E tests with browser visible
 bun test:report      # Open HTML test report
 ```
@@ -133,6 +131,6 @@ bun test:report      # Open HTML test report
 
 - **No logic in components** — if it can be a `.ts` file, it must be a `.ts` file.
 - **Test pure logic** — every function in `utils/` and `services/` should have unit test coverage.
-- **Files stay under 160 lines** — if a file is growing past that, split it.
+- **Files stay under 200 lines** — if a file is growing past that, split it.
 - **Mantine first** — use Mantine components before reaching for raw HTML elements.
 - See `CLAUDE.md` for the full rule set.

@@ -13,6 +13,7 @@ import '@mantine/notifications/styles.css';
 import { AuthInit } from './features/auth/AuthInit';
 import { AppRouter } from './routes/AppRouter';
 import { ErrorBoundary } from './shared/ErrorBoundary';
+import { logEditorStartupPhase } from './utils/editorStartupTiming';
 
 const queryClient = new QueryClient();
 
@@ -42,14 +43,12 @@ const theme = createTheme({
   },
 });
 
+logEditorStartupPhase('boot:react createRoot render start');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <MantineProvider
-        theme={theme}
-        defaultColorScheme="dark"
-        env={import.meta.env.VITE_E2E_TEST_MODE === 'true' ? 'test' : undefined}
-      >
+      <MantineProvider theme={theme} defaultColorScheme="dark">
         <Notifications />
         <ErrorBoundary>
           <AuthInit />

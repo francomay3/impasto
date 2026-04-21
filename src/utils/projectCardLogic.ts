@@ -3,5 +3,5 @@ export function formatProjectDate(updatedAt: string): string {
 }
 
 export function getProjectRoute(id: string): string {
-  return `/project/${id}`;
+  return `/projectv2/${id}`;
 }

@@ -1,5 +1,3 @@
-import heic2any from 'heic2any';
-
 const MAX_PIXELS = 2_000_000;
 
 function toBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
@@ -29,6 +27,8 @@ export function isHeic(file: File): boolean {
 
 async function toDecodableBlob(file: File): Promise<Blob> {
   if (!isHeic(file)) return file;
+  // Dynamic import keeps heic2any (~300 kB) out of the main bundle — only loaded for HEIC uploads.
+  const { default: heic2any } = await import('heic2any');
   const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
   return Array.isArray(result) ? result[0] : result;
 }

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useAuthStore } from '../auth/authStore';
+import { FREE_PROJECT_LIMIT } from '../dashboard/freeProjectLimit';
+import { useProjects } from '../dashboard/useProjects';
 import {
   getFirestoreProject,
   saveFirestoreProject,
@@ -43,14 +45,18 @@ export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
-  const isTestMode = import.meta.env.VITE_E2E_TEST_MODE === 'true';
+  const { projects, createAlwaysNew } = useProjects();
 
   const queryClient = useQueryClient();
 
-  const { data: project, isLoading, isError } = useQuery({
+  const {
+    data: project,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: queryKeys.project(user?.uid ?? '', id ?? ''),
     queryFn: () => resolveProject(user!.uid, id!),
-    enabled: !isTestMode && !!user && !!id,
+    enabled: !!user && !!id,
     staleTime: Infinity,
   });
 
@@ -63,36 +69,49 @@ export function ProjectPage() {
 
   const onSave = useCallback(
     async (state: ProjectState) => {
-      if (isTestMode || !user || !id) return;
+      if (!user || !id) return;
       await saveFirestoreProject(user.uid, id, state);
     },
-    [isTestMode, user, id]
+    [user, id]
   );
 
   const onNewImageFile = useCallback(
     async (file: File) => {
-      if (isTestMode || !user || !id) return;
+      if (!user || !id) return;
       const url = await uploadProjectImage(user.uid, id, file);
       await saveFirestoreImageUrl(user.uid, id, url);
-      queryClient.setQueryData<ResolvedProject | null>(
-        queryKeys.project(user.uid, id),
-        (prev) => prev ? { ...prev, state: { ...prev.state, imageStorageUrl: url } } : prev
+      queryClient.setQueryData<ResolvedProject | null>(queryKeys.project(user.uid, id), (prev) =>
+        prev ? { ...prev, state: { ...prev.state, imageStorageUrl: url } } : prev
       );
     },
-    [isTestMode, user, id, queryClient]
+    [user, id, queryClient]
   );
 
   const onThumbnailColors = useCallback(
     async (colors: string[]) => {
-      if (isTestMode || !user || !id) return;
+      if (!user || !id) return;
       await saveFirestoreThumbnailColors(user.uid, id, colors);
     },
-    [isTestMode, user, id]
+    [user, id]
   );
 
-  const isLoading_ = !isTestMode && isLoading;
-  const initialState = isTestMode ? DEFAULT_PROJECT_STATE : (project?.state ?? DEFAULT_PROJECT_STATE);
-  const initialImage = isTestMode ? null : (project?.image ?? null);
+  const onNewProjectFromReplaceImage = useCallback(async () => {
+    if (projects.length >= FREE_PROJECT_LIMIT) {
+      notifications.show({
+        title: 'Project limit reached',
+        message: 'Delete a project from the dashboard or upgrade your plan to add more.',
+        color: 'yellow',
+      });
+      navigate('/');
+      return;
+    }
+    const newId = await createAlwaysNew();
+    navigate(`/projectv2/${newId}`);
+  }, [projects.length, createAlwaysNew, navigate]);
+
+  const isLoading_ = isLoading;
+  const initialState = project?.state ?? DEFAULT_PROJECT_STATE;
+  const initialImage = project?.image ?? null;
 
   return (
     <Editor
@@ -103,6 +122,7 @@ export function ProjectPage() {
       onSave={onSave}
       onNewImageFile={onNewImageFile}
       onThumbnailColors={onThumbnailColors}
+      onNewProjectFromReplaceImage={onNewProjectFromReplaceImage}
     />
   );
 }

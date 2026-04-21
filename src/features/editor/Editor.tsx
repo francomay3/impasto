@@ -31,6 +31,8 @@ interface AppProps {
   onSave: (state: ProjectState) => void | Promise<void>;
   onNewImageFile?: (file: File) => void;
   onThumbnailColors?: (colors: string[]) => void;
+  /** Replace-image modal: create a blank project and leave the current one intact. */
+  onNewProjectFromReplaceImage?: () => void | Promise<void>;
 }
 
 export default function Editor({
@@ -40,6 +42,7 @@ export default function Editor({
   onSave,
   onNewImageFile,
   onThumbnailColors,
+  onNewProjectFromReplaceImage,
 }: AppProps) {
   const filteredCanvasRef = useRef<HTMLCanvasElement>(null);
   const [engine] = useState(() => new CanvasEngine(filteredCanvasRef));
@@ -139,6 +142,7 @@ export default function Editor({
                   ref={replaceRef}
                   hasSamples={project.state.palette.some((c) => c.sample)}
                   onFileSelected={editorHandlers.handleFileSelected}
+                  onNewProject={onNewProjectFromReplaceImage}
                 />
               </AppShell>
             </FilterContext.Provider>

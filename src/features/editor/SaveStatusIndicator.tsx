@@ -1,10 +1,9 @@
 import { Group, Loader, Text } from '@mantine/core';
 import { Check, AlertCircle } from 'lucide-react';
+import type { PersistenceStatus } from '../../storage/PersistenceGlue';
 import type { SaveStatus } from './useSaveStatus';
 
-interface Props {
-  status: SaveStatus;
-}
+type Props = { status: SaveStatus | PersistenceStatus };
 
 export function SaveStatusIndicator({ status }: Props) {
   if (status === 'saving') {
@@ -25,6 +24,7 @@ export function SaveStatusIndicator({ status }: Props) {
     );
   }
 
+  // `PersistenceStatus` uses `idle` / `saved` for the quiet state; legacy editor uses `saved` only.
   return (
     <Group gap={5} data-testid="save-status">
       <Check size={12} color="var(--mantine-color-gray-5)" />

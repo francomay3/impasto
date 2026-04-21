@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteField,
   doc,
   updateDoc,
   deleteDoc,
@@ -102,6 +103,11 @@ export async function saveFirestoreImageUrl(
   imageStorageUrl: string
 ): Promise<void> {
   await updateDoc(doc(projectsCol(userId), projectId), { imageStorageUrl });
+}
+
+/** Clears dashboard thumbnail / orphan-detection field when engine source is removed. */
+export async function clearFirestoreProjectImageUrl(userId: string, projectId: string): Promise<void> {
+  await updateDoc(doc(projectsCol(userId), projectId), { imageStorageUrl: deleteField() });
 }
 
 export async function renameFirestoreProject(

@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 interface Props {
   hasSamples: boolean;
   onFileSelected: (file: File) => void;
+  /** When set, "New Project" runs this (e.g. create Firestore project + navigate) instead of only opening `/`. */
+  onNewProject?: () => void | Promise<void>;
 }
 
 export interface ReplaceImageModalRef {
@@ -13,7 +15,7 @@ export interface ReplaceImageModalRef {
 }
 
 export const ReplaceImageModal = forwardRef<ReplaceImageModalRef, Props>(function ReplaceImageModal(
-  { hasSamples, onFileSelected },
+  { hasSamples, onFileSelected, onNewProject },
   ref
 ) {
   const navigate = useNavigate();
@@ -83,7 +85,16 @@ export const ReplaceImageModal = forwardRef<ReplaceImageModalRef, Props>(functio
             <Button variant="subtle" onClick={() => setOpened(false)}>
               Cancel
             </Button>
-            <Button variant="light" onClick={() => navigate('/')}>
+            <Button
+              variant="light"
+              onClick={() => {
+                setOpened(false);
+                const run = onNewProject ?? (() => navigate('/'));
+                void Promise.resolve(run()).catch((err) => {
+                  console.error('[ReplaceImageModal] New Project failed:', err);
+                });
+              }}
+            >
               New Project
             </Button>
             <Button color="red" variant="light" onClick={() => confirm()}>

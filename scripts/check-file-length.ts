@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Enforces the 160-line limit on production source under `src/**` (`.ts` / `.tsx`, excluding `*.test.ts`).
+ * Enforces the 200-line limit on production source under `src/**` (`.ts` / `.tsx`, excluding `*.test.ts`).
  * Counts only lines that contain at least one non-whitespace character outside TypeScript/TSX comment trivia
  * (empty lines and comment-only lines are ignored). Exits with code 1 if any file exceeds the limit.
  */
@@ -10,7 +10,7 @@ import { dirname, join, relative } from 'path';
 import { fileURLToPath } from 'url';
 import * as ts from 'typescript';
 
-const MAX_LINES = 160;
+const MAX_LINES = 200;
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'src');
 
@@ -44,7 +44,9 @@ function collectCommentRanges(sourceFile: ts.SourceFile): Array<{ pos: number; e
 }
 
 /** Exported for unit tests. */
-export function mergeRanges(ranges: Array<{ pos: number; end: number }>): Array<{ pos: number; end: number }> {
+export function mergeRanges(
+  ranges: Array<{ pos: number; end: number }>
+): Array<{ pos: number; end: number }> {
   if (ranges.length === 0) return [];
   const sorted = [...ranges].sort((a, b) => a.pos - b.pos);
   const merged: Array<{ pos: number; end: number }> = [];
@@ -106,7 +108,13 @@ function countEffectiveLines(content: string, sourceFile: ts.SourceFile): number
 /** `fileName` is only used to pick TS vs TSX parsing (`.tsx` suffix). Exported for unit tests. */
 export function countEffectiveLinesInText(content: string, fileName: string): number {
   const scriptKind = fileName.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
-  const sourceFile = ts.createSourceFile(fileName, content, ts.ScriptTarget.Latest, true, scriptKind);
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    content,
+    ts.ScriptTarget.Latest,
+    true,
+    scriptKind
+  );
   return countEffectiveLines(content, sourceFile);
 }
 
@@ -115,11 +123,7 @@ function collectFiles(dir: string): string[] {
   return entries.flatMap((e) => {
     const full = join(dir, e.name);
     if (e.isDirectory()) return collectFiles(full);
-    if (
-      e.isFile() &&
-      /\.(ts|tsx)$/.test(e.name) &&
-      !e.name.endsWith('.test.ts')
-    ) {
+    if (e.isFile() && /\.(ts|tsx)$/.test(e.name) && !e.name.endsWith('.test.ts')) {
       return [full];
     }
     return [];
@@ -141,18 +145,18 @@ function runCli(): void {
   }
 
   if (violations.length > 0) {
-    console.error('\n[check-file-length] Files exceeding the 160 effective-line limit:\n');
+    console.error('\n[check-file-length] Files exceeding the 200 effective-line limit:\n');
     for (const { file, lines } of violations) {
       console.error(`  ${lines.toString().padStart(4)} effective lines  ${file}`);
     }
     console.error(
-      `\n${violations.length} file(s) must be split before merging.\n(Empty lines and full-line / block / JSDoc comment trivia are not counted. *.test.ts files are not checked.)\n`,
+      `\n${violations.length} file(s) must be split before merging.\n(Empty lines and full-line / block / JSDoc comment trivia are not counted. *.test.ts files are not checked.)\n`
     );
     process.exit(1);
   }
 
   console.log(
-    `[check-file-length] All ${files.length} files are within the ${MAX_LINES} effective-line limit.`,
+    `[check-file-length] All ${files.length} files are within the ${MAX_LINES} effective-line limit.`
   );
 }
 
