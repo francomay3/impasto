@@ -3,6 +3,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
+import pkg from './package.json' with { type: 'json' };
 
 // pako is not a top-level dep — it lives inside browserify-zlib (a @react-pdf/pdfkit dep).
 // Rolldown can't resolve the deep pako/* imports, so we alias them explicitly.
@@ -28,6 +29,9 @@ export default defineConfig({
       ...pakoAlias,
       '@impasto/engine': path.resolve('./src/REFACTOR/ImpastoEngine'),
     },
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   test: {
     environment: 'node',
@@ -101,6 +105,45 @@ export default defineConfig({
         'src/utils/dndSensor.ts',
         'src/lib/queryKeys.ts',
         'src/tools.ts',
+        // New engine (src/engine/) — mirrors REFACTOR exclusions for the same categories
+        // Public barrel + type-only API / DTO shapes
+        'src/engine/index.ts',
+        'src/engine/core/ImpastoEngineApi.ts',
+        'src/engine/core/impastoDocumentSnapshot.ts',
+        'src/engine/core/engineConstants.ts',
+        'src/engine/core/impastoEngineBootTypes.ts',
+        'src/engine/colorPins/colorPinTypes.ts',
+        'src/engine/colorPins/colorPinPlacementApiHost.ts',
+        'src/engine/pipeline/pipelineIndexConfig.ts',
+        'src/engine/pipeline/filterChainWorkerProtocol.ts',
+        'src/engine/pipeline/indexedPassWorkerProtocol.ts',
+        'src/engine/pipeline/indexedPassTypes.ts',
+        'src/engine/tools/toolConfigParams.ts',
+        // Canvas / DOM wiring
+        'src/engine/colorPins/colorPinOverlayImageDragSession.ts',
+        'src/engine/colorPins/viewports/**',
+        'src/engine/viewports/canvas/host/forwardWheelToViewportCanvas.ts',
+        'src/engine/viewports/canvas/host/viewportCanvasGestures.ts',
+        'src/engine/viewports/canvas/host/viewportCanvasMarqueePointerSession.ts',
+        'src/engine/viewports/canvas/host/viewportCanvasPanWheelPointer.ts',
+        'src/engine/viewports/canvas/host/viewportCanvasPointerBridge.ts',
+        'src/engine/viewports/canvas/host/viewportCanvasPointerReticleChrome.ts',
+        'src/engine/viewports/canvas/render/viewportCanvasRenderer.ts',
+        'src/engine/viewports/canvas/render/viewportCanvasResizer.ts',
+        'src/engine/viewports/canvas/surfaces/**',
+        // React context wiring
+        'src/engine/core/ImpastoEngineContext.tsx',
+        // Zustand stores
+        'src/engine/colorPins/colorPinHighlightStore.ts',
+        // Storage — type/interface-only and network/Firebase I/O
+        'src/storage/IStorageAdapter.ts',
+        'src/storage/IProjectMetadataAdapter.ts',
+        'src/storage/projectMetadata.ts',
+        'src/storage/impastoProjectDto.ts',
+        'src/storage/loadRawImageFromUrl.ts',
+        'src/storage/rawImageToWebpBlob.ts',
+        'src/storage/firestoreImpastoProjectDoc.ts',
+        'src/storage/FirestoreStorageAdapter.ts',
       ],
       thresholds: {
         statements: 85,

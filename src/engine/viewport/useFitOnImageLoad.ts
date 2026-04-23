@@ -1,11 +1,9 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import type { RawImage } from '../../types';
 import { useImpastoEngine } from '../core/ImpastoEngineContext';
-import { fitToContain } from './fitToContain';
 
 /**
- * Fits the shared viewport transform with {@link fitToContain} for the current host — same math as
- * {@link ViewportWrapper}'s double‑click reset.
+ * Fits via `engine.viewport.fitToImage()` (hub size from ViewportWrapper ResizeObserver, with host rect fallback).
  *
  * Runs on mount and whenever the **source raster instance** changes (first decode, import/replace, persistence
  * fetch, undo/redo image steps). Skips when the engine already holds the same `RawImage` reference so stray
@@ -24,13 +22,18 @@ export function useFitOnImageLoad(hostRef: RefObject<HTMLDivElement | null>): vo
         lastFittedToImage.current = null;
         return;
       }
-      const host = hostRef.current;
-      if (!host) return;
-      const { width: vpW, height: vpH } = host.getBoundingClientRect();
-      if (vpW === 0 || vpH === 0) return;
       if (lastFittedToImage.current === image) return;
 
-      engine.viewport.requestTransform(fitToContain(image.width, image.height, vpW, vpH));
+      const host = hostRef.current;
+      if (host) {
+        const { width, height } = host.getBoundingClientRect();
+        if (width > 0 && height > 0) {
+          engine.viewport.setViewportSize(width, height);
+        }
+      }
+
+      const applied = engine.viewport.fitToImage();
+      if (!applied) return;
       lastFittedToImage.current = image;
     }
 

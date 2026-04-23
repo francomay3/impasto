@@ -50,8 +50,13 @@ function ProjectPageV2Shell() {
   const { hydrationPhase, projectName, renameProjectName, saveStatus } = useImpastoProject();
   const hydratedLoggedRef = useRef(false);
   const allLoadedLoggedRef = useRef(false);
-  const { replaceRef, hasDestructiveWork, handleFileSelected, openImportImage, handleNewProjectAfterReplace } =
-    useProjectV2ReplaceImage();
+  const {
+    replaceRef,
+    hasDestructiveWork,
+    handleFileSelected,
+    openImportImage,
+    handleNewProjectAfterReplace,
+  } = useProjectV2ReplaceImage();
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
   const shellVisible = hydrationPhase !== 'idle';
@@ -126,7 +131,7 @@ function ProjectPageV2Shell() {
         <AppShell.Main
           style={{
             background: 'var(--mantine-color-dark-9)',
-            paddingTop: 'calc(var(--app-shell-header-height) + 4px)',
+            paddingTop: 'var(--app-shell-header-height)',
           }}
         >
           <Box

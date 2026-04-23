@@ -114,7 +114,7 @@ describe('ImpastoEngine', () => {
   });
 
   describe('palette rebuild path', () => {
-    it('defers flushIndexedPaletteFromPins to the next microtask when a color pin is added', async () => {
+    it('defers palette flush until after the resolver promise settles (microtasks after add)', async () => {
       const engine = new ImpastoEngine();
       await Promise.resolve();
 
@@ -124,6 +124,7 @@ describe('ImpastoEngine', () => {
       engine.colorPins.add({ imageX: 0, imageY: 0, radiusPx: 2 });
       expect(spy).not.toHaveBeenCalled();
 
+      await Promise.resolve();
       await Promise.resolve();
       expect(spy).toHaveBeenCalledTimes(1);
 
@@ -262,6 +263,7 @@ describe('ImpastoEngine', () => {
       expect(spy).not.toHaveBeenCalled();
 
       await Promise.resolve();
+      await Promise.resolve();
       expect(spy).toHaveBeenCalledWith({ palette: [], pinIds: [] });
 
       engine.dispose();
@@ -292,7 +294,9 @@ describe('ImpastoEngine', () => {
       expect(pins[0]!.id).not.toBe(id1);
       expect(pins[0]!.id).not.toBe(id2);
       expect(engine.selection.getAll()).toEqual([{ kind: 'colorPin', id: pins[0]!.id }]);
-      expect(pins[0]!.imageX).toBe(0);
+      // x=1 is the grey pixel whose neighbourhood average has the smallest ΔE from the
+      // Lab-space average of the red+blue pin colors — see colorPinBlendPlacement.test.ts.
+      expect(pins[0]!.imageX).toBe(1);
 
       spy.mockRestore();
       engine.dispose();

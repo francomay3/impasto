@@ -227,60 +227,6 @@ describe('PersistenceGlue.initialize', () => {
     );
   });
 
-  it('updateProjectName calls saveProjectMetadata, updates projectName, and emits saving → saved status', async () => {
-    const engine = {
-      subscribeDocumentChanged: vi.fn(() => () => {}),
-      loadDocument: vi.fn(),
-      getDocumentSnapshot: vi.fn(),
-      image: { get: vi.fn(() => null) },
-    } as unknown as ImpastoEngine;
-
-    const adapter: IStorageAdapter = {
-      load: vi.fn(async () => null),
-      save: vi.fn(),
-      uploadImage: vi.fn(),
-      deleteImage: vi.fn(),
-    };
-
-    const metaAdapter: IProjectMetadataAdapter = {
-      loadProjectMetadata: vi.fn(async () => ({ name: 'Old Name' })),
-      saveProjectMetadata: vi.fn(async () => {}),
-    };
-
-    glue = new PersistenceGlue(engine, adapter, { projectMetadataAdapter: metaAdapter });
-    await glue.initialize('proj-rename');
-
-    const statuses: string[] = [];
-    glue.subscribeStatus((s) => statuses.push(s));
-
-    await glue.updateProjectName('New Name');
-
-    expect(metaAdapter.saveProjectMetadata).toHaveBeenCalledWith('proj-rename', { name: 'New Name' });
-    expect(glue.projectName).toBe('New Name');
-    expect(statuses).toEqual(['idle', 'saving', 'saved']);
-  });
-
-  it('updateProjectName is a no-op when no projectMetadataAdapter is provided', async () => {
-    const engine = {
-      subscribeDocumentChanged: vi.fn(() => () => {}),
-      loadDocument: vi.fn(),
-      getDocumentSnapshot: vi.fn(),
-      image: { get: vi.fn(() => null) },
-    } as unknown as ImpastoEngine;
-
-    const adapter: IStorageAdapter = {
-      load: vi.fn(async () => null),
-      save: vi.fn(),
-      uploadImage: vi.fn(),
-      deleteImage: vi.fn(),
-    };
-
-    glue = new PersistenceGlue(engine, adapter);
-    await glue.initialize('proj-no-meta');
-    await expect(glue.updateProjectName('New Name')).resolves.toBeUndefined();
-    expect(glue.projectName).toBe('');
-  });
-
   it('loads blank document when adapter.load returns null (new project, no engine doc yet)', async () => {
     const loadDocument = vi.fn();
     const engine = {

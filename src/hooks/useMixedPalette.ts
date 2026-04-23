@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Pigment } from '../types';
+import type { LabColor, MixPaletteWorkerOutput } from '../workers/mixPaletteWorkerProtocol';
 import MixPaletteWorker from '../workers/mix-palette.worker?worker';
-
-type LabColor = { l: number; a: number; b: number };
 
 export function useMixedPalette(
   hexes: string[],
@@ -32,8 +31,8 @@ export function useMixedPalette(
     workerRef.current = worker;
     setIsLoading(true);
 
-    worker.onmessage = (e: MessageEvent<LabColor[]>) => {
-      setData(e.data);
+    worker.onmessage = (e: MessageEvent<MixPaletteWorkerOutput>) => {
+      setData(e.data.labs);
       setIsLoading(false);
     };
 

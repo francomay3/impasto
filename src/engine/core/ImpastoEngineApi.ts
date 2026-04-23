@@ -12,6 +12,17 @@ import type { InputManager } from '../input/InputManager';
 import type { ImpastoToolId, ImpastoToolsState } from '../tools/ToolState';
 import type { ViewportPipelineState } from '../pipeline/ViewportPipeline';
 import type { ViewportPhysics } from '../viewport/ViewportPhysics';
+import type { PaletteResolver, ResolvedPaletteEntry } from '../palette';
+
+export type { PaletteResolver, ResolvedPaletteEntry };
+
+/** Last resolver output + swap hook for async/pigment palette strategies. */
+export type ImpastoEnginePaletteApi = {
+  setResolver(resolver: PaletteResolver): void;
+  getAll(): readonly ResolvedPaletteEntry[];
+  getByPinId(pinId: string): ResolvedPaletteEntry | undefined;
+  subscribe(listener: () => void): () => void;
+};
 
 /** Shared pan/zoom physics and viewport registration. */
 export type ImpastoEngineViewportApi = {
@@ -26,6 +37,14 @@ export type ImpastoEngineViewportApi = {
    * Intended future hook for input throttling, debouncing, and constraint application (for example zoom clamp and pan bounds) before the transform is committed to {@link ViewportPhysics}.
    */
   requestTransform(next: ViewportTransform): void;
+  /** Pushes measured DOM size for {@link fitToImage} (see ViewportWrapper ResizeObserver). */
+  setViewportSize(width: number, height: number): void;
+  getViewportSize(): { width: number; height: number } | null;
+  /**
+   * Fits the shared transform so the source image is contained in the last reported viewport size.
+   * No-op (returns false) when image or viewport size is unknown or non-positive.
+   */
+  fitToImage(): boolean;
 };
 
 /** Canonical source bitmap read/write. */

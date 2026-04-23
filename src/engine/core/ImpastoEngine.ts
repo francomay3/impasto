@@ -29,10 +29,12 @@ import type {
   ImpastoEngineToolsApi,
   ImpastoEngineViewports,
   ImpastoEngineMarqueeApi,
+  ImpastoEnginePaletteApi,
   ImpastoEngineViewportApi,
   LoadDocumentOptions,
 } from './ImpastoEngineApi';
 import { ColorPinCoordinator } from '../colorPins/ColorPinCoordinator';
+import type { EnginePaletteSync } from '../colorPins/enginePaletteSync';
 import { cloneColorPinSnapshot } from './colorPinHistorySnapshot';
 import { cloneFilterSnapshot } from './filterHistorySnapshot';
 import { SourceImageCoordinator } from './SourceImageCoordinator';
@@ -43,7 +45,7 @@ import { createImpastoEngineBoot, type ImpastoEngineLifecycle } from './createIm
  * Application-level engine for Impasto (orchestration above feature-local engines such as the canvas `CanvasEngine`).
  *
  * Public API is grouped for IntelliSense: {@link viewport}, {@link viewports}, {@link image},
- * {@link filters}, {@link pipeline}, {@link tools}, `marquee`, {@link managers}. Document snapshot
+ * {@link filters}, {@link palette}, {@link pipeline}, {@link tools}, `marquee`, {@link managers}. Document snapshot
  * methods implement {@link ImpastoEngineDocumentApi}.
  */
 export class ImpastoEngine implements ImpastoEngineDocumentApi {
@@ -57,10 +59,12 @@ export class ImpastoEngine implements ImpastoEngineDocumentApi {
   private readonly _sourceImageCoordinator: SourceImageCoordinator;
   private readonly _viewportPipeline: ViewportPipeline;
   private readonly _unsubscribeColorPins: () => void;
+  private readonly _paletteSync: EnginePaletteSync;
 
   readonly viewport: ImpastoEngineViewportApi;
   readonly image: ImpastoEngineImageApi;
   readonly filters: ImpastoEngineFiltersApi;
+  readonly palette: ImpastoEnginePaletteApi;
   readonly pipeline: ImpastoEnginePipelineApi;
   readonly tools: ImpastoEngineToolsApi;
   readonly colorPins: ImpastoEngineColorPinsApi;
@@ -81,6 +85,7 @@ export class ImpastoEngine implements ImpastoEngineDocumentApi {
     this._sourceImageCoordinator = b._sourceImageCoordinator;
     this._viewportPipeline = b._viewportPipeline;
     this._unsubscribeColorPins = b._unsubscribeColorPins;
+    this._paletteSync = b._paletteSync;
     this.viewport = b.viewport;
     this.image = b.image;
     this.managers = b.managers;
@@ -90,6 +95,7 @@ export class ImpastoEngine implements ImpastoEngineDocumentApi {
     this.selection = b.selection;
     this.marquee = b.marquee;
     this.filters = b.filters;
+    this.palette = b.palette;
     this.pipeline = b.pipeline;
     this.viewports = b.viewports;
   }
@@ -131,6 +137,7 @@ export class ImpastoEngine implements ImpastoEngineDocumentApi {
     if (this._lifecycle.disposed) {
       return;
     }
+    this._paletteSync.dispose();
     this._lifecycle.disposed = true;
     this._colorPinDragSession.clear();
     this._historyManager.clear();

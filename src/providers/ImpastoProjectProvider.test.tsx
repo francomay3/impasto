@@ -46,7 +46,6 @@ vi.mock('../storage/PersistenceGlue', () => ({
 
     async initialize(
       _projectId: string,
-      _userId?: string,
       options?: { onStructuralReady?: () => void },
     ): Promise<void> {
       if (persistenceGlueMockCtl.stallBeforeStructural) {

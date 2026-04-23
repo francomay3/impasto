@@ -1,12 +1,11 @@
 /**
- * Pure chord matching for engine hotkeys. Browser-normalized: uses {@link KeyboardEvent.code}.
- * Tool letters: **Figma-style** Hand H + Esc, Move V; **C** is sample-color (app-specific, not Figma’s comment tool); delete: Backspace/Delete/X.
+ * Pure chord matching for engine hotkeys. Registry-driven via {@link matchesHotkey} + {@link HOTKEY_META}
+ * (same physical keys/modifiers as before). Browser-normalized: uses {@link KeyboardEvent.code}.
  */
 
+import { matchesHotkey } from '../../matchesHotkey';
 import type { HotkeyBinding, HotkeyToolContext } from './hotkeyBinding';
 import { HotkeyPriorityTier } from './hotkeyBinding';
-
-;
 
 /** True when hotkeys should not steal focus from typing or modal UI. */
 export function shouldIgnoreHotkeysForEventTarget(target: EventTarget | null): boolean {
@@ -24,32 +23,17 @@ export function shouldIgnoreHotkeysForEventTarget(target: EventTarget | null): b
 
 /** Figma Hand (H) or Escape — both activate pan without modifiers. */
 export function matchPanTool(e: KeyboardEvent): boolean {
-  if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) {
-    return false;
-  }
-  return e.code === 'KeyH' || e.code === 'Escape';
+  return matchesHotkey(e, 'PAN_TOOL');
 }
 
 /** Sample-color tool (C) — intentional exception to Figma’s I=eyedropper / C=comment mapping. */
 export function matchSampleColorTool(e: KeyboardEvent): boolean {
-  return (
-    e.code === 'KeyC' &&
-    !e.metaKey &&
-    !e.ctrlKey &&
-    !e.altKey &&
-    !e.shiftKey
-  );
+  return matchesHotkey(e, 'ADD_COLOR');
 }
 
 /** Figma Move tool (V) — rectangular drag selection in this engine. */
 export function matchMarqueeTool(e: KeyboardEvent): boolean {
-  return (
-    e.code === 'KeyV' &&
-    !e.metaKey &&
-    !e.ctrlKey &&
-    !e.altKey &&
-    !e.shiftKey
-  );
+  return matchesHotkey(e, 'TOOL_SELECT');
 }
 
 /** Cmd (Mac) or Ctrl (other): arrow up/down adjusts sample-color brush when that tool is active. */
@@ -57,10 +41,7 @@ export function matchSampleBrushNudge(e: KeyboardEvent, ctx: HotkeyToolContext):
   if (ctx.activeToolId !== 'sample-color') {
     return false;
   }
-  if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) {
-    return false;
-  }
-  return e.code === 'ArrowUp' || e.code === 'ArrowDown';
+  return matchesHotkey(e, 'BRUSH_NUDGE_UP') || matchesHotkey(e, 'BRUSH_NUDGE_DOWN');
 }
 
 export function brushNudgeDeltaSteps(e: KeyboardEvent): 1 | -1 {
@@ -72,38 +53,17 @@ export function matchDeleteSelection(e: KeyboardEvent, ctx: HotkeyToolContext): 
   if (!ctx.hasDeletableSelection) {
     return false;
   }
-  if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) {
-    return false;
-  }
-  return e.code === 'Backspace' || e.code === 'Delete' || e.code === 'KeyX';
+  return matchesHotkey(e, 'DELETE_COLOR');
 }
 
 /** Cmd/Ctrl+Z without Shift — undo (browser text fields are skipped upstream). */
 export function matchHistoryUndo(e: KeyboardEvent): boolean {
-  if (e.altKey) {
-    return false;
-  }
-  if (!(e.metaKey || e.ctrlKey)) {
-    return false;
-  }
-  if (e.shiftKey) {
-    return false;
-  }
-  return e.code === 'KeyZ';
+  return matchesHotkey(e, 'UNDO');
 }
 
 /** Cmd/Ctrl+Shift+Z or Cmd/Ctrl+Y — redo. */
 export function matchHistoryRedo(e: KeyboardEvent): boolean {
-  if (e.altKey) {
-    return false;
-  }
-  if (!(e.metaKey || e.ctrlKey)) {
-    return false;
-  }
-  if (e.code === 'KeyY' && !e.shiftKey) {
-    return true;
-  }
-  return e.code === 'KeyZ' && e.shiftKey;
+  return matchesHotkey(e, 'REDO') || matchesHotkey(e, 'REDO_ALT');
 }
 
 /**

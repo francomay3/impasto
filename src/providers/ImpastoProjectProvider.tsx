@@ -16,13 +16,14 @@ import { ImpastoEngine } from '../engine/core/ImpastoEngine';
 import { ImpastoEngineContext } from '../engine/core/ImpastoEngineContext';
 import { db, storage } from '../firebase';
 import { queryKeys } from '../lib/queryKeys';
-import { clearFirestoreProjectImageUrl, saveFirestoreImageUrl } from '../services/FirestoreService';
+import { clearFirestoreProjectImageUrl, renameFirestoreProject, saveFirestoreImageUrl } from '../services/FirestoreService';
 import { ensureDashboardThumbnailForEngineProject } from '../storage/ensureDashboardThumbnailForEngineProject';
 import { impastoEngineProjectSourceImageStoragePath } from '../storage/firestoreImpastoProjectDoc';
 import { FirestoreStorageAdapter } from '../storage/FirestoreStorageAdapter';
 import { PersistenceGlue, type PersistenceStatus } from '../storage/PersistenceGlue';
 import { ProjectPigmentsState } from '../storage/ProjectPigmentsState';
 import { DEFAULT_PIGMENT_NAMES, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD } from '../services/ColorMixer';
+import { EnginePaletteResolverSync } from '../features/palette/EnginePaletteResolverSync';
 import { logEditorStartupPhase } from '../utils/editorStartupTiming';
 import type { HydrationPhase } from './hydrationPhase';
 
@@ -73,9 +74,6 @@ export function ImpastoProjectProvider({
   );
   /** First-render seed only: avoids recreating the engine when the parent passes a new `initialSourceImage` reference. */
   const initialSourceImageRef = useRef(initialSourceImage);
-  /** Ref so renameProjectName can access the live glue without it being a useCallback dep. */
-  const glueRef = useRef<PersistenceGlue | null>(null);
-
   const [hydrationPhase, setHydrationPhase] = useState<HydrationPhase>(() =>
     !projectId || !userId ? 'imageReady' : 'idle'
   );
@@ -88,9 +86,7 @@ export function ImpastoProjectProvider({
         return;
       }
       try {
-        // Routes through PersistenceGlue so rename is owned by the persistence layer,
-        // not a direct Firestore call in the component.
-        await glueRef.current?.updateProjectName(name);
+        await renameFirestoreProject(userId, projectId, name);
         setProjectName(name);
         queryClient.setQueryData<ProjectState[]>(queryKeys.projects(userId), (prev = []) =>
           prev.map((p) => (p.id === projectId ? { ...p, name } : p))
@@ -158,7 +154,6 @@ export function ImpastoProjectProvider({
       return;
     }
 
-    glueRef.current = glue;
     const unsubStatus = glue.subscribeStatus(setSaveStatus);
     let cancelled = false;
     const glueT0 = performance.now();
@@ -190,7 +185,6 @@ export function ImpastoProjectProvider({
 
     return () => {
       cancelled = true;
-      glueRef.current = null;
       unsubStatus();
       glue.dispose();
     };
@@ -205,6 +199,7 @@ export function ImpastoProjectProvider({
       <ImpastoProjectContext.Provider
         value={{ hydrationPhase, saveStatus, projectName, renameProjectName, pigmentsState }}
       >
+        <EnginePaletteResolverSync />
         {children}
       </ImpastoProjectContext.Provider>
     </ImpastoEngineContext.Provider>

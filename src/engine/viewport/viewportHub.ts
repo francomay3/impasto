@@ -10,9 +10,22 @@ export class ViewportHub {
   private readonly physics: ViewportPhysics;
   private readonly observers: Viewport[] = [];
   private readonly transformListeners = new ListenerRegistry<[]>();
+  /**
+   * Last measured host size from {@link ViewportWrapper} (ResizeObserver). Shared transform uses one size bucket;
+   * when several wrappers mount, each update overwrites — typical split view uses equal flex panes so dimensions match.
+   */
+  private viewportSize: { width: number; height: number } | null = null;
 
   constructor(physics: ViewportPhysics) {
     this.physics = physics;
+  }
+
+  setViewportSize(width: number, height: number): void {
+    this.viewportSize = { width, height };
+  }
+
+  getViewportSize(): { width: number; height: number } | null {
+    return this.viewportSize;
   }
 
   subscribe(viewport: Viewport): () => void {

@@ -14,6 +14,8 @@ type ColorPinOverlayLayout = {
   readonly x: number;
   /** Vertical center of the pin in canvas CSS coordinates. */
   readonly y: number;
+  /** Sampling radius in CSS px (image radius × zoom; DPR cancels in the projection pipeline). */
+  readonly radiusCssPx: number;
 };
 
 export function buildColorPinOverlayLayouts(
@@ -30,6 +32,6 @@ export function buildColorPinOverlayLayouts(
       transform,
       canvas,
     );
-    return { pin, x, y };
+    return { pin, x, y, radiusCssPx: pin.radiusPx * transform.z };
   });
 }

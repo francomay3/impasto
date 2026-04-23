@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { ToolId } from '../../tools';
 
+export type EditorAsidePanel = 'palette' | 'pigments' | 'filters';
+
 interface EditorStore {
   selectedColorIds: Set<string>;
   hoveredColorId: string | null;
@@ -20,6 +22,8 @@ interface EditorStore {
   // Palette tool
   activePaletteTool: ToolId;
   setActivePaletteTool: (tool: ToolId) => void;
+  activePanel: EditorAsidePanel;
+  setActivePanel: (panel: EditorAsidePanel) => void;
 }
 
 export const useEditorStore = create<EditorStore>((set) => ({
@@ -66,4 +70,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
 
   activePaletteTool: 'select',
   setActivePaletteTool: (tool) => set({ activePaletteTool: tool }),
+
+  activePanel: 'palette',
+  setActivePanel: (panel) => set({ activePanel: panel }),
 }));

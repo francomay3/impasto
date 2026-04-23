@@ -38,8 +38,8 @@ type PersistenceGlueOptions = {
    */
   onEngineSourceImageTouch?: (touch: EngineSourceImageDashboardTouch) => void | Promise<void>;
   /**
-   * When set, {@link PersistenceGlue.initialize} fetches project metadata in parallel with the engine DTO,
-   * and {@link PersistenceGlue.updateProjectName} persists name changes without engine snapshot involvement.
+   * When set, {@link PersistenceGlue.initialize} fetches project metadata in parallel with the engine DTO
+   * so both Firestore round-trips overlap and `projectName` is populated after initialize resolves.
    */
   projectMetadataAdapter?: IProjectMetadataAdapter;
   /**
@@ -147,27 +147,6 @@ export class PersistenceGlue {
     this._projectName = book.projectName;
     if (this._pigmentsState && book.pigmentSettings) {
       this._pigmentsState.loadSettings(book.pigmentSettings);
-    }
-  }
-
-  /**
-   * Persists a display-name change for this project via the `projectMetadataAdapter`.
-   * This is an imperative, non-debounced save — it has no relation to the engine snapshot path.
-   * Resolves when Firestore confirms the write. Throws on failure.
-   */
-  async updateProjectName(name: string): Promise<void> {
-    if (!this._projectMetadataAdapter || !this._projectId) {
-      return;
-    }
-    this._setStatus('saving');
-    try {
-      await this._projectMetadataAdapter.saveProjectMetadata(this._projectId, { name });
-      this._projectName = name;
-      this._setStatus('saved');
-    } catch (err) {
-      console.error('[persistence] rename error:', err);
-      this._setStatus('error');
-      throw err;
     }
   }
 

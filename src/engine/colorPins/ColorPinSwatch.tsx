@@ -8,6 +8,8 @@ type ColorPinSwatchProps = {
   x: number;
   /** Center Y in CSS pixels relative to the overlay host. */
   y: number;
+  /** Sampling radius in CSS px (layout: image radius × zoom). */
+  radiusCssPx: number;
   /** Primary pointer down: selection + optional image-space drag (handled by overlay hook). */
   onPinPrimaryPointerDown: (e: React.PointerEvent<HTMLDivElement>, pin: ColorPin) => void;
   /** True while any pin in this overlay is mid drag (cursor affordance). */
@@ -25,6 +27,7 @@ export function ColorPinSwatch(props: ColorPinSwatchProps) {
   const {
     wrapRef,
     pinWrap,
+    samplingRadiusCircle,
     swatchRing,
     isSelected,
     onMouseEnter,
@@ -43,6 +46,7 @@ export function ColorPinSwatch(props: ColorPinSwatchProps) {
       onPointerDown={onPointerDown}
       onContextMenu={onContextMenu}
     >
+      <div style={samplingRadiusCircle} aria-hidden />
       <div style={swatchRing} data-selected={isSelected || undefined}>
         <ColorSwatch color={pin.color} size={14} withShadow aria-label="Color pin" />
       </div>

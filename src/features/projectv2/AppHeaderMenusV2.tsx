@@ -1,5 +1,14 @@
-import { Menu, Text, UnstyledButton } from '@mantine/core';
+import { useState } from 'react';
+import { Menu, UnstyledButton } from '@mantine/core';
+import { useHotkeys } from '@mantine/hooks';
+import { useNavigate } from 'react-router-dom';
 import { MANTINE_MENU_CLICK_OUTSIDE_EVENTS } from '../../shared/mantineMenuClickOutsideEvents';
+import { HOTKEYS } from '../../hotkeys';
+import { useProjects } from '../dashboard/useProjects';
+import { OpenProjectModal } from './OpenProjectModal';
+import { EditMenuV2 } from './EditMenuV2';
+import { HelpMenuV2 } from './HelpMenuV2';
+import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 
 interface MenuButtonProps {
   label: string;
@@ -29,51 +38,40 @@ function MenuButton({ label, children }: MenuButtonProps) {
 }
 
 export function AppHeaderMenusV2({ onImportImage }: AppHeaderMenusV2Props) {
+  const navigate = useNavigate();
+  const { create, isCreating } = useProjects();
+  const [openProjectModalOpen, setOpenProjectModalOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  // Modal + hotkey live at this level (not inside HelpMenuV2) because Menu.Dropdown
+  // unmounts its children when closed, which would unmount the modal and its listener.
+  useHotkeys([[HOTKEYS.SHOW_SHORTCUTS, () => setShortcutsOpen(true)]]);
+
   return (
     <>
+      <OpenProjectModal opened={openProjectModalOpen} onClose={() => setOpenProjectModalOpen(false)} />
+      <KeyboardShortcutsModal opened={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <MenuButton label="File">
-        <Menu.Item disabled>New Project</Menu.Item>
-        <Menu.Item disabled>Open…</Menu.Item>
+        <Menu.Item
+          disabled={isCreating}
+          onClick={async () => {
+            const id = await create();
+            navigate(`/projectv2/${id}`);
+          }}
+        >
+          New Project
+        </Menu.Item>
+        <Menu.Item onClick={() => setOpenProjectModalOpen(true)}>Open…</Menu.Item>
         <Menu.Divider />
         <Menu.Item onClick={onImportImage}>Import Image…</Menu.Item>
         <Menu.Divider />
-        <Menu.Item disabled>Save</Menu.Item>
         <Menu.Item disabled>Export PDF</Menu.Item>
-        <Menu.Divider />
-        <Menu.Item disabled>Recent Projects</Menu.Item>
       </MenuButton>
       <MenuButton label="Edit">
-        <Menu.Item disabled rightSection={<Text size="xs" c="dimmed">⌘Z</Text>}>
-          Undo
-        </Menu.Item>
-        <Menu.Item disabled rightSection={<Text size="xs" c="dimmed">⌘⇧Z</Text>}>
-          Redo
-        </Menu.Item>
-        <Menu.Divider />
-        <Menu.Item disabled>Reset to Original</Menu.Item>
-        <Menu.Item disabled>Clear Palette</Menu.Item>
-        <Menu.Divider />
-        <Menu.Sub>
-          <Menu.Sub.Target>
-            <Menu.Sub.Item>Add Filter</Menu.Sub.Item>
-          </Menu.Sub.Target>
-          <Menu.Sub.Dropdown>
-            <Menu.Item disabled>Add Filter…</Menu.Item>
-          </Menu.Sub.Dropdown>
-        </Menu.Sub>
-        <Menu.Item disabled>Add Color to Palette</Menu.Item>
+        <EditMenuV2 />
       </MenuButton>
       <MenuButton label="Help">
-        <Menu.Item disabled rightSection={<Text size="xs" c="dimmed">?</Text>}>
-          Keyboard Shortcuts
-        </Menu.Item>
-        <Menu.Item disabled>Documentation</Menu.Item>
-        <Menu.Divider />
-        <Menu.Item disabled>
-          <Text size="xs" c="dimmed">
-            Impasto v0.1
-          </Text>
-        </Menu.Item>
+        <HelpMenuV2 onOpenShortcuts={() => setShortcutsOpen(true)} />
       </MenuButton>
     </>
   );

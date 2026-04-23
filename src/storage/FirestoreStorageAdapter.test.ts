@@ -156,7 +156,7 @@ describe('FirestoreStorageAdapter', () => {
       pins: [],
       filters: [],
       indexConfig: { blurSigma: 4 },
-      groups: [{ id: 'g1', name: 'Warm tones', colorIds: ['c1', 'c2'] }],
+      groups: [{ id: 'g1', label: 'Warm tones' }],
       imageUrl: null,
     };
 

@@ -1,72 +1,114 @@
 import type { RawImage } from '../../types';
-import type { ColorPinState } from './ColorPinState';
-import { labsForColorPinsFromFilteredImage, samplePinColorFromFilteredImage } from './indexedPaletteFromColorPins';
+import type { PaletteResolver, PaletteResolverContext } from '../palette/paletteResolver';
+import { ResolvedPaletteState } from '../palette/ResolvedPaletteState';
 import type { ViewportPipeline } from '../pipeline/ViewportPipeline';
+import type { ColorPinState } from './ColorPinState';
+import { buildPaletteRecolorUpdates } from './enginePaletteSyncApply';
 
 /**
- * Coalesces color-pin changes into a single indexed-palette flush on the next microtask,
- * and applies palette updates when the filtered image changes.
+ * Coalesces color-pin changes into a single indexed-palette flush on the next microtask, and applies palette
+ * updates when the filtered image changes. Delegates LAB/display derivation to a {@link PaletteResolver}.
  */
 export class EnginePaletteSync {
   private paletteRebuildScheduled = false;
+  /** When true, another `scheduleRebuild` arrived while a microtask was already queued — run another flush pass. */
+  private paletteRebuildAgain = false;
+  private resolver: PaletteResolver;
+  private abortInFlight: AbortController | null = null;
+  private flushGeneration = 0;
+  private syncDisposed = false;
   private readonly colorPins: ColorPinState;
   private readonly getPipeline: () => ViewportPipeline | undefined;
   private readonly isDisposed: () => boolean;
+  private readonly resolved: ResolvedPaletteState;
 
   constructor(
     colorPins: ColorPinState,
     getPipeline: () => ViewportPipeline | undefined,
     isDisposed: () => boolean,
+    resolved: ResolvedPaletteState,
+    initialResolver: PaletteResolver,
   ) {
     this.colorPins = colorPins;
     this.getPipeline = getPipeline;
     this.isDisposed = isDisposed;
+    this.resolved = resolved;
+    this.resolver = initialResolver;
+  }
+
+  dispose(): void {
+    this.syncDisposed = true;
+    this.abortInFlight?.abort();
+    this.abortInFlight = null;
+    this.resolved.clear();
+  }
+
+  setResolver(next: PaletteResolver): void {
+    this.resolver = next;
+    this.scheduleRebuild();
   }
 
   scheduleRebuild(): void {
+    this.flushGeneration += 1;
     if (this.paletteRebuildScheduled) {
+      this.paletteRebuildAgain = true;
       return;
     }
     this.paletteRebuildScheduled = true;
     queueMicrotask(() => {
       this.paletteRebuildScheduled = false;
-      if (this.isDisposed()) {
-        return;
-      }
-      this.flushFromPins();
+      if (this.isDisposed()) return;
+      do {
+        this.paletteRebuildAgain = false;
+        if (this.isDisposed()) return;
+        this.flushFromPins();
+      } while (this.paletteRebuildAgain);
     });
   }
 
   /**
-   * Recomputes LAB from geometry-only pins + filtered bitmap and pushes config into the index runner.
-   * Also resamples each pin's display hex so swatches stay in sync when the filtered image changes
-   * (e.g. after a filter parameter edit). The second field in repositionMany will be a no-op on the
-   * next microtask cycle if colors haven't changed, breaking the notify loop.
+   * Recomputes palette rows from pins + filtered bitmap via the active resolver, pushes into the index runner, and
+   * mirrors resolver rows into {@link ResolvedPaletteState}. Pin display colors follow the sampled path for
+   * `sampled` resolver id; otherwise {@link ResolvedPaletteEntry.displayHex} drives swatches.
    */
   flushFromPins(filtered?: RawImage | null): void {
-    if (this.isDisposed()) {
-      return;
-    }
+    if (this.isDisposed() || this.syncDisposed) return;
     const pipeline = this.getPipeline();
-    if (!pipeline) {
-      return;
+    if (!pipeline) return;
+    if (filtered !== undefined) {
+      this.flushGeneration += 1;
     }
+    const myGen = this.flushGeneration;
     const img = filtered !== undefined ? filtered : pipeline.getLastFilteredImage();
     const pins = this.colorPins.getAll();
+    const ctx: PaletteResolverContext = { filteredImage: img, pins };
 
-    const palette = labsForColorPinsFromFilteredImage(img, pins);
-    const pinIds = pins.map((p) => p.id);
-    pipeline.setIndexedPaletteConfig({ palette, pinIds });
+    this.abortInFlight?.abort();
+    const ac = new AbortController();
+    this.abortInFlight = ac;
+    const signal = ac.signal;
+    const resolvingResolverId = this.resolver.id;
+    const run = this.resolver.resolve(ctx, signal);
 
-    // Resample display hex for every pin so swatches reflect the current filtered bitmap.
-    if (img && pins.length > 0) {
-      const recolorUpdates = pins.flatMap((pin) => {
-        const color = samplePinColorFromFilteredImage(img, pin);
-        return color ? [{ id: pin.id, imageX: pin.imageX, imageY: pin.imageY, color }] : [];
+    void run
+      .then((result) => {
+        if (signal.aborted || this.isDisposed() || this.syncDisposed || myGen !== this.flushGeneration) {
+          return;
+        }
+        const palette = result.entries.map((e) => e.lab);
+        const pinIds = result.entries.map((e) => e.pinId);
+        pipeline.setIndexedPaletteConfig({ palette, pinIds });
+        this.resolved.setEntries(result.entries);
+        const imgNow = pipeline.getLastFilteredImage();
+        const pinsNow = this.colorPins.getAll();
+        const recolor = buildPaletteRecolorUpdates(imgNow, pinsNow, result, resolvingResolverId);
+        if (recolor.length > 0) {
+          this.colorPins.repositionMany(recolor);
+        }
+      })
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        throw err;
       });
-      if (recolorUpdates.length > 0) {
-        this.colorPins.repositionMany(recolorUpdates);
-      }
-    }
   }
 }

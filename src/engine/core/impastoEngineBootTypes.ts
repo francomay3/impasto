@@ -11,6 +11,7 @@
 
 import type { EnginePaletteSync } from '../colorPins/enginePaletteSync';
 import type { ColorPinCoordinator } from '../colorPins/ColorPinCoordinator';
+import type { ResolvedPaletteState } from '../palette/ResolvedPaletteState';
 import type { ColorPinGroupState } from '../colorPins/ColorPinGroupState';
 import type { ColorPinPointerDragSession } from '../colorPins/ColorPinPointerDragSession';
 import type { ColorPinState } from '../colorPins/ColorPinState';
@@ -31,6 +32,7 @@ import type {
   ImpastoEngineImageApi,
   ImpastoEngineManagersApi,
   ImpastoEngineMarqueeApi,
+  ImpastoEnginePaletteApi,
   ImpastoEnginePipelineApi,
   ImpastoEngineSelectionApi,
   ImpastoEngineToolsApi,
@@ -61,8 +63,10 @@ export type ImpastoEngineBoot = {
   readonly selection: ImpastoEngineSelectionApi;
   readonly marquee: ImpastoEngineMarqueeApi;
   readonly filters: ImpastoEngineFiltersApi;
+  readonly palette: ImpastoEnginePaletteApi;
   readonly pipeline: ImpastoEnginePipelineApi;
   readonly viewports: ImpastoEngineViewports;
+  readonly _paletteSync: EnginePaletteSync;
 };
 
 /** Internal graph built before `createViewportPipeline` (everything that pipeline + APIs close over). */
@@ -80,6 +84,7 @@ export type ImpastoEngineBootMid = {
   readonly _colorPinGroups: ColorPinGroupState;
   readonly _selection: SelectionState;
   readonly _marqueeGesture: MarqueeGestureState;
+  readonly _resolvedPalette: ResolvedPaletteState;
   readonly _paletteSync: EnginePaletteSync;
   readonly _unsubscribeColorPins: () => void;
   readonly _sourceImageCoordinator: SourceImageCoordinator;

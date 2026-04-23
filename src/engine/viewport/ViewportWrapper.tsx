@@ -11,7 +11,6 @@ import {
   nextTransformFromPinch,
 } from '../viewports/canvas/host/viewportCanvasGestures';
 import { useFitOnImageLoad } from './useFitOnImageLoad';
-import { fitToContain } from './fitToContain';
 import type { ViewportTransform } from './models';
 
 type ViewportWrapperProps = {
@@ -45,6 +44,24 @@ export function ViewportWrapper({
     showColorPinsOverlay ?? (surface === 'filtered' || surface === 'indexed');
   const marqueeOverlay =
     showMarqueeOverlay ?? (surface === 'filtered' || surface === 'indexed');
+
+  // Report host size before useFitOnImageLoad's layout effect so fitToImage() sees non-null dimensions.
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host) {
+      return;
+    }
+    const sync = () => {
+      const { width, height } = host.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        engine.viewport.setViewportSize(width, height);
+      }
+    };
+    sync();
+    const ro = new ResizeObserver(() => sync());
+    ro.observe(host);
+    return () => ro.disconnect();
+  }, [engine]);
 
   useFitOnImageLoad(hostRef);
 
@@ -115,12 +132,7 @@ export function ViewportWrapper({
         ref={hostRef}
         {...boxProps}
         onDoubleClick={() => {
-          const image = engine.image.get();
-          const host = hostRef.current;
-          if (!image || !host) return;
-          const { width: vpW, height: vpH } = host.getBoundingClientRect();
-          if (vpW === 0 || vpH === 0) return;
-          engine.viewport.requestTransform(fitToContain(image.width, image.height, vpW, vpH));
+          void engine.viewport.fitToImage();
         }}
         style={{ position: 'relative', overflow: 'hidden', touchAction: 'none', ...boxProps.style }}
       >

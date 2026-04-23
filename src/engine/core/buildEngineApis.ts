@@ -17,8 +17,10 @@ import type { ViewportPipeline, ViewportPipelineState } from '../pipeline/Viewpo
 import type { MarqueeGestureState } from '../selection/MarqueeGestureState';
 import type { SelectionState } from '../selection/SelectionState';
 import type { ToolState } from '../tools/ToolState';
+import { fitToContain } from '../viewport/fitToContain';
 import type { ViewportHub } from '../viewport/viewportHub';
 import type { ViewportPhysics } from '../viewport/ViewportPhysics';
+import type { RawImage } from '../../types';
 import type {
   ImpastoEngineManagersApi,
   ImpastoEngineMarqueeApi,
@@ -35,6 +37,7 @@ type BuildViewportApiDeps = {
   readonly hub: ViewportHub;
   /** Called before mutating transform state from the public API (matches disposed-engine guard on `setTransform`). */
   readonly ensureLive: () => void;
+  readonly getImage: () => RawImage | null;
 };
 
 export function buildViewportApi(deps: BuildViewportApiDeps): ImpastoEngineViewportApi {
@@ -47,6 +50,20 @@ export function buildViewportApi(deps: BuildViewportApiDeps): ImpastoEngineViewp
       deps.hub.setTransform(next);
     },
     requestTransform: (next) => deps.hub.requestTransform(next),
+    setViewportSize: (width, height) => {
+      deps.ensureLive();
+      deps.hub.setViewportSize(width, height);
+    },
+    getViewportSize: () => deps.hub.getViewportSize(),
+    fitToImage: () => {
+      const image = deps.getImage();
+      const size = deps.hub.getViewportSize();
+      if (!image || !size || size.width <= 0 || size.height <= 0) {
+        return false;
+      }
+      deps.hub.requestTransform(fitToContain(image.width, image.height, size.width, size.height));
+      return true;
+    },
   };
 }
 

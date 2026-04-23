@@ -21,6 +21,7 @@ import {
 } from './buildEngineApis';
 import { buildEngineCanvasInputHost } from './buildEngineCanvasInputHost';
 import { buildEngineFiltersApi } from './buildEngineFiltersApi';
+import { buildEnginePaletteApi } from './buildEnginePaletteApi';
 import { buildEngineInputManagerHandlers } from './buildEngineInputManagerHandlers';
 import { createEngineSelectionPickColorPin } from './createEngineSelectionPickColorPin';
 import { createViewportPipeline } from './createViewportPipeline';
@@ -32,6 +33,7 @@ import type {
   ImpastoEngineImageApi,
   ImpastoEngineManagersApi,
   ImpastoEngineMarqueeApi,
+  ImpastoEnginePaletteApi,
   ImpastoEnginePipelineApi,
   ImpastoEngineSelectionApi,
   ImpastoEngineToolsApi,
@@ -50,6 +52,7 @@ type ImpastoEngineBootWiredApis = {
   readonly selection: ImpastoEngineSelectionApi;
   readonly marquee: ImpastoEngineMarqueeApi;
   readonly filters: ImpastoEngineFiltersApi;
+  readonly palette: ImpastoEnginePaletteApi;
   readonly pipeline: ImpastoEnginePipelineApi;
   readonly viewports: ImpastoEngineViewports;
   readonly _viewportPipeline: ViewportPipeline;
@@ -107,6 +110,7 @@ export function wireImpastoEngineApis(mid: ImpastoEngineBootMid): ImpastoEngineB
     physics: mid._viewportPhysics,
     hub: mid._viewportHub,
     ensureLive: ensureNotDisposed,
+    getImage: () => mid._sourceImageCoordinator.getImage(),
   });
 
   const image = mid._sourceImageCoordinator.buildApi();
@@ -136,6 +140,12 @@ export function wireImpastoEngineApis(mid: ImpastoEngineBootMid): ImpastoEngineB
     ensureLive: ensureNotDisposed,
     pipeline: _viewportPipeline,
     history: mid._historyManager,
+  });
+
+  const palette = buildEnginePaletteApi({
+    paletteSync: mid._paletteSync,
+    resolved: mid._resolvedPalette,
+    ensureLive: ensureNotDisposed,
   });
 
   const pipeline = buildPipelineApi({
@@ -171,6 +181,7 @@ export function wireImpastoEngineApis(mid: ImpastoEngineBootMid): ImpastoEngineB
     selection,
     marquee,
     filters,
+    palette,
     pipeline,
     viewports,
     _viewportPipeline,

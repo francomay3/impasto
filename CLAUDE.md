@@ -1,64 +1,14 @@
 # Impasto — Development Rules
 
-## Package Manager
+**Always use `bun`:** for installing deps, running scripts, adding packages, etc...
+**Leave comments:** to explain non-obvious intent, invariants, tradeoffs, and anything that would save the next reader (human or agent) a trip through git history.
+**No business logic in components or hooks:** as much as possible though
+**planning:** When asked to write a plan for a feature or refactor, always use the `/plan-project` skill. Never write ad-hoc plan files directly.
+**save tokens:**: you are expensive to run. thinking tokens and your review is more valuable that ahving you write every single line of code. whenever you can delegate your task in smaller chunks, use the /delegate skill to have a dumber agent implement the changes. you just prompt, verify, correct.
+**dont write custom CSS:** unless necessary. use mantine defaults as much as possible. if you need to add CSS, its preferred to add it in theme scoped places to keep everything consistent. specific css for a single component is allowed as a 3 option only.
+**run `bun project-check`:** do that pretty often. make sure your changes dont break the check.
 
-**Always use `bun`. Never use `npm`, `npx`, or `yarn` for any command in this project.**
+## core values
 
-- Install deps: `bun install`
-- Run scripts: `bun run <script>`
-- Add packages: `bun add <package>`
-- Execute binaries: `bunx <binary>`
-
-## Comments and spacing
-
-Leaving comments in source files is **wanted**: explain non-obvious intent, invariants, tradeoffs, and anything that would save the next reader (human or agent) a trip through git history.
-
-**Comments and blank lines do not count toward the effective line limit** used by `project-check` (the file-length step only counts lines that contain non-comment code). Prefer readability: use extra newlines to group sections and add as many comments as genuinely help maintainability, without worrying about inflating “lines of code.”
-
-## No business logic in components or hooks
-
-**All business logic must live in plain TypeScript files (classes, functions, state machines). React components and hooks are only allowed to wire things together and render.**
-
-Examples of logic that must NOT live in components or hooks:
-- Color math, mixing, sampling
-- Viewport transforms (zoom, pan)
-- Tool state and transitions
-- Hotkey handling
-- Derived/computed state calculations
-- Validation or formatting
-
-If you find yourself writing logic inside a `.tsx` file or a `use*` hook beyond simple wiring, extract it to a `.ts` file first and test it there.
-
-This rule exists because logic coupled to the React render cycle is hard to unit test, has unpredictable blast radius when changed, and causes unrelated features to break.
-
-## Testing `.tsx` files
-
-Component tests (`.test.tsx` with `@testing-library/react`) are acceptable **only** when the bug or behaviour is inherently about DOM interaction or event propagation — things that cannot be reproduced by testing plain `.ts` logic in isolation.
-
-Acceptable cases:
-- Click/keyboard events that bubble through the component tree (e.g. a toolbar button clearing selection via a parent `onClick`)
-- Context wiring — verifying that a component reads from the right context and responds correctly
-- Accessibility attributes or ARIA behaviour that depend on rendered output
-
-Not acceptable — extract to `.ts` first instead:
-- Business logic that happens to live inside a component
-- Derived state or computed values
-- Anything that can be tested without rendering React at all
-
-When in doubt: if you can write the test in a `.test.ts` file, do that instead.
-
-## Planning
-
-When asked to write a plan for a feature or refactor, always use the `/plan-project` skill. Never write ad-hoc plan files directly.
-
-## Scalability First
-
-**Always implement features using the most scalable, well-architected solution. Never take the quick and easy path.**
-
-When multiple approaches exist, choose the one that:
-- Holds up as complexity grows
-- Keeps concerns properly separated
-- Avoids coupling that will need to be undone later
-- Follows the established patterns in the codebase
-
-If the right solution requires a major refactor, **ask for permission before proceeding**. Do not work around existing architecture to avoid touching it — that compounds tech debt. The correct path is worth the extra effort.
+- testability: modularize a lot. test everything you can. leave logic outside react for easier testability.
+- scalability: dont be afraid of bigger refactors in favour of scalability. they are needed to keep the codebase able to grow.

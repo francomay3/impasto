@@ -14,6 +14,8 @@ import { ColorPinGroupState } from '../colorPins/ColorPinGroupState';
 import { ColorPinPointerDragSession } from '../colorPins/ColorPinPointerDragSession';
 import { ColorPinState } from '../colorPins/ColorPinState';
 import { EnginePaletteSync } from '../colorPins/enginePaletteSync';
+import { SampledPaletteResolver } from '../palette/SampledPaletteResolver';
+import { ResolvedPaletteState } from '../palette/ResolvedPaletteState';
 import { HistoryManager } from '../history/HistoryManager';
 import { InputManager } from '../input/InputManager';
 import { ListenerRegistry } from '../infra/listenerRegistry';
@@ -39,16 +41,23 @@ function createEnginePaletteSyncSection(
   colorPins: ColorPinState,
   pipelineRef: { current?: ViewportPipeline },
   lifecycle: ImpastoEngineLifecycle,
-): { paletteSync: EnginePaletteSync; unsubscribeColorPins: () => void } {
+): {
+  paletteSync: EnginePaletteSync;
+  resolvedPalette: ResolvedPaletteState;
+  unsubscribeColorPins: () => void;
+} {
+  const resolvedPalette = new ResolvedPaletteState();
   const paletteSync = new EnginePaletteSync(
     colorPins,
     () => pipelineRef.current,
     () => lifecycle.disposed,
+    resolvedPalette,
+    new SampledPaletteResolver(),
   );
   const unsubscribeColorPins = colorPins.subscribe(() => {
     paletteSync.scheduleRebuild();
   });
-  return { paletteSync, unsubscribeColorPins };
+  return { paletteSync, resolvedPalette, unsubscribeColorPins };
 }
 
 function createBootColorPinCoordinator(
@@ -94,8 +103,11 @@ export function buildImpastoEngineBootMid(lifecycle: ImpastoEngineLifecycle): Im
   const _colorPinGroups = new ColorPinGroupState();
   const _selection = new SelectionState();
   const _marqueeGesture = new MarqueeGestureState();
-  const { paletteSync: _paletteSync, unsubscribeColorPins: _unsubscribeColorPins } =
-    createEnginePaletteSyncSection(_colorPins, pipelineRef, lifecycle);
+  const {
+    paletteSync: _paletteSync,
+    resolvedPalette: _resolvedPalette,
+    unsubscribeColorPins: _unsubscribeColorPins,
+  } = createEnginePaletteSyncSection(_colorPins, pipelineRef, lifecycle);
   const _sourceImageCoordinator = new SourceImageCoordinator(_historyManager, ensureNotDisposed);
   const _colorPinCoordinator = createBootColorPinCoordinator(
     pipelineRef,
@@ -122,6 +134,7 @@ export function buildImpastoEngineBootMid(lifecycle: ImpastoEngineLifecycle): Im
     _colorPinGroups,
     _selection,
     _marqueeGesture,
+    _resolvedPalette,
     _paletteSync,
     _unsubscribeColorPins,
     _sourceImageCoordinator,

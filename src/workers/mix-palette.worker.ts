@@ -1,23 +1,19 @@
 import chroma from 'chroma-js';
 import { findMixData, mixedResultHex } from '../services/ColorMixer';
-import type { Pigment } from '../types';
+import type { MixPaletteWorkerInput, MixPaletteWorkerOutput } from './mixPaletteWorkerProtocol';
 
-type Input = {
-  hexes: string[];
-  pigments: Pigment[];
-  minPaintPercent: number;
-  deltaThreshold: number;
-};
-
-type LabColor = { l: number; a: number; b: number };
-
-self.onmessage = ({ data }: MessageEvent<Input>) => {
+self.onmessage = ({ data }: MessageEvent<MixPaletteWorkerInput>) => {
   const { hexes, pigments, minPaintPercent, deltaThreshold } = data;
-  const result: LabColor[] = hexes.map((hex) => {
-    const mix = findMixData(hex, minPaintPercent, deltaThreshold, pigments);
-    const resultHex = mixedResultHex(mix);
-    const [l, a, b] = chroma(resultHex).lab();
-    return { l, a, b };
-  });
-  self.postMessage(result);
+  const labs: MixPaletteWorkerOutput['labs'] = [];
+  const recipes: MixPaletteWorkerOutput['recipes'] = [];
+  for (const hex of hexes) {
+    const recipe = findMixData(hex, minPaintPercent, deltaThreshold, pigments);
+    recipes.push(recipe);
+    const [l, a, b] = chroma(mixedResultHex(recipe)).lab();
+    labs.push({ l, a, b });
+  }
+  const out: MixPaletteWorkerOutput = { labs, recipes };
+  self.postMessage(out);
 };
+
+export type { MixPaletteWorkerInput, MixPaletteWorkerOutput } from './mixPaletteWorkerProtocol';

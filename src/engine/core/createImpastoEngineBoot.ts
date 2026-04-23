@@ -33,6 +33,7 @@ export function createImpastoEngineBoot(args: CreateImpastoEngineBootArgs): Impa
     _marqueeGesture: mid._marqueeGesture,
     _sourceImageCoordinator: mid._sourceImageCoordinator,
     _unsubscribeColorPins: mid._unsubscribeColorPins,
+    _paletteSync: mid._paletteSync,
     ...wired,
     colorPinGroups: wired.colorPinGroups,
   };

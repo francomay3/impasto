@@ -13,11 +13,14 @@ import { useImpastoSelection } from '../hooks/useImpastoSelection';
 import { useViewportSurface } from '../viewport/ViewportSurfaceContext';
 import { forwardWheelEventToCanvas } from '../viewports/canvas/host/forwardWheelToViewportCanvas';
 import { useColorPinHighlightStore } from './colorPinHighlightStore';
+import { hexWithAlpha } from './hexWithAlpha';
 
 type UseColorPinSwatchControllerArgs = {
   pin: ColorPin;
   x: number;
   y: number;
+  /** Sampling radius in overlay CSS px (from layout: image radius × zoom). */
+  radiusCssPx: number;
   onPinPrimaryPointerDown: (e: ReactPointerEvent<HTMLDivElement>, pin: ColorPin) => void;
   overlayPinDragActive: boolean;
   onPinContextMenu: (detail: { pinId: string; clientX: number; clientY: number }) => void;
@@ -26,6 +29,7 @@ type UseColorPinSwatchControllerArgs = {
 export function useColorPinSwatchController(args: UseColorPinSwatchControllerArgs): {
   wrapRef: RefObject<HTMLDivElement | null>;
   pinWrap: CSSProperties;
+  samplingRadiusCircle: CSSProperties;
   swatchRing: CSSProperties;
   isSelected: boolean;
   onMouseEnter: () => void;
@@ -33,7 +37,15 @@ export function useColorPinSwatchController(args: UseColorPinSwatchControllerArg
   onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onContextMenu: (e: ReactMouseEvent<HTMLDivElement>) => void;
 } {
-  const { pin, x, y, onPinPrimaryPointerDown, overlayPinDragActive, onPinContextMenu } = args;
+  const {
+    pin,
+    x,
+    y,
+    radiusCssPx,
+    onPinPrimaryPointerDown,
+    overlayPinDragActive,
+    onPinContextMenu,
+  } = args;
   const engine = useImpastoEngine();
   const surface = useViewportSurface();
   const canvas = engine.viewports[surface].canvas;
@@ -45,7 +57,7 @@ export function useColorPinSwatchController(args: UseColorPinSwatchControllerArg
 
   const isSelected = useMemo(
     () => selection.some((e) => e.kind === 'colorPin' && e.id === pin.id),
-    [selection, pin.id],
+    [selection, pin.id]
   );
 
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -81,13 +93,33 @@ export function useColorPinSwatchController(args: UseColorPinSwatchControllerArg
     boxShadow: isSelected
       ? '0 0 0 2px var(--mantine-primary-color-5)'
       : isHighlighted
-        ? '0 0 0 2px var(--mantine-color-secondary-2)'
-        : '0 0 0 2px rgba(255, 255, 255, 0.35)',
+        ? '0 0 0 2px var(--mantine-color-secondary-3)'
+        : '0 0 0 2px rgba(255, 255, 255, 0.75)',
   };
+
+  const samplingRadiusCircle: CSSProperties = useMemo(() => {
+    if (radiusCssPx <= 0) {
+      return { display: 'none' };
+    }
+    const d = `${2 * radiusCssPx}px`;
+    return {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: d,
+      height: d,
+      transform: 'translate(-50%, -50%)',
+      borderRadius: '50%',
+      border: `1.5px solid rgba(255, 255, 255, 0.35)`,
+      backgroundColor: hexWithAlpha(pin.color, 0.15),
+      pointerEvents: 'none',
+    };
+  }, [pin.color, radiusCssPx]);
 
   return {
     wrapRef,
     pinWrap,
+    samplingRadiusCircle,
     swatchRing,
     isSelected,
     onMouseEnter: () => setHighlightedPinId(pin.id),

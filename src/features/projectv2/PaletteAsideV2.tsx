@@ -1,5 +1,6 @@
 import { Tabs, Tooltip } from '@mantine/core';
 import { Palette, FlaskConical, SlidersHorizontal } from 'lucide-react';
+import { type EditorAsidePanel, useEditorStore } from '../editor/editorStore';
 import { FiltersPanel } from './FiltersPanel/FiltersPanel';
 import { PaletteSidebarV2 } from './PaletteSidebarV2';
 import { PigmentsPanelV2 } from './PigmentsPanelV2';
@@ -19,9 +20,13 @@ const panelStyle: React.CSSProperties = {
 };
 
 export function PaletteAsideV2() {
+  const activePanel = useEditorStore((s) => s.activePanel);
+  const setActivePanel = useEditorStore((s) => s.setActivePanel);
+
   return (
     <Tabs
-      defaultValue="palette"
+      value={activePanel}
+      onChange={(v) => v && setActivePanel(v as EditorAsidePanel)}
       orientation="vertical"
       style={{ height: '100%', display: 'flex' }}
     >
