@@ -16,13 +16,16 @@ import { ImpastoEngine } from '../engine/core/ImpastoEngine';
 import { ImpastoEngineContext } from '../engine/core/ImpastoEngineContext';
 import { db, storage } from '../firebase';
 import { queryKeys } from '../lib/queryKeys';
-import { clearFirestoreProjectImageUrl, renameFirestoreProject, saveFirestoreImageUrl } from '../services/FirestoreService';
-import { ensureDashboardThumbnailForEngineProject } from '../storage/ensureDashboardThumbnailForEngineProject';
-import { impastoEngineProjectSourceImageStoragePath } from '../storage/firestoreImpastoProjectDoc';
+import { renameFirestoreProject } from '../services/FirestoreService';
 import { FirestoreStorageAdapter } from '../storage/FirestoreStorageAdapter';
 import { PersistenceGlue, type PersistenceStatus } from '../storage/PersistenceGlue';
 import { ProjectPigmentsState } from '../storage/ProjectPigmentsState';
-import { DEFAULT_PIGMENT_NAMES, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD } from '../services/ColorMixer';
+import {
+  DEFAULT_PIGMENT_NAMES,
+  DEFAULT_MIN_PAINT_PERCENT,
+  DEFAULT_DELTA_THRESHOLD,
+  DEFAULT_USE_PIGMENT_MATCHED_COLORS,
+} from '../services/ColorMixer';
 import { EnginePaletteResolverSync } from '../features/palette/EnginePaletteResolverSync';
 import { logEditorStartupPhase } from '../utils/editorStartupTiming';
 import type { HydrationPhase } from './hydrationPhase';
@@ -70,6 +73,7 @@ export function ImpastoProjectProvider({
         enabledNames: [...DEFAULT_PIGMENT_NAMES],
         minPaintPercent: DEFAULT_MIN_PAINT_PERCENT,
         deltaThreshold: DEFAULT_DELTA_THRESHOLD,
+        usePigmentMatchedColors: DEFAULT_USE_PIGMENT_MATCHED_COLORS,
       }),
   );
   /** First-render seed only: avoids recreating the engine when the parent passes a new `initialSourceImage` reference. */
@@ -137,18 +141,6 @@ export function ImpastoProjectProvider({
       glue = new PersistenceGlue(engine, adapter, {
         projectMetadataAdapter: adapter,
         projectPigmentsState: pigmentsState,
-        onEngineSourceImageTouch: async ({ projectId: pid, kind }) => {
-          if (kind === 'uploaded') {
-            await saveFirestoreImageUrl(
-              userId,
-              pid,
-              impastoEngineProjectSourceImageStoragePath(userId, pid)
-            );
-          } else {
-            await clearFirestoreProjectImageUrl(userId, pid);
-          }
-          await queryClient.invalidateQueries({ queryKey: queryKeys.projects(userId) });
-        },
       });
     } catch {
       return;
@@ -173,13 +165,6 @@ export function ImpastoProjectProvider({
         if (!cancelled) {
           setHydrationPhase('imageReady');
           setProjectName(glue.projectName);
-          if (engine.image.get() !== null) {
-            void ensureDashboardThumbnailForEngineProject(userId, projectId).then((didWrite) => {
-              if (didWrite) {
-                void queryClient.invalidateQueries({ queryKey: queryKeys.projects(userId) });
-              }
-            });
-          }
         }
       });
 

@@ -4,6 +4,7 @@ import { RotateCcw, SplitSquareHorizontal } from 'lucide-react';
 import { ZoomControls } from './ZoomControls';
 import { useEngine } from '../engine/EngineContext';
 import { useFilterContext } from '../../filters/FilterContext';
+import { useProjectPigments } from '../../projectv2/pigments/useProjectPigments';
 import { useEditorStore } from '../../editor/editorStore';
 import { usePaletteContext } from '../../palette/PaletteContext';
 import { SlimNumberInput } from '../../../shared/SlimNumberInput';
@@ -93,14 +94,13 @@ function PaletteToolOptions() {
 }
 
 function PaletteMixToggle() {
-  const showMixedColors = useEditorStore((s) => s.showMixedColors);
-  const setShowMixedColors = useEditorStore((s) => s.setShowMixedColors);
+  const { settings, pigmentsState } = useProjectPigments();
   return (
     <Switch
       size="xs"
       label={<Text size="xs" c="dimmed">Show mixes</Text>}
-      checked={showMixedColors}
-      onChange={(e) => setShowMixedColors(e.currentTarget.checked)}
+      checked={settings.usePigmentMatchedColors}
+      onChange={(e) => pigmentsState.setUsePigmentMatchedColors(e.currentTarget.checked)}
     />
   );
 }

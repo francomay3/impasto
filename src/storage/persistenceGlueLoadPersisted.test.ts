@@ -239,6 +239,7 @@ describe('loadPersistedDtoIntoEngine', () => {
     const metaAdapter: IProjectMetadataAdapter = {
       loadProjectMetadata: vi.fn(async () => ({ name: 'Parallel dashboard title' })),
       saveProjectMetadata: vi.fn(),
+      setOrphaned: vi.fn(),
     };
     const dto = dtoWithImage('https://example.com/parallel.png');
     const loadDocument = vi.fn();
@@ -269,6 +270,7 @@ describe('loadPersistedDtoIntoEngine', () => {
     const metaAdapter: IProjectMetadataAdapter = {
       loadProjectMetadata: vi.fn().mockRejectedValue(new Error('metadata unavailable')),
       saveProjectMetadata: vi.fn(),
+      setOrphaned: vi.fn(),
     };
     const dto = dtoWithImage('https://example.com/meta-fail.png');
     const loadDocument = vi.fn();
@@ -299,6 +301,7 @@ describe('loadPersistedDtoIntoEngine', () => {
     const metaAdapter: IProjectMetadataAdapter = {
       loadProjectMetadata: vi.fn(async () => ({ name: 'Fresh row' })),
       saveProjectMetadata: vi.fn(),
+      setOrphaned: vi.fn(),
     };
     const loadDocument = vi.fn();
     const engine = {

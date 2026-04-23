@@ -10,9 +10,10 @@ export function listProjectsForOpenModal(
   searchQuery: string
 ): ProjectState[] {
   const trimmed = searchQuery.trim();
-  const withoutCurrent = currentProjectId
+  const withoutCurrent = (currentProjectId
     ? projects.filter((p) => p.id !== currentProjectId)
-    : projects.slice();
+    : projects.slice()
+  ).filter((p) => !p.orphaned);
 
   const searchFiltered = trimmed
     ? withoutCurrent.filter((p) => p.name.toLowerCase().includes(trimmed.toLowerCase()))

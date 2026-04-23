@@ -8,6 +8,22 @@
 **dont write custom CSS:** unless necessary. use mantine defaults as much as possible. if you need to add CSS, its preferred to add it in theme scoped places to keep everything consistent. specific css for a single component is allowed as a 3 option only.
 **run `bun project-check`:** do that pretty often. make sure your changes dont break the check.
 
+## persistence (mental model + real paths)
+
+there are 3 scopes for data storing in the db:
+
+- **App:** not yet used anywhere, but will be populated. would be stored in firestore under `app/`
+- **User:** stored in firestore under `user/{userId}`
+- **Project:** stored in firestore under `user/{userId}/project/{projectId}`
+
+per-project source image in Storage: `users/{userId}/projects/{projectId}/source.webp` (resolved in code from `userId` + `projectId`). engine DTO: `users/{userId}/projects/{projectId}/engine/data`.
+
+dashboard project doc: `orphaned: true` until a source image is saved (new row + `create()` reuse); then `false`. Hides in-progress “slots” from the project grid.
+
+### what should be in the DB and what should not
+
+any value that can be derived from other data, should NOT live in the DB. for example, no color pins resovled colors there. an exception could be for values that we want to be able to retrieve from outside of the project without running the engine.
+
 ## core values
 
 - testability: modularize a lot. test everything you can. leave logic outside react for easier testability.

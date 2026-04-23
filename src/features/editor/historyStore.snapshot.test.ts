@@ -21,6 +21,7 @@ function makeState(overrides: Partial<ProjectState> = {}): ProjectState {
   return {
     id: 'test-id',
     name: 'Test',
+    orphaned: false,
     palette: [],
     groups: [],
     paletteSize: 8,

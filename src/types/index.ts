@@ -120,7 +120,8 @@ export function createRawImage(
 export type ProjectState = {
   id: string;
   name: string;
-  imageStorageUrl?: string;
+  /** True: created but no source image yet — hidden from the dashboard grid; `create()` reuses the first such project. */
+  orphaned: boolean;
   palette: Color[];
   groups: ColorGroup[];
   paletteSize: number;
@@ -135,6 +136,7 @@ export type ProjectState = {
 export const DEFAULT_PROJECT_STATE: ProjectState = {
   id: '',
   name: 'Untitled Project',
+  orphaned: false,
   palette: [],
   groups: [],
   paletteSize: 8,

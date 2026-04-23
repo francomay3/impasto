@@ -12,6 +12,7 @@ import {
 } from '../viewports/canvas/host/viewportCanvasGestures';
 import { useFitOnImageLoad } from './useFitOnImageLoad';
 import type { ViewportTransform } from './models';
+import { ViewportPipelineStatusCorner } from './ViewportPipelineStatusCorner';
 
 type ViewportWrapperProps = {
   surface: 'source' | 'filtered' | 'indexed';
@@ -138,6 +139,7 @@ export function ViewportWrapper({
       >
         {marqueeOverlay && <MarqueeOverlay />}
         {pinsOverlay && <ColorPinsOverlay />}
+        {surface === 'filtered' && <ViewportPipelineStatusCorner />}
       </Box>
     </ViewportSurfaceProvider>
   );

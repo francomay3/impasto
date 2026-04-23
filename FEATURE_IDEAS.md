@@ -1,0 +1,6 @@
+- app level palettes, user level palletes and project palette. all three selectable with a dropdown. so the user can use a zorn palette, or create and name a custom one, or use one only specific to this project
+- value study. how? not sure. im thinking something similar to the current indexer, but with a prepass of saturation 0 and blur. not using the color pins, some other pins instead. or choosing the cleares value and darkest value and n steps in between. no color pins at all, only sliders.
+- measuring tool. you set the image scale and then be able to draw lines on the canvas to instantly get the length in mm, inch, whatever
+- rotate and crop to ratio
+- print page with optional widgets you can opt in. so you can add the original image, the indexed image, resolved colors, colors recipes grouped by their respective groups, value study, etc...
+- have a zoom-lock feature or at least a zoom level input where you can write to, so that yo mantain a stable zoom level for proportional drawing. in fact, there should be a separate view for the drawing par d. with the measurement tools, grids, fixed zoom, etc...

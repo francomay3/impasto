@@ -6,13 +6,15 @@ import { PigmentMixWorkerBridge } from '../../engine/palette/pigmentMixWorkerBri
 import { SampledPaletteResolver } from '../../engine/palette/SampledPaletteResolver';
 import type { PaletteResolver } from '../../engine/palette/paletteResolver';
 import type { PigmentSettings } from '../../storage/impastoProjectDto';
-import { useEditorStore } from '../editor/editorStore';
 import { useProjectPigments } from '../projectv2/pigments/useProjectPigments';
 
 /** Structural dependency of {@link PigmentMatchedPaletteResolver} (worker bridge surface). */
-export type PigmentMixWorkerBridgeLike = Pick<InstanceType<typeof PigmentMixWorkerBridge>, 'mix' | 'dispose'>;
+type PigmentMixWorkerBridgeLike = Pick<
+  InstanceType<typeof PigmentMixWorkerBridge>,
+  'mixOne' | 'tryGetCached' | 'dispose'
+>;
 
-export type UseSyncEnginePaletteResolverOptions = {
+type UseSyncEnginePaletteResolverOptions = {
   bridgeFactory?: () => PigmentMixWorkerBridgeLike;
 };
 
@@ -47,8 +49,8 @@ function nextResolver(
  */
 export function useSyncEnginePaletteResolver(options?: UseSyncEnginePaletteResolverOptions): void {
   const engine = useImpastoEngine();
-  const showMixed = useEditorStore((s) => s.showMixedColors);
   const { settings } = useProjectPigments();
+  const showMixed = settings.usePigmentMatchedColors;
   const bridgeRef = useRef<PigmentMixWorkerBridgeLike | null>(null);
   const lastKeyRef = useRef<string | null>(null);
   const factoryRef = useRef<(() => PigmentMixWorkerBridgeLike) | null>(null);

@@ -3,13 +3,8 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Users can only read/write images in their own project folders
-    match /users/{userId}/projects/{projectId}/image {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // ImpastoEngine REFACTOR persistence — source image per project.
-    match /users/{userId}/impasto_engine_projects/{projectId}/source.png {
+    // One source image per project (WebP); path is derived in app from userId + projectId.
+    match /users/{userId}/projects/{projectId}/source.webp {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 

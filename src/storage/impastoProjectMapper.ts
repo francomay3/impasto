@@ -1,16 +1,33 @@
 import type { ImpastoDocumentSnapshot } from '../engine/core/impastoDocumentSnapshot';
-import type { ImpastoProjectDto, PigmentSettings } from './impastoProjectDto';
-import { DEFAULT_PIGMENT_NAMES, DEFAULT_MIN_PAINT_PERCENT, DEFAULT_DELTA_THRESHOLD } from '../services/ColorMixer';
+import type { ImpastoProjectDto, PigmentSettings, PigmentSettingsInDto } from './impastoProjectDto';
+import {
+  DEFAULT_PIGMENT_NAMES,
+  DEFAULT_MIN_PAINT_PERCENT,
+  DEFAULT_DELTA_THRESHOLD,
+  DEFAULT_USE_PIGMENT_MATCHED_COLORS,
+} from '../services/ColorMixer';
+
+const PIGMENT_SETTINGS_DEFAULTS: PigmentSettings = {
+  enabledNames: [...DEFAULT_PIGMENT_NAMES],
+  minPaintPercent: DEFAULT_MIN_PAINT_PERCENT,
+  deltaThreshold: DEFAULT_DELTA_THRESHOLD,
+  usePigmentMatchedColors: DEFAULT_USE_PIGMENT_MATCHED_COLORS,
+};
 
 /**
  * Extracts pigment settings from a DTO, filling defaults when the field is absent
- * (legacy documents pre-date this field).
+ * (legacy documents pre-date pigmentSettings or individual keys).
  */
 export function dtoToPigmentSettings(dto: ImpastoProjectDto): PigmentSettings {
-  return dto.pigmentSettings ?? {
-    enabledNames: [...DEFAULT_PIGMENT_NAMES],
-    minPaintPercent: DEFAULT_MIN_PAINT_PERCENT,
-    deltaThreshold: DEFAULT_DELTA_THRESHOLD,
+  const ps: PigmentSettingsInDto | undefined = dto.pigmentSettings;
+  if (!ps) {
+    return { ...PIGMENT_SETTINGS_DEFAULTS, enabledNames: [...PIGMENT_SETTINGS_DEFAULTS.enabledNames] };
+  }
+  return {
+    enabledNames: ps.enabledNames ? [...ps.enabledNames] : [...DEFAULT_PIGMENT_NAMES],
+    minPaintPercent: ps.minPaintPercent ?? DEFAULT_MIN_PAINT_PERCENT,
+    deltaThreshold: ps.deltaThreshold ?? DEFAULT_DELTA_THRESHOLD,
+    usePigmentMatchedColors: ps.usePigmentMatchedColors ?? DEFAULT_USE_PIGMENT_MATCHED_COLORS,
   };
 }
 

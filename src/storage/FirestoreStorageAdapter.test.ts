@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Firestore } from 'firebase/firestore';
 import type { FirebaseStorage } from 'firebase/storage';
 import { createRawImage } from '../types';
-import { IMPASTO_ENGINE_PROJECTS_COLLECTION } from './firestoreImpastoProjectDoc';
+import {
+  PROJECT_ENGINE_STATE_DOC_ID,
+  PROJECT_ENGINE_SUBCOLLECTION,
+} from './firestoreImpastoProjectDoc';
 import type { ImpastoProjectDto } from './impastoProjectDto';
 
 const {
@@ -67,12 +70,18 @@ describe('FirestoreStorageAdapter', () => {
     const result = await adapter.load('missing-id');
     expect(result).toBeNull();
     expect(mockDoc).toHaveBeenCalledWith(
-      db, 'users', TEST_USER_ID, IMPASTO_ENGINE_PROJECTS_COLLECTION, 'missing-id',
+      db,
+      'users',
+      TEST_USER_ID,
+      'projects',
+      'missing-id',
+      PROJECT_ENGINE_SUBCOLLECTION,
+      PROJECT_ENGINE_STATE_DOC_ID,
     );
     expect(mockGetDoc).toHaveBeenCalledTimes(1);
   });
 
-  it('load uses users/{userId}/impasto_engine_projects/{projectId} and parses DTO when doc exists', async () => {
+  it('load uses users/.../projects/.../engine/data and parses DTO when doc exists', async () => {
     const firestorePayload = {
       schemaVersion: 1,
       pins: [{ id: 'p1', imageX: 0, imageY: 0, radiusPx: 1, color: '#fff' }],
@@ -89,7 +98,13 @@ describe('FirestoreStorageAdapter', () => {
     const result = await adapter.load('proj-42');
 
     expect(mockDoc).toHaveBeenCalledWith(
-      db, 'users', TEST_USER_ID, IMPASTO_ENGINE_PROJECTS_COLLECTION, 'proj-42',
+      db,
+      'users',
+      TEST_USER_ID,
+      'projects',
+      'proj-42',
+      PROJECT_ENGINE_SUBCOLLECTION,
+      PROJECT_ENGINE_STATE_DOC_ID,
     );
     expect(result).toEqual({
       schemaVersion: 1,
@@ -100,7 +115,7 @@ describe('FirestoreStorageAdapter', () => {
     });
   });
 
-  it('save writes to users/{userId}/impasto_engine_projects/{projectId} with cloned DTO fields', async () => {
+  it('save writes to users/.../projects/.../engine/data with cloned DTO fields', async () => {
     const dto: ImpastoProjectDto = {
       schemaVersion: 1,
       pins: [],
@@ -113,7 +128,13 @@ describe('FirestoreStorageAdapter', () => {
     await adapter.save('save-me', dto);
 
     expect(mockDoc).toHaveBeenCalledWith(
-      db, 'users', TEST_USER_ID, IMPASTO_ENGINE_PROJECTS_COLLECTION, 'save-me',
+      db,
+      'users',
+      TEST_USER_ID,
+      'projects',
+      'save-me',
+      PROJECT_ENGINE_SUBCOLLECTION,
+      PROJECT_ENGINE_STATE_DOC_ID,
     );
     expect(mockSetDoc).toHaveBeenCalledTimes(1);
     const [, payload] = mockSetDoc.mock.calls[0] as [unknown, Record<string, unknown>];
@@ -137,6 +158,7 @@ describe('FirestoreStorageAdapter', () => {
         enabledNames: ['Titanium White', 'Ivory Black'],
         minPaintPercent: 5,
         deltaThreshold: 2,
+        usePigmentMatchedColors: false,
       },
       imageUrl: null,
     };
@@ -197,7 +219,7 @@ describe('FirestoreStorageAdapter', () => {
     expect(mockRawImageToWebpBlob).toHaveBeenCalledWith(image);
     expect(mockRef).toHaveBeenCalledWith(
       storage,
-      `users/${TEST_USER_ID}/${IMPASTO_ENGINE_PROJECTS_COLLECTION}/pid-99/source.webp`,
+      `users/${TEST_USER_ID}/projects/pid-99/source.webp`,
     );
     expect(mockUploadBytes).toHaveBeenCalledTimes(1);
     expect(mockGetDownloadURL).toHaveBeenCalledTimes(1);

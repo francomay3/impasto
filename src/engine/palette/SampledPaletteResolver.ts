@@ -1,38 +1,37 @@
+import chroma from 'chroma-js';
+import type { RawImage } from '../../types';
 import type { ColorPin } from '../colorPins/colorPinTypes';
-import {
-  labsForColorPinsFromFilteredImage,
-  samplePinColorFromFilteredImage,
-} from '../colorPins/indexedPaletteFromColorPins';
-import type { PaletteResolver, PaletteResolverContext, ResolvedPalette } from './paletteResolver';
+import { samplePinColorFromFilteredImage } from '../colorPins/indexedPaletteFromColorPins';
+import type { IndexedPaletteLab } from '../pipeline/indexedPassTypes';
+import type { PaletteResolver, ResolvedPaletteEntry } from './paletteResolver';
 
-function sourceKey(pins: readonly ColorPin[], w: number, h: number): string {
-  return `${w}x${h}:${pins.map((p) => p.id).join('\x1f')}`;
+function hexToLab(hex: string): IndexedPaletteLab {
+  const [l, a, b] = chroma(hex).lab();
+  return { l, a, b };
 }
 
-function fnv1a(s: string): string {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
-  return (h >>> 0).toString(36);
-}
-
+/**
+ * Derives one entry per pin from a circle average on the filtered bitmap. Pure, synchronous — the
+ * async method is a trivial wrapper so callers can use the same shape as pigment-matched.
+ */
 export class SampledPaletteResolver implements PaletteResolver {
   readonly id = 'sampled';
   readonly version = 'sampled';
 
-  resolve(ctx: PaletteResolverContext, signal: AbortSignal): Promise<ResolvedPalette> {
+  tryResolvePinSync(pin: ColorPin, filteredImage: RawImage | null): ResolvedPaletteEntry | null {
+    const hex = samplePinColorFromFilteredImage(filteredImage, pin);
+    if (!hex) return null;
+    const lab = hexToLab(hex);
+    return { pinId: pin.id, lab, displayHex: hex, target: lab };
+  }
+
+  resolvePinAsync(
+    pin: ColorPin,
+    filteredImage: RawImage | null,
+    signal: AbortSignal,
+  ): Promise<ResolvedPaletteEntry> {
     if (signal.aborted) return Promise.reject(new DOMException('aborted', 'AbortError'));
-    const { filteredImage, pins } = ctx;
-    const w = filteredImage?.width ?? 0;
-    const h = filteredImage?.height ?? 0;
-    const labs = labsForColorPinsFromFilteredImage(filteredImage, pins);
-    if (labs.length !== pins.length) {
-      return Promise.resolve({ entries: [], sourceId: fnv1a(sourceKey(pins, w, h)) });
-    }
-    const entries = pins.map((pin, i) => {
-      const lab = labs[i]!;
-      const displayHex = samplePinColorFromFilteredImage(filteredImage, pin)!;
-      return { pinId: pin.id, lab, displayHex, target: lab };
-    });
-    return Promise.resolve({ entries, sourceId: fnv1a(sourceKey(pins, w, h)) });
+    const entry = this.tryResolvePinSync(pin, filteredImage);
+    return entry ? Promise.resolve(entry) : Promise.reject(new Error('SampledPaletteResolver: no filtered image'));
   }
 }

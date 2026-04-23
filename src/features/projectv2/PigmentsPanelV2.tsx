@@ -1,5 +1,4 @@
 import { Stack, Text, NumberInput, Checkbox, Box, Divider, Group, Switch } from '@mantine/core';
-import { useEditorStore } from '../editor/editorStore';
 import { PIGMENTS } from '../../services/ColorMixer';
 import { useProjectPigments } from './pigments/useProjectPigments';
 import type { ProjectPigmentsState } from '../../storage/ProjectPigmentsState';
@@ -81,8 +80,6 @@ function PigmentList({
 
 export function PigmentsPanelV2() {
   const { settings, pigmentsState } = useProjectPigments();
-  const showMixed = useEditorStore((s) => s.showMixedColors);
-  const setShowMixed = useEditorStore((s) => s.setShowMixedColors);
 
   return (
     <Stack gap="xs" p="xs">
@@ -90,8 +87,8 @@ export function PigmentsPanelV2() {
         size="xs"
         label="Use pigment-matched colors"
         description="Use closest achievable mix from enabled pigments"
-        checked={showMixed}
-        onChange={(e) => setShowMixed(e.currentTarget.checked)}
+        checked={settings.usePigmentMatchedColors}
+        onChange={(e) => pigmentsState.setUsePigmentMatchedColors(e.currentTarget.checked)}
       />
       <Divider />
       <Text size="xs" c="dimmed" fw={500}>Mix Settings</Text>

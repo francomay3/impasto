@@ -1,19 +1,18 @@
 import type { ImpastoProjectDto } from './impastoProjectDto';
 import type { PipelineIndexConfig } from '../engine/pipeline/pipelineIndexConfig';
 
-/**
- * Collection id for engine {@link ImpastoProjectDto} documents. `FirestoreStorageAdapter` `load` / `save`
- * must use the same path segment so reads and writes align.
- */
-export const IMPASTO_ENGINE_PROJECTS_COLLECTION = 'impasto_engine_projects';
+/** Subcollection under `users/{userId}/projects/{projectId}` holding the engine DTO. */
+export const PROJECT_ENGINE_SUBCOLLECTION = 'engine';
+
+/** Single document id for {@link ImpastoProjectDto} in that subcollection. */
+export const PROJECT_ENGINE_STATE_DOC_ID = 'data';
 
 /**
- * Deterministic Storage object path for the engine project's source image (same convention as
- * {@link FirestoreStorageAdapter.uploadImage}). Dashboard `imageStorageUrl` can store this path so
- * thumbnails resolve via `getProjectImageUrl` without duplicating bytes under `projects/…/image`.
+ * Deterministic Storage object path for the project source image (WebP).
+ * Same path for engine uploads and legacy `ImageStorageService` uploads — one object per project.
  */
-export function impastoEngineProjectSourceImageStoragePath(userId: string, projectId: string): string {
-  return `users/${userId}/${IMPASTO_ENGINE_PROJECTS_COLLECTION}/${projectId}/source.webp`;
+export function projectSourceImageWebpStoragePath(userId: string, projectId: string): string {
+  return `users/${userId}/projects/${projectId}/source.webp`;
 }
 
 /**
@@ -82,10 +81,13 @@ export function parseImpastoProjectDtoFromFirestoreData(data: unknown): ImpastoP
       typeof ps.minPaintPercent === 'number' &&
       typeof ps.deltaThreshold === 'number'
     ) {
+      const usePigmentMatchedColors =
+        typeof ps.usePigmentMatchedColors === 'boolean' ? ps.usePigmentMatchedColors : false;
       pigmentSettings = {
         enabledNames: structuredClone(ps.enabledNames) as string[],
         minPaintPercent: ps.minPaintPercent,
         deltaThreshold: ps.deltaThreshold,
+        usePigmentMatchedColors,
       };
     }
   }

@@ -5,7 +5,7 @@ import type { ProjectState } from '../../types';
 const base = (id: string, name: string, updatedAt: string): ProjectState => ({
   id,
   name,
-  imageStorageUrl: 'x',
+  orphaned: false,
   palette: [],
   groups: [],
   paletteSize: 8,
@@ -43,5 +43,11 @@ describe('listProjectsForOpenModal', () => {
   it('returns [] when no matches', () => {
     const a = base('1', 'A', '2024-01-01T00:00:00.000Z');
     expect(listProjectsForOpenModal([a], undefined, 'z')).toEqual([]);
+  });
+
+  it('excludes orphaned projects (no source image yet)', () => {
+    const ready = base('1', 'Ready', '2024-01-01T00:00:00.000Z');
+    const orphan = { ...base('2', 'Empty', '2023-01-01T00:00:00.000Z'), orphaned: true };
+    expect(listProjectsForOpenModal([ready, orphan], undefined, '')).toEqual([ready]);
   });
 });

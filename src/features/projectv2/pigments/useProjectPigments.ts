@@ -1,8 +1,5 @@
 import { useSyncExternalStore } from 'react';
 import { useImpastoProject } from '../../../providers/ImpastoProjectProvider';
-import type { PigmentSettings } from '../../../storage/impastoProjectDto';
-
-export type { PigmentSettings };
 
 /**
  * Subscribes to the project-level pigment settings.
@@ -12,7 +9,7 @@ export function useProjectPigments() {
   const { pigmentsState } = useImpastoProject();
   const settings = useSyncExternalStore(
     (cb) => pigmentsState.subscribe(cb),
-    () => pigmentsState.getSnapshot(),
+    () => pigmentsState.getSnapshot()
   );
   return { settings, pigmentsState };
 }

@@ -3,7 +3,7 @@ import { Group, Kbd, Modal, Stack, Text } from '@mantine/core';
 import { hotkeyLabel } from '../../hotkeys';
 import { buildShortcutRows } from './keyboardShortcutsRows';
 
-export interface KeyboardShortcutsModalProps {
+interface KeyboardShortcutsModalProps {
   opened: boolean;
   onClose: () => void;
 }

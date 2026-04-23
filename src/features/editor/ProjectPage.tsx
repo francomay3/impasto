@@ -8,10 +8,11 @@ import { useProjects } from '../dashboard/useProjects';
 import {
   getFirestoreProject,
   saveFirestoreProject,
-  saveFirestoreImageUrl,
   saveFirestoreThumbnailColors,
+  setProjectOrphaned,
 } from '../../services/FirestoreService';
 import { uploadProjectImage, getProjectImageUrl } from '../../services/ImageStorageService';
+import { projectSourceImageWebpStoragePath } from '../../storage/firestoreImpastoProjectDoc';
 import Editor from './Editor';
 import { DEFAULT_PROJECT_STATE, createRawImage } from '../../types';
 import type { ProjectState, RawImage } from '../../types';
@@ -23,9 +24,11 @@ async function resolveProject(userId: string, projectId: string): Promise<Resolv
   const project = await getFirestoreProject(userId, projectId);
   if (!project) return null;
 
-  if (project.imageStorageUrl) {
-    const url = await getProjectImageUrl(project.imageStorageUrl);
-    const res = await fetch(url);
+  const downloadUrl = await getProjectImageUrl(
+    projectSourceImageWebpStoragePath(userId, projectId)
+  ).catch(() => null);
+  if (downloadUrl) {
+    const res = await fetch(downloadUrl);
     const blob = await res.blob();
     const bitmap = await createImageBitmap(blob);
     const canvas = document.createElement('canvas');
@@ -78,11 +81,10 @@ export function ProjectPage() {
   const onNewImageFile = useCallback(
     async (file: File) => {
       if (!user || !id) return;
-      const url = await uploadProjectImage(user.uid, id, file);
-      await saveFirestoreImageUrl(user.uid, id, url);
-      queryClient.setQueryData<ResolvedProject | null>(queryKeys.project(user.uid, id), (prev) =>
-        prev ? { ...prev, state: { ...prev.state, imageStorageUrl: url } } : prev
-      );
+      await uploadProjectImage(user.uid, id, file);
+      await setProjectOrphaned(user.uid, id, false);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.project(user.uid, id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.projects(user.uid) });
     },
     [user, id, queryClient]
   );

@@ -17,14 +17,12 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can only read/write their own project documents
+    // Project metadata (dashboard) and subcollections (e.g. engine DTO at `engine/data`).
     match /users/{userId}/projects/{projectId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // ImpastoEngine REFACTOR persistence — user-scoped engine documents. the path should be updated when the impasto refactor is done
-    match /users/{userId}/impasto_engine_projects/{projectId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /engine/{engineDocId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Deny everything else by default

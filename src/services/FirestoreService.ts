@@ -1,6 +1,5 @@
 import {
   collection,
-  deleteField,
   doc,
   updateDoc,
   deleteDoc,
@@ -17,12 +16,13 @@ import type { Color, ProjectState } from '../types';
 
 // hex is always derived at runtime — never persisted
 type StoredColor = Omit<Color, 'hex'>;
-type StoredProject = Omit<ProjectState, 'createdAt' | 'updatedAt' | 'palette'> & {
+type StoredProject = Omit<ProjectState, 'createdAt' | 'updatedAt' | 'palette' | 'orphaned'> & {
   palette: StoredColor[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
-  imageStorageUrl?: string;
   thumbnailColors?: string[];
+  /** Absent on legacy rows — treated as false. */
+  orphaned?: boolean;
 };
 
 function projectsCol(userId: string) {
@@ -31,11 +31,16 @@ function projectsCol(userId: string) {
 
 function toProjectState(id: string, data: StoredProject): ProjectState {
   return {
-    ...data,
     id,
+    name: data.name,
+    orphaned: data.orphaned === true,
     palette: (data.palette as Array<StoredColor & { hex?: string }>)
       .filter((c) => c.sample)
       .map(({ hex: _hex, ...c }) => ({ hex: '', ...c })),
+    groups: data.groups,
+    paletteSize: data.paletteSize,
+    filters: data.filters,
+    preIndexingBlur: data.preIndexingBlur,
     thumbnailColors: data.thumbnailColors,
     createdAt: data.createdAt.toDate().toISOString(),
     updatedAt: data.updatedAt.toDate().toISOString(),
@@ -45,12 +50,12 @@ function toProjectState(id: string, data: StoredProject): ProjectState {
 function toPayload(state: ProjectState) {
   return {
     name: state.name,
+    orphaned: state.orphaned,
     palette: state.palette.map(({ hex: _hex, ...c }) => c),
     groups: state.groups,
     paletteSize: state.paletteSize,
     filters: state.filters,
     preIndexingBlur: state.preIndexingBlur,
-    ...(state.imageStorageUrl ? { imageStorageUrl: state.imageStorageUrl } : {}),
     ...(state.thumbnailColors ? { thumbnailColors: state.thumbnailColors } : {}),
   };
 }
@@ -69,6 +74,10 @@ export async function createFirestoreProject(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function setProjectOrphaned(userId: string, projectId: string, orphaned: boolean): Promise<void> {
+  await updateDoc(doc(projectsCol(userId), projectId), { orphaned });
 }
 
 export async function saveFirestoreProject(
@@ -95,19 +104,6 @@ export async function getFirestoreProject(
   const snap = await getDoc(doc(projectsCol(userId), projectId));
   if (!snap.exists()) return null;
   return toProjectState(snap.id, snap.data() as StoredProject);
-}
-
-export async function saveFirestoreImageUrl(
-  userId: string,
-  projectId: string,
-  imageStorageUrl: string
-): Promise<void> {
-  await updateDoc(doc(projectsCol(userId), projectId), { imageStorageUrl });
-}
-
-/** Clears dashboard thumbnail / orphan-detection field when engine source is removed. */
-export async function clearFirestoreProjectImageUrl(userId: string, projectId: string): Promise<void> {
-  await updateDoc(doc(projectsCol(userId), projectId), { imageStorageUrl: deleteField() });
 }
 
 export async function renameFirestoreProject(

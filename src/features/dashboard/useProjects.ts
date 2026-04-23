@@ -22,8 +22,8 @@ export function useProjects() {
     enabled: !!user,
   });
 
-  const orphan = data.find((p) => !p.imageStorageUrl) ?? null;
-  const projects = data.filter((p) => !!p.imageStorageUrl);
+  const orphan = data.find((p) => p.orphaned) ?? null;
+  const projects = data.filter((p) => !p.orphaned);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -32,6 +32,7 @@ export function useProjects() {
       const blank: ProjectState = {
         ...DEFAULT_PROJECT_STATE,
         id: ref.id,
+        orphaned: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -95,7 +96,7 @@ export function useProjects() {
 
   return {
     projects,
-    /** First project doc missing `imageStorageUrl` (same id `create()` reuses). */
+    /** First project still waiting for a source image — {@link create} reuses this id. */
     orphanId: orphan?.id ?? null,
     loading,
     hasAnyProject: data.length > 0,

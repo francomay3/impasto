@@ -23,6 +23,8 @@ export const PIGMENTS: Pigment[] = [
 
 export const DEFAULT_MIN_PAINT_PERCENT = 2;
 export const DEFAULT_DELTA_THRESHOLD = 4;
+/** Default for `usePigmentMatchedColors` in {@link import('../storage/impastoProjectDto').PigmentSettings} (legacy + new projects). */
+export const DEFAULT_USE_PIGMENT_MATCHED_COLORS = false;
 
 /** Core palette enabled for new projects and as a fallback for legacy documents. */
 export const DEFAULT_PIGMENT_NAMES: readonly string[] = [

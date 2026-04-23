@@ -8,4 +8,6 @@ import type { ProjectMetadata } from './projectMetadata';
 export interface IProjectMetadataAdapter {
   loadProjectMetadata(projectId: string): Promise<ProjectMetadata | null>;
   saveProjectMetadata(projectId: string, metadata: ProjectMetadata): Promise<void>;
+  /** Called when a source image is first persisted to Storage so the project can appear on the dashboard. */
+  setOrphaned(projectId: string, orphaned: boolean): Promise<void>;
 }

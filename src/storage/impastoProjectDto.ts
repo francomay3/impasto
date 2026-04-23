@@ -3,11 +3,21 @@ import type { ColorPinGroup } from '../engine/colorPins/ColorPinGroupState';
 import type { PipelineIndexConfig } from '../engine/pipeline/pipelineIndexConfig';
 import type { FilterInstance } from '../types';
 
-/** Persisted pigment palette selection and mix tuning for a project. */
+/** Normalized pigment palette + mix options after load (all fields set). */
 export type PigmentSettings = {
   enabledNames: string[];
   minPaintPercent: number;
   deltaThreshold: number;
+  /** When true, the editor uses pigment-matched lab colors (and the engine uses pigment-matched palette resolution). */
+  usePigmentMatchedColors: boolean;
+};
+
+/**
+ * Shape stored in {@link ImpastoProjectDto.pigmentSettings}. Older documents may omit
+ * `usePigmentMatchedColors`; the mapper supplies {@link import('../services/ColorMixer').DEFAULT_USE_PIGMENT_MATCHED_COLORS}.
+ */
+export type PigmentSettingsInDto = Omit<PigmentSettings, 'usePigmentMatchedColors'> & {
+  usePigmentMatchedColors?: boolean;
 };
 
 /**
@@ -27,6 +37,6 @@ export type ImpastoProjectDto = {
   /** Present on new saves; omitted in legacy stored documents (see mapper / Firestore parser). */
   groups?: readonly ColorPinGroup[];
   /** Present on new saves; absent in legacy documents — mapper supplies defaults when missing. */
-  pigmentSettings?: PigmentSettings;
+  pigmentSettings?: PigmentSettingsInDto;
   imageUrl: string | null;
 };

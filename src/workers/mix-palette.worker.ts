@@ -16,4 +16,4 @@ self.onmessage = ({ data }: MessageEvent<MixPaletteWorkerInput>) => {
   self.postMessage(out);
 };
 
-export type { MixPaletteWorkerInput, MixPaletteWorkerOutput } from './mixPaletteWorkerProtocol';
+;

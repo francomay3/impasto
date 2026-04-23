@@ -18,7 +18,7 @@ const BRUSH_SCHEMA = {
   key: 'brushSize',
   label: 'Brush size',
   min: 1,
-  max: 30,
+  max: 120,
   step: 1,
   unit: 'px',
 } as const;
@@ -47,7 +47,11 @@ export class SampleColorTool extends ImpastoTool {
     primaryClickColorSample: true,
   };
 
-  pointerChrome({ surface, pointerInside, panDrag }: ToolPointerChromeArgs): ViewportCanvasPointerUi {
+  pointerChrome({
+    surface,
+    pointerInside,
+    panDrag,
+  }: ToolPointerChromeArgs): ViewportCanvasPointerUi {
     /** While panning (any button), Photoshop-style hand: grab cursor, no sampling ring. */
     if (panDrag !== null) {
       return { cursor: 'grabbing', sampleRingActive: false };
@@ -93,7 +97,7 @@ export class SampleColorTool extends ImpastoTool {
               step: BRUSH_SCHEMA.step,
               unit: BRUSH_SCHEMA.unit,
             },
-            brush,
+            brush
           ),
         ],
       },

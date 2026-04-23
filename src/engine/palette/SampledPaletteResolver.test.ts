@@ -6,45 +6,42 @@ import {
 } from '../colorPins/indexedPaletteFromColorPins';
 import { SampledPaletteResolver } from './SampledPaletteResolver';
 
+const pinA = { id: 'a', imageX: 0, imageY: 0, radiusPx: 0, color: '#ff0000' } as const;
+
 describe('SampledPaletteResolver', () => {
   const resolver = new SampledPaletteResolver();
 
-  it('returns empty entries when there are no pins', async () => {
-    const data = new Uint8ClampedArray([255, 0, 0, 255]);
-    const img = createRawImage(data, 1, 1);
-    const out = await resolver.resolve({ filteredImage: img, pins: [] }, new AbortController().signal);
-    expect(out.entries).toEqual([]);
-    expect(out.sourceId).toMatch(/^[0-9a-z]+$/i);
+  it('tryResolvePinSync returns null when filtered image is null', () => {
+    expect(resolver.tryResolvePinSync(pinA, null)).toBeNull();
   });
 
-  it('returns empty when filtered image is null', async () => {
-    const out = await resolver.resolve(
-      {
-        filteredImage: null,
-        pins: [{ id: 'a', imageX: 0, imageY: 0, radiusPx: 0, color: '#ff0000' }],
-      },
-      new AbortController().signal,
-    );
-    expect(out.entries).toEqual([]);
+  it('tryResolvePinSync produces target == lab and the sampled hex as displayHex', () => {
+    const img = createRawImage(new Uint8ClampedArray([255, 0, 0, 255]), 1, 1);
+    const [expectedLab] = labsForColorPinsFromFilteredImage(img, [pinA]);
+    const entry = resolver.tryResolvePinSync(pinA, img);
+    expect(entry).not.toBeNull();
+    expect(entry!.lab).toEqual(expectedLab);
+    expect(entry!.target).toEqual(expectedLab);
+    expect(entry!.displayHex).toBe(samplePinColorFromFilteredImage(img, pinA));
   });
 
-  it('target equals lab and matches labsForColorPinsFromFilteredImage', async () => {
-    const data = new Uint8ClampedArray([255, 0, 0, 255]);
-    const img = createRawImage(data, 1, 1);
-    const pins = [{ id: '1', imageX: 0, imageY: 0, radiusPx: 0, color: '#ff0000' }] as const;
-    const [expectedLab] = labsForColorPinsFromFilteredImage(img, pins);
-    const out = await resolver.resolve({ filteredImage: img, pins }, new AbortController().signal);
-    expect(out.entries).toHaveLength(1);
-    expect(out.entries[0]!.lab).toEqual(expectedLab);
-    expect(out.entries[0]!.target).toEqual(expectedLab);
-    expect(out.entries[0]!.displayHex).toBe(samplePinColorFromFilteredImage(img, pins[0]!));
+  it('resolvePinAsync mirrors the sync path', async () => {
+    const img = createRawImage(new Uint8ClampedArray([255, 0, 0, 255]), 1, 1);
+    const entry = await resolver.resolvePinAsync(pinA, img, new AbortController().signal);
+    expect(entry).toEqual(resolver.tryResolvePinSync(pinA, img));
   });
 
-  it('rejects when signal is already aborted', async () => {
+  it('resolvePinAsync rejects when signal is already aborted', async () => {
     const ac = new AbortController();
     ac.abort();
-    await expect(resolver.resolve({ filteredImage: null, pins: [] }, ac.signal)).rejects.toMatchObject({
-      name: 'AbortError',
-    });
+    await expect(
+      resolver.resolvePinAsync(pinA, null, ac.signal),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  it('resolvePinAsync rejects when the filtered image is missing', async () => {
+    await expect(
+      resolver.resolvePinAsync(pinA, null, new AbortController().signal),
+    ).rejects.toBeInstanceOf(Error);
   });
 });

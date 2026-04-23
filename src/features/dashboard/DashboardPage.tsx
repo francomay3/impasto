@@ -32,8 +32,7 @@ export function DashboardPage() {
       return;
     }
 
-    // `projects` hides rows without `imageStorageUrl`; `hasAnyProject` does not — send the user
-    // to the orphan so they are not stuck on an empty grid.
+    // All rows are "orphans" (no source image yet) — send the user to the reusable slot so the grid is not empty.
     if (projects.length === 0 && orphanId != null) {
       navigate(`/projectv2/${orphanId}`, { replace: true });
     }

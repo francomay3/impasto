@@ -1,6 +1,6 @@
 import type { PigmentSettings } from './impastoProjectDto';
 
-export type { PigmentSettings };
+;
 
 /**
  * Project-level observable state for the pigment palette and mix settings.
@@ -53,6 +53,12 @@ export class ProjectPigmentsState {
 
   setDeltaThreshold(value: number): void {
     this._settings = frozenSettings({ ...this._settings, deltaThreshold: value });
+    this._notify();
+  }
+
+  setUsePigmentMatchedColors(value: boolean): void {
+    if (this._settings.usePigmentMatchedColors === value) return;
+    this._settings = frozenSettings({ ...this._settings, usePigmentMatchedColors: value });
     this._notify();
   }
 

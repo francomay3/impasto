@@ -24,9 +24,9 @@ import {
 } from './colorPinPlacementApiMethodBuilders';
 import type { ColorPinPlacementApiHost } from './colorPinPlacementApiHost';
 
-export type { ColorPinPlacementApiHost } from './colorPinPlacementApiHost';
-
-export function buildColorPinPlacementApi(host: ColorPinPlacementApiHost): ImpastoEngineColorPinsPlacementApi {
+export function buildColorPinPlacementApi(
+  host: ColorPinPlacementApiHost
+): ImpastoEngineColorPinsPlacementApi {
   return {
     getAll: () => host.colorPins.getAll(),
     subscribe: (listener) => host.colorPins.subscribe(listener),

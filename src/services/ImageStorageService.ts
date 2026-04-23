@@ -1,11 +1,12 @@
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
+import { projectSourceImageWebpStoragePath } from '../storage/firestoreImpastoProjectDoc';
 
 const MAX_DIMENSION = 2048;
 const WEBP_QUALITY = 0.85;
 
 function imageRef(userId: string, projectId: string) {
-  return ref(storage, `users/${userId}/projects/${projectId}/image`);
+  return ref(storage, projectSourceImageWebpStoragePath(userId, projectId));
 }
 
 function compressToWebP(file: File | Blob): Promise<Blob> {
@@ -41,7 +42,7 @@ export async function uploadProjectImage(
   const compressed = await compressToWebP(file);
   const r = imageRef(userId, projectId);
   await uploadBytes(r, compressed, { contentType: 'image/webp' });
-  return `users/${userId}/projects/${projectId}/image`;
+  return projectSourceImageWebpStoragePath(userId, projectId);
 }
 
 /** Resolve a storage path (or legacy full URL) to a fresh download URL. */

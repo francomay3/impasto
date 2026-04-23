@@ -18,13 +18,7 @@ type PersistenceGlueInitializeOptions = {
   onStructuralReady?: () => void;
 };
 
-export type { PersistenceGlueInitializeOptions };
-
-/** Fired after a successful engine {@link IStorageAdapter.save} that uploaded or deleted remote source bytes. */
-export type EngineSourceImageDashboardTouch = {
-  projectId: string;
-  kind: 'uploaded' | 'deleted';
-};
+;
 
 type PersistenceGlueOptions = {
   /**
@@ -32,11 +26,6 @@ type PersistenceGlueOptions = {
    * @default 1500
    */
   debounceMs?: number;
-  /**
-   * Sync `users/{userId}/projects/{projectId}.imageStorageUrl` with engine Storage (project v2),
-   * since the engine DTO lives under `impasto_engine_projects` and does not update the dashboard row by itself.
-   */
-  onEngineSourceImageTouch?: (touch: EngineSourceImageDashboardTouch) => void | Promise<void>;
   /**
    * When set, {@link PersistenceGlue.initialize} fetches project metadata in parallel with the engine DTO
    * so both Firestore round-trips overlap and `projectName` is populated after initialize resolves.
@@ -57,9 +46,6 @@ export class PersistenceGlue {
   private readonly adapter: IStorageAdapter;
   private readonly _projectMetadataAdapter: IProjectMetadataAdapter | undefined;
   private readonly debounceMs: number;
-  private readonly _onEngineSourceImageTouch?: (
-    touch: EngineSourceImageDashboardTouch
-  ) => void | Promise<void>;
 
   /** Set by {@link PersistenceGlue.initialize} once a project is known. */
   private _projectId: string | null = null;
@@ -93,7 +79,6 @@ export class PersistenceGlue {
     this.adapter = adapter;
     this._projectMetadataAdapter = options?.projectMetadataAdapter;
     this.debounceMs = options?.debounceMs ?? DEFAULT_DOCUMENT_DEBOUNCE_MS;
-    this._onEngineSourceImageTouch = options?.onEngineSourceImageTouch;
     this._pigmentsState = options?.projectPigmentsState;
 
     this._unsubscribeDocument = engine.subscribeDocumentChanged(() => {
@@ -235,21 +220,19 @@ export class PersistenceGlue {
       const imageChanged = pixelsDiffer || orphanedPersistedUrl;
 
       let imageUrl = this._lastPersistedImageUrl;
-      let engineSourceTouch: EngineSourceImageDashboardTouch['kind'] | null = null;
+      let uploadedSourceThisPass = false;
       if (imageChanged) {
         if (currentImage !== null) {
           /**
-           * Source PNG uses a deterministic Storage path (`source.png`). Overwriting via upload replaces bytes
+           * WebP at a deterministic Storage path. Overwriting via upload replaces bytes
            * without delete — **do not** delete-before-upload for the same path: delete removes the object while
-           * Firestore still stores the previous download URL, so any fetch (reload, another tab) returns 403 until
-           * upload finishes (token/generation mismatch window).
+           * the DTO may still store the previous download URL, so fetches can 403 until upload finishes.
            */
           imageUrl = await this.adapter.uploadImage(projectId, currentImage);
-          engineSourceTouch = 'uploaded';
+          uploadedSourceThisPass = true;
         } else if (this._lastPersistedImageUrl !== null) {
           await this.adapter.deleteImage(this._lastPersistedImageUrl);
           imageUrl = null;
-          engineSourceTouch = 'deleted';
         }
       }
 
@@ -259,14 +242,8 @@ export class PersistenceGlue {
         : baseDto;
       await this.adapter.save(projectId, dto);
 
-      if (engineSourceTouch !== null && this._onEngineSourceImageTouch !== undefined) {
-        try {
-          await Promise.resolve(
-            this._onEngineSourceImageTouch({ projectId, kind: engineSourceTouch }),
-          );
-        } catch (err) {
-          console.error('[persistence] dashboard thumbnail sync failed', err);
-        }
+      if (uploadedSourceThisPass && this._projectMetadataAdapter) {
+        await this._projectMetadataAdapter.setOrphaned(projectId, false);
       }
 
       this._lastPersistedImageUrl = imageUrl;

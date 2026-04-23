@@ -1,4 +1,6 @@
 {
-  "ignore": ["src/utils/mixbox.d.ts"],
-  "ignoreFiles": ["src/REFACTOR/**"]
+  "entry": ["src/engine/index.ts"],
+  "ignore": [
+    "src/utils/mixbox.d.ts"
+  ]
 }

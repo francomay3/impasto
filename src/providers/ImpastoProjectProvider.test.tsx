@@ -70,14 +70,14 @@ vi.mock('../storage/PersistenceGlue', () => ({
 vi.mock('../engine/core/ImpastoEngine', () => ({
   ImpastoEngine: class MockImpastoEngine {
     image = { set: vi.fn(), get: vi.fn(() => null) };
+    /** Used by {@link EnginePaletteResolverSync} / `useSyncEnginePaletteResolver`. */
+    palette = { setResolver: vi.fn() };
     dispose = vi.fn();
   },
 }));
 
 vi.mock('../services/FirestoreService', () => ({
   renameFirestoreProject: vi.fn().mockResolvedValue(undefined),
-  saveFirestoreImageUrl: vi.fn().mockResolvedValue(undefined),
-  clearFirestoreProjectImageUrl: vi.fn().mockResolvedValue(undefined),
   getFirestoreProject: vi.fn().mockResolvedValue(null),
 }));
 

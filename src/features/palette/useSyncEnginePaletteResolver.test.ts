@@ -8,7 +8,6 @@ import { PigmentMatchedPaletteResolver } from '../../engine/palette/PigmentMatch
 import { SampledPaletteResolver } from '../../engine/palette/SampledPaletteResolver';
 import type { PaletteResolver } from '../../engine/palette/paletteResolver';
 import type { PigmentSettings } from '../../storage/impastoProjectDto';
-import { useEditorStore } from '../editor/editorStore';
 import { useSyncEnginePaletteResolver } from './useSyncEnginePaletteResolver';
 
 const pigmentCtl = vi.hoisted(() => ({
@@ -16,12 +15,14 @@ const pigmentCtl = vi.hoisted(() => ({
     enabledNames: ['Titanium White'],
     minPaintPercent: 2,
     deltaThreshold: 4,
+    usePigmentMatchedColors: false,
   } as PigmentSettings,
 }));
 
 vi.mock('../../engine/palette/pigmentMixWorkerBridge', () => ({
   PigmentMixWorkerBridge: class {
-    mix = vi.fn().mockResolvedValue({ labs: [], recipes: [] });
+    mixOne = vi.fn().mockResolvedValue({ lab: { l: 0, a: 0, b: 0 }, recipe: [] });
+    tryGetCached = vi.fn().mockReturnValue(null);
     dispose = vi.fn();
   },
 }));
@@ -44,11 +45,11 @@ function engineWrapper(engine: ImpastoEngine) {
 
 describe('useSyncEnginePaletteResolver', () => {
   beforeEach(() => {
-    useEditorStore.setState({ showMixedColors: false });
     pigmentCtl.settings = {
       enabledNames: ['Titanium White'],
       minPaintPercent: 2,
       deltaThreshold: 4,
+      usePigmentMatchedColors: false,
     };
   });
 
@@ -60,23 +61,23 @@ describe('useSyncEnginePaletteResolver', () => {
     return renderHook(() => useSyncEnginePaletteResolver(), { wrapper: engineWrapper(engine) });
   }
 
-  it('mounts with showMixed false -> sampled resolver', () => {
+  it('mounts with usePigmentMatchedColors false -> sampled resolver', () => {
     const { engine, setResolver } = makeEngine();
     renderWithEngine(engine);
     expect(setResolver).toHaveBeenCalledWith(expect.any(SampledPaletteResolver));
   });
 
-  it('toggles showMixed true with pigments -> pigment-matched resolver', () => {
+  it('toggles usePigmentMatchedColors true with pigments -> pigment-matched resolver', () => {
     const { engine, setResolver } = makeEngine();
     const { rerender } = renderWithEngine(engine);
-    useEditorStore.setState({ showMixedColors: true });
+    pigmentCtl.settings = { ...pigmentCtl.settings, usePigmentMatchedColors: true };
     rerender();
     expect(setResolver).toHaveBeenLastCalledWith(expect.any(PigmentMatchedPaletteResolver));
   });
 
-  it('changes minPaintPercent while showMixed -> swaps resolver (new version)', () => {
+  it('changes minPaintPercent while usePigmentMatchedColors -> swaps resolver (new version)', () => {
     const { engine, setResolver } = makeEngine();
-    useEditorStore.setState({ showMixedColors: true });
+    pigmentCtl.settings = { ...pigmentCtl.settings, usePigmentMatchedColors: true };
     const { rerender } = renderWithEngine(engine);
     const v1 = (setResolver.mock.calls.at(-1)?.[0] as PigmentMatchedPaletteResolver).version;
     pigmentCtl.settings = { ...pigmentCtl.settings, minPaintPercent: 9 };
@@ -85,11 +86,11 @@ describe('useSyncEnginePaletteResolver', () => {
     expect(v2).not.toBe(v1);
   });
 
-  it('flipping showMixed false -> sampled again', () => {
+  it('flipping usePigmentMatchedColors false -> sampled again', () => {
     const { engine, setResolver } = makeEngine();
-    useEditorStore.setState({ showMixedColors: true });
+    pigmentCtl.settings = { ...pigmentCtl.settings, usePigmentMatchedColors: true };
     const { rerender } = renderWithEngine(engine);
-    useEditorStore.setState({ showMixedColors: false });
+    pigmentCtl.settings = { ...pigmentCtl.settings, usePigmentMatchedColors: false };
     rerender();
     expect(setResolver).toHaveBeenLastCalledWith(expect.any(SampledPaletteResolver));
   });
@@ -104,11 +105,12 @@ describe('useSyncEnginePaletteResolver', () => {
 
   it('unmount disposes injected bridge', () => {
     const dispose = vi.fn();
-    const mix = vi.fn().mockResolvedValue({ labs: [], recipes: [] });
+    const mixOne = vi.fn().mockResolvedValue({ lab: { l: 0, a: 0, b: 0 }, recipe: [] });
+    const tryGetCached = vi.fn().mockReturnValue(null);
     const { engine } = makeEngine();
-    useEditorStore.setState({ showMixedColors: true });
+    pigmentCtl.settings = { ...pigmentCtl.settings, usePigmentMatchedColors: true };
     const { unmount } = renderHook(
-      () => useSyncEnginePaletteResolver({ bridgeFactory: () => ({ dispose, mix }) }),
+      () => useSyncEnginePaletteResolver({ bridgeFactory: () => ({ dispose, mixOne, tryGetCached }) }),
       { wrapper: engineWrapper(engine) },
     );
     unmount();

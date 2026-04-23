@@ -3,16 +3,15 @@ import chroma from 'chroma-js';
 import { findMixData, mixedResultHex, PIGMENTS, type MixEntry } from '../../services/ColorMixer';
 import { createRawImage } from '../../types';
 import { samplePinColorFromFilteredImage } from '../colorPins/indexedPaletteFromColorPins';
-import type { PigmentMixWorkerBridge } from './pigmentMixWorkerBridge';
+import type { PigmentMixWorkerBridge, MixOneResult } from './pigmentMixWorkerBridge';
 import { PigmentMatchedPaletteResolver } from './PigmentMatchedPaletteResolver';
 
-type MixOut = {
-  labs: { l: number; a: number; b: number }[];
-  recipes: MixEntry[][];
-};
-
-function fakeBridge({ labs, recipes }: MixOut): PigmentMixWorkerBridge {
-  return { mix: vi.fn().mockResolvedValue({ labs, recipes }), dispose: vi.fn() } as unknown as PigmentMixWorkerBridge;
+function fakeBridge(result: MixOneResult, cached?: MixOneResult | null): PigmentMixWorkerBridge {
+  return {
+    mixOne: vi.fn().mockResolvedValue(result),
+    tryGetCached: vi.fn().mockReturnValue(cached ?? null),
+    dispose: vi.fn(),
+  } as unknown as PigmentMixWorkerBridge;
 }
 
 describe('PigmentMatchedPaletteResolver', () => {
@@ -20,75 +19,75 @@ describe('PigmentMatchedPaletteResolver', () => {
   const minPaintPercent = 2;
   const deltaThreshold = 4;
 
-  it('uses sampled LAB as target and worker LAB as lab', async () => {
-    const data = new Uint8ClampedArray([255, 0, 0, 255]);
-    const img = createRawImage(data, 1, 1);
-    const pins = [{ id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#ff0000' }] as const;
-    const hex = samplePinColorFromFilteredImage(img, pins[0]!)!;
+  it('resolvePinAsync fills lab from the worker and target from the sampled hex', async () => {
+    const img = createRawImage(new Uint8ClampedArray([255, 0, 0, 255]), 1, 1);
+    const pin = { id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#ff0000' } as const;
+    const hex = samplePinColorFromFilteredImage(img, pin)!;
     const [tl, ta, tb] = chroma(hex).lab();
-    const targetLab = { l: tl, a: ta, b: tb };
-    const fakeLab = { l: 9, a: 8, b: 7 };
-    const mix = vi.fn().mockResolvedValue({ labs: [fakeLab], recipes: [[]] });
-    const bridge = { mix, dispose: vi.fn() } as unknown as PigmentMixWorkerBridge;
+    const workerLab = { l: 9, a: 8, b: 7 };
+    const bridge = fakeBridge({ lab: workerLab, recipe: [] });
     const resolver = new PigmentMatchedPaletteResolver({ pigments, minPaintPercent, deltaThreshold, bridge });
-    const out = await resolver.resolve({ filteredImage: img, pins }, new AbortController().signal);
-    expect(out.entries[0]!.target).toEqual(targetLab);
-    expect(out.entries[0]!.lab).toEqual(fakeLab);
-    expect(mix).toHaveBeenCalledWith(
-      expect.objectContaining({ hexes: [hex], pigments, minPaintPercent, deltaThreshold }),
+    const entry = await resolver.resolvePinAsync(pin, img, new AbortController().signal);
+    expect(entry.lab).toEqual(workerLab);
+    expect(entry.target).toEqual({ l: tl, a: ta, b: tb });
+    expect(bridge.mixOne).toHaveBeenCalledWith(
+      hex,
+      expect.objectContaining({ pigments, minPaintPercent, deltaThreshold }),
+      expect.any(AbortSignal),
     );
   });
 
-  it('fills recipe and displayHex from mix', async () => {
-    const data = new Uint8ClampedArray([0, 128, 255, 255]);
-    const img = createRawImage(data, 1, 1);
-    const pins = [{ id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#0080ff' }] as const;
-    const hex = samplePinColorFromFilteredImage(img, pins[0]!)!;
+  it('resolvePinAsync fills recipe and displayHex from the worker result', async () => {
+    const img = createRawImage(new Uint8ClampedArray([0, 128, 255, 255]), 1, 1);
+    const pin = { id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#0080ff' } as const;
+    const hex = samplePinColorFromFilteredImage(img, pin)!;
     const recipe = findMixData(hex, minPaintPercent, deltaThreshold, pigments);
-    const bridge = fakeBridge({ labs: [{ l: 1, a: 0, b: 0 }], recipes: [recipe] });
+    const bridge = fakeBridge({ lab: { l: 1, a: 0, b: 0 }, recipe });
     const resolver = new PigmentMatchedPaletteResolver({ pigments, minPaintPercent, deltaThreshold, bridge });
-    const out = await resolver.resolve({ filteredImage: img, pins }, new AbortController().signal);
-    expect(out.entries[0]!.recipe).toEqual(recipe);
-    expect(out.entries[0]!.displayHex).toBe(mixedResultHex(recipe));
+    const entry = await resolver.resolvePinAsync(pin, img, new AbortController().signal);
+    expect(entry.recipe).toEqual(recipe);
+    expect(entry.displayHex).toBe(mixedResultHex(recipe));
   });
 
-  it('sourceId is stable for identical inputs', async () => {
-    const data = new Uint8ClampedArray([10, 20, 30, 255]);
-    const img = createRawImage(data, 1, 1);
-    const pins = [{ id: 'x', imageX: 0, imageY: 0, radiusPx: 0, color: '#fff' }] as const;
-    const bridge = fakeBridge({ labs: [{ l: 1, a: 0, b: 0 }], recipes: [[]] });
+  it('tryResolvePinSync returns null when the bridge has no cached mix for this hex', () => {
+    const img = createRawImage(new Uint8ClampedArray([255, 0, 0, 255]), 1, 1);
+    const pin = { id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#ff0000' } as const;
+    const bridge = fakeBridge({ lab: { l: 1, a: 0, b: 0 }, recipe: [] }, null);
     const resolver = new PigmentMatchedPaletteResolver({ pigments, minPaintPercent, deltaThreshold, bridge });
-    const a = await resolver.resolve({ filteredImage: img, pins }, new AbortController().signal);
-    const b = await resolver.resolve({ filteredImage: img, pins }, new AbortController().signal);
-    expect(a.sourceId).toBe(b.sourceId);
+    expect(resolver.tryResolvePinSync(pin, img)).toBeNull();
   });
 
-  it('throws AbortError when signal aborts before bridge', async () => {
-    const data = new Uint8ClampedArray([255, 0, 0, 255]);
-    const img = createRawImage(data, 1, 1);
-    const pins = [{ id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#f00' }] as const;
-    const bridge = fakeBridge({ labs: [{ l: 1, a: 0, b: 0 }], recipes: [[]] });
+  it('tryResolvePinSync returns a cached entry without hitting the worker', () => {
+    const img = createRawImage(new Uint8ClampedArray([255, 0, 0, 255]), 1, 1);
+    const pin = { id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#ff0000' } as const;
+    const recipe: MixEntry[] = [];
+    const cached = { lab: { l: 42, a: 0, b: 0 }, recipe };
+    const bridge = fakeBridge({ lab: { l: 0, a: 0, b: 0 }, recipe: [] }, cached);
+    const resolver = new PigmentMatchedPaletteResolver({ pigments, minPaintPercent, deltaThreshold, bridge });
+    const entry = resolver.tryResolvePinSync(pin, img);
+    expect(entry).not.toBeNull();
+    expect(entry!.lab).toEqual(cached.lab);
+    expect(bridge.mixOne).not.toHaveBeenCalled();
+  });
+
+  it('resolvePinAsync rejects when signal aborts before the bridge call', async () => {
+    const img = createRawImage(new Uint8ClampedArray([255, 0, 0, 255]), 1, 1);
+    const pin = { id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#f00' } as const;
+    const bridge = fakeBridge({ lab: { l: 1, a: 0, b: 0 }, recipe: [] });
     const resolver = new PigmentMatchedPaletteResolver({ pigments, minPaintPercent, deltaThreshold, bridge });
     const ac = new AbortController();
     ac.abort();
-    await expect(resolver.resolve({ filteredImage: img, pins }, ac.signal)).rejects.toMatchObject({
-      name: 'AbortError',
-    });
+    await expect(
+      resolver.resolvePinAsync(pin, img, ac.signal),
+    ).rejects.toMatchObject({ name: 'AbortError' });
   });
 
-  it('throws when signal aborts during mix', async () => {
-    const data = new Uint8ClampedArray([255, 0, 0, 255]);
-    const img = createRawImage(data, 1, 1);
-    const pins = [{ id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#f00' }] as const;
-    const ac = new AbortController();
-    const mix = vi.fn(async () => {
-      ac.abort();
-      return { labs: [{ l: 1, a: 0, b: 0 }], recipes: [[] as MixEntry[]] };
-    });
-    const bridge = { mix, dispose: vi.fn() } as unknown as PigmentMixWorkerBridge;
+  it('resolvePinAsync rejects when filtered image is missing', async () => {
+    const pin = { id: 'p1', imageX: 0, imageY: 0, radiusPx: 0, color: '#f00' } as const;
+    const bridge = fakeBridge({ lab: { l: 1, a: 0, b: 0 }, recipe: [] });
     const resolver = new PigmentMatchedPaletteResolver({ pigments, minPaintPercent, deltaThreshold, bridge });
-    await expect(resolver.resolve({ filteredImage: img, pins }, ac.signal)).rejects.toMatchObject({
-      name: 'AbortError',
-    });
+    await expect(
+      resolver.resolvePinAsync(pin, null, new AbortController().signal),
+    ).rejects.toBeInstanceOf(Error);
   });
 });

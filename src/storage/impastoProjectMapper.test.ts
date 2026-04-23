@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ImpastoDocumentSnapshot } from '../engine/core/impastoDocumentSnapshot';
 import type { ImpastoProjectDto } from './impastoProjectDto';
-import { dtoToSnapshot, snapshotToDto } from './impastoProjectMapper';
+import { dtoToPigmentSettings, dtoToSnapshot, snapshotToDto } from './impastoProjectMapper';
 
 function assertSnapshotStructurallyEqual(
   original: ImpastoDocumentSnapshot,
@@ -52,6 +52,33 @@ describe('impastoProjectMapper', () => {
     const again = dtoToSnapshot(dto);
     assertSnapshotStructurallyEqual(snapshot, again);
     expect(dto.imageUrl).toBe('https://example.com/image.png');
+  });
+
+  describe('dtoToPigmentSettings', () => {
+    it('uses full defaults when pigmentSettings is absent', () => {
+      const dto: ImpastoProjectDto = {
+        schemaVersion: 1,
+        pins: [],
+        filters: [],
+        indexConfig: { blurSigma: 1 },
+        imageUrl: null,
+      };
+      const ps = dtoToPigmentSettings(dto);
+      expect(ps.usePigmentMatchedColors).toBe(false);
+      expect(ps.enabledNames.length).toBeGreaterThan(0);
+    });
+
+    it('defaults usePigmentMatchedColors when older document omits it', () => {
+      const dto: ImpastoProjectDto = {
+        schemaVersion: 1,
+        pins: [],
+        filters: [],
+        indexConfig: { blurSigma: 1 },
+        pigmentSettings: { enabledNames: ['Titanium White'], minPaintPercent: 2, deltaThreshold: 3 },
+        imageUrl: null,
+      };
+      expect(dtoToPigmentSettings(dto).usePigmentMatchedColors).toBe(false);
+    });
   });
 
   it('dtoToSnapshot rejects unsupported schemaVersion', () => {

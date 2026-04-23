@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ProjectState } from '../../types';
 import { useProjectImageUrl } from '../../hooks/useProjectImageUrl';
+import { useAuthStore } from '../auth/authStore';
 import { drawPaletteThumbnail } from '../../utils/canvasUtils';
 
 function PaletteThumbnail({ thumbnailColors }: { thumbnailColors: string[] }) {
@@ -31,7 +32,8 @@ function PaletteThumbnail({ thumbnailColors }: { thumbnailColors: string[] }) {
 
 export function ProjectCardPreview({ project }: { project: ProjectState }) {
   const [loaded, setLoaded] = useState(false);
-  const imageUrl = useProjectImageUrl(project.imageStorageUrl);
+  const userId = useAuthStore((s) => s.user?.uid);
+  const imageUrl = useProjectImageUrl(userId, project.id);
 
   return (
     <>

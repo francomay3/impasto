@@ -6,7 +6,7 @@ import { usePaletteContext } from '../../palette/PaletteContext';
 import { useFilteredImage } from '../../filters/useFilteredImage';
 import { useIndexedImage } from '../../../hooks/useIndexedImage';
 import { useMixedPalette } from '../../../hooks/useMixedPalette';
-import { useEditorStore } from '../editorStore';
+import { useProjectPigments } from '../../projectv2/pigments/useProjectPigments';
 import { useExportSettings } from '../useExportSettings';
 import { getValidPaletteHexes, computeLabPalette } from '../../../utils/paletteComputation';
 import { drawImageDataToCanvas } from '../../../utils/canvasUtils';
@@ -36,7 +36,8 @@ export function PaletteTabContent() {
     onAddNewColor,
     onCancelAddingColor,
   } = usePaletteContext();
-  const showMixedColors = useEditorStore((s) => s.showMixedColors);
+  const { settings: pigmentProjectSettings } = useProjectPigments();
+  const usePigmentMatchedColors = pigmentProjectSettings.usePigmentMatchedColors;
   const { pigments, minPaintPercent, delta } = useExportSettings();
   const filteredRef = useRef<HTMLCanvasElement>(null);
 
@@ -49,10 +50,10 @@ export function PaletteTabContent() {
   const labPalette = useMemo(() => computeLabPalette(paletteHexes), [paletteHexes]);
 
   const { data: mixedLabPalette, isLoading: isMixLoading } = useMixedPalette(
-    paletteHexes, pigments, minPaintPercent, delta, showMixedColors
+    paletteHexes, pigments, minPaintPercent, delta, usePigmentMatchedColors
   );
 
-  const activePalette = showMixedColors && mixedLabPalette ? mixedLabPalette : labPalette;
+  const activePalette = usePigmentMatchedColors && mixedLabPalette ? mixedLabPalette : labPalette;
 
   const { data: indexedData, isLoading: isIndexedLoading } = useIndexedImage(
     filteredData,
@@ -107,9 +108,9 @@ export function PaletteTabContent() {
         <CanvasViewport ref={indexedCanvasRef} variant="indexed" />
         <Group style={{ ...labelStyle, gap: 6 }}>
           <Text size="xs" c="dimmed">
-            {showMixedColors ? 'Mixed preview' : 'Indexed colors'}
+            {usePigmentMatchedColors ? 'Mixed preview' : 'Indexed colors'}
           </Text>
-          {(isIndexedLoading || (showMixedColors && isMixLoading)) && <Loader size="xs" />}
+          {(isIndexedLoading || (usePigmentMatchedColors && isMixLoading)) && <Loader size="xs" />}
         </Group>
       </Box>
       {overlayProps.editPin && (

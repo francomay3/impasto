@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { render, fireEvent, cleanup } from '@testing-library/react';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MantineProvider } from '@mantine/core';
 import { CanvasEngine } from '../engine/CanvasEngine';
 import { EngineProvider } from '../engine/EngineContext';
@@ -8,6 +8,18 @@ import { PaletteContext } from '../../palette/PaletteContext';
 import { FilterContext } from '../../filters/FilterContext';
 import { ContextualToolbar } from '.';
 import { useEditorStore } from '../../editor/editorStore';
+
+vi.mock('../../projectv2/pigments/useProjectPigments', () => ({
+  useProjectPigments: () => ({
+    settings: {
+      enabledNames: [],
+      minPaintPercent: 2,
+      deltaThreshold: 4,
+      usePigmentMatchedColors: false,
+    },
+    pigmentsState: { setUsePigmentMatchedColors: vi.fn() },
+  }),
+}));
 
 const noop = () => {};
 

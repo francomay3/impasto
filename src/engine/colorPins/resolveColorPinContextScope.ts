@@ -5,14 +5,6 @@
 type SelectionLike = { readonly kind: string; readonly id: string };
 
 /**
- * All color-pin ids from a selection array, preserving list order, no deduplication.
- * Use {@link colorPinIdsInSelectionOrder} when dedup matters (e.g. context-menu scope).
- */
-export function colorPinIdsFromSelection(entries: readonly SelectionLike[]): readonly string[] {
-  return entries.filter((e) => e.kind === 'colorPin').map((e) => e.id);
-}
-
-/**
  * Color-pin ids from selection, in list order, first occurrence wins (defensive if duplicates ever appear).
  */
 function colorPinIdsInSelectionOrder(selection: readonly SelectionLike[]): string[] {

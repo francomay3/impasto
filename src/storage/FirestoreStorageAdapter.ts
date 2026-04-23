@@ -5,9 +5,10 @@ import type { FirebaseStorage } from 'firebase/storage';
 import type { RawImage } from '../types';
 import type { ImpastoProjectDto } from './impastoProjectDto';
 import {
-  IMPASTO_ENGINE_PROJECTS_COLLECTION,
-  impastoEngineProjectSourceImageStoragePath,
   parseImpastoProjectDtoFromFirestoreData,
+  projectSourceImageWebpStoragePath,
+  PROJECT_ENGINE_STATE_DOC_ID,
+  PROJECT_ENGINE_SUBCOLLECTION,
 } from './firestoreImpastoProjectDoc';
 import { pathsToUndefinedValues } from './firestoreUndefinedPaths';
 import type { IStorageAdapter } from './IStorageAdapter';
@@ -15,15 +16,22 @@ import type { IProjectMetadataAdapter } from './IProjectMetadataAdapter';
 import type { ProjectMetadata } from './projectMetadata';
 import { rawImageToWebpBlob } from './rawImageToWebpBlob';
 
-/** Firestore doc ref for a user-scoped engine project: `users/{userId}/impasto_engine_projects/{projectId}`. */
-function impastoEngineProjectDocRef(db: Firestore, userId: string, projectId: string) {
-  return doc(db, 'users', userId, IMPASTO_ENGINE_PROJECTS_COLLECTION, projectId);
+/** Engine DTO: `users/{userId}/projects/{projectId}/engine/{PROJECT_ENGINE_STATE_DOC_ID}`. */
+function projectEngineStateDocRef(db: Firestore, userId: string, projectId: string) {
+  return doc(
+    db,
+    'users',
+    userId,
+    'projects',
+    projectId,
+    PROJECT_ENGINE_SUBCOLLECTION,
+    PROJECT_ENGINE_STATE_DOC_ID,
+  );
 }
 
 /**
  * Firestore + Firebase Storage implementation of {@link IStorageAdapter}.
- * Documents live at `users/{userId}/impasto_engine_projects/{projectId}`, matching the
- * Firestore security rules that scope access to the authenticated owner.
+ * Engine documents live under the same `projects` tree as dashboard metadata, in the `engine` subcollection.
  */
 export class FirestoreStorageAdapter implements IStorageAdapter, IProjectMetadataAdapter {
   readonly db: Firestore;
@@ -37,7 +45,7 @@ export class FirestoreStorageAdapter implements IStorageAdapter, IProjectMetadat
   }
 
   async load(projectId: string): Promise<ImpastoProjectDto | null> {
-    const snap = await getDoc(impastoEngineProjectDocRef(this.db, this.userId, projectId));
+    const snap = await getDoc(projectEngineStateDocRef(this.db, this.userId, projectId));
     if (!snap.exists()) {
       return null;
     }
@@ -63,14 +71,14 @@ export class FirestoreStorageAdapter implements IStorageAdapter, IProjectMetadat
         payloadPreview: JSON.stringify(payload, (_k, v) => (v === undefined ? '__undefined__' : v)),
       });
     }
-    await setDoc(impastoEngineProjectDocRef(this.db, this.userId, projectId), payload);
+    await setDoc(projectEngineStateDocRef(this.db, this.userId, projectId), payload);
   }
 
   async uploadImage(projectId: string, image: RawImage): Promise<string> {
     const blob = await rawImageToWebpBlob(image);
     const storageRef = ref(
       this.storage,
-      impastoEngineProjectSourceImageStoragePath(this.userId, projectId),
+      projectSourceImageWebpStoragePath(this.userId, projectId),
     );
     await uploadBytes(storageRef, blob, { contentType: 'image/webp' });
     return getDownloadURL(storageRef);
@@ -97,9 +105,8 @@ export class FirestoreStorageAdapter implements IStorageAdapter, IProjectMetadat
     }
   }
 
-  // Dashboard project doc: `users/{userId}/projects/{projectId}`.
-  // Separate from the engine collection (`impasto_engine_projects`) — engine data and project
-  // metadata live in different sub-collections under the same user document.
+  // Dashboard fields on the project root doc: `users/{userId}/projects/{projectId}`.
+  // Engine DTO is a subdocument: `.../projects/{projectId}/engine/data`.
   private projectDocRef(projectId: string) {
     return doc(this.db, 'users', this.userId, 'projects', projectId);
   }
@@ -116,5 +123,9 @@ export class FirestoreStorageAdapter implements IStorageAdapter, IProjectMetadat
       name: metadata.name,
       updatedAt: serverTimestamp(),
     });
+  }
+
+  async setOrphaned(projectId: string, orphaned: boolean): Promise<void> {
+    await updateDoc(this.projectDocRef(projectId), { orphaned });
   }
 }

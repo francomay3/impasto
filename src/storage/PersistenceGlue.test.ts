@@ -123,6 +123,7 @@ describe('PersistenceGlue.initialize', () => {
     const metaAdapter: IProjectMetadataAdapter = {
       loadProjectMetadata: vi.fn(async () => ({ name: 'Parallel Hydrate Title' })),
       saveProjectMetadata: vi.fn(),
+      setOrphaned: vi.fn(),
     };
 
     glue = new PersistenceGlue(engine, adapter, { projectMetadataAdapter: metaAdapter });
@@ -457,62 +458,6 @@ describe('PersistenceGlue coalescing save', () => {
 
     expect(adapter.uploadImage).toHaveBeenCalledTimes(2);
     expect(adapter.deleteImage).not.toHaveBeenCalled();
-  });
-
-  it('invokes onEngineSourceImageTouch after upload and after delete when option is set', async () => {
-    const img = createRawImage(new Uint8ClampedArray([255, 0, 0, 255]), 1, 1);
-    const snapshot = Object.freeze({
-      pins: Object.freeze([]),
-      filters: Object.freeze([]),
-      indexConfig: Object.freeze({ blurSigma: 0 }),
-      groups: Object.freeze([]),
-    });
-
-    const onEngineSourceImageTouch = vi.fn().mockResolvedValue(undefined);
-
-    const adapter: IStorageAdapter = {
-      load: vi.fn(async () => null),
-      save: vi.fn(async () => {}),
-      uploadImage: vi.fn(async () => 'https://storage.example/new'),
-      deleteImage: vi.fn(async () => {}),
-    };
-
-    let currentImage: RawImage | null = img;
-    let documentListener: (() => void) | undefined;
-    const engine = {
-      subscribeDocumentChanged: vi.fn((listener: () => void) => {
-        documentListener = listener;
-        return () => {
-          documentListener = undefined;
-        };
-      }),
-      loadDocument: vi.fn(),
-      getDocumentSnapshot: vi.fn(() => snapshot),
-      image: { get: () => currentImage },
-    } as unknown as ImpastoEngine;
-
-    glue = new PersistenceGlue(engine, adapter, {
-      debounceMs: 10,
-      onEngineSourceImageTouch,
-    });
-    await glue.initialize('proj-touch');
-
-    documentListener!();
-    await vi.advanceTimersByTimeAsync(10);
-    await vi.runAllTimersAsync();
-    expect(onEngineSourceImageTouch).toHaveBeenCalledWith({
-      projectId: 'proj-touch',
-      kind: 'uploaded',
-    });
-
-    currentImage = null;
-    documentListener!();
-    await vi.advanceTimersByTimeAsync(10);
-    await vi.runAllTimersAsync();
-    expect(onEngineSourceImageTouch).toHaveBeenCalledWith({
-      projectId: 'proj-touch',
-      kind: 'deleted',
-    });
   });
 
   it('after a failed image fetch, debounced save deletes the stale Storage object and clears imageUrl', async () => {

@@ -6,6 +6,7 @@ const DEFAULTS: PigmentSettings = {
   enabledNames: ['Titanium White', 'Ivory Black', 'Cadmium Yellow'],
   minPaintPercent: 2,
   deltaThreshold: 4,
+  usePigmentMatchedColors: false,
 };
 
 function makeState(overrides?: Partial<PigmentSettings>) {
@@ -74,14 +75,33 @@ describe('ProjectPigmentsState', () => {
     });
   });
 
+  describe('setUsePigmentMatchedColors', () => {
+    it('updates the flag and ignores duplicate values', () => {
+      const state = makeState();
+      const l = vi.fn();
+      state.subscribe(l);
+      state.setUsePigmentMatchedColors(true);
+      expect(state.getSnapshot().usePigmentMatchedColors).toBe(true);
+      expect(l).toHaveBeenCalledTimes(1);
+      state.setUsePigmentMatchedColors(true);
+      expect(l).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('loadSettings', () => {
     it('replaces all settings', () => {
       const state = makeState();
-      state.loadSettings({ enabledNames: ['Cobalt Blue'], minPaintPercent: 5, deltaThreshold: 3 });
+      state.loadSettings({
+        enabledNames: ['Cobalt Blue'],
+        minPaintPercent: 5,
+        deltaThreshold: 3,
+        usePigmentMatchedColors: true,
+      });
       expect(state.getSnapshot()).toEqual({
         enabledNames: ['Cobalt Blue'],
         minPaintPercent: 5,
         deltaThreshold: 3,
+        usePigmentMatchedColors: true,
       });
     });
   });

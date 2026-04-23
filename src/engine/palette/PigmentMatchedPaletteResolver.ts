@@ -1,16 +1,11 @@
 import chroma from 'chroma-js';
 import { mixedResultHex } from '../../services/ColorMixer';
-import type { Pigment } from '../../types';
+import type { RawImage, Pigment } from '../../types';
 import type { ColorPin } from '../colorPins/colorPinTypes';
 import { samplePinColorFromFilteredImage } from '../colorPins/indexedPaletteFromColorPins';
 import type { IndexedPaletteLab } from '../pipeline/indexedPassTypes';
-import type { PigmentMixWorkerBridge } from './pigmentMixWorkerBridge';
-import type {
-  PaletteResolver,
-  PaletteResolverContext,
-  ResolvedPalette,
-  ResolvedPaletteEntry,
-} from './paletteResolver';
+import type { PigmentMixWorkerBridge, PigmentMixSettings } from './pigmentMixWorkerBridge';
+import type { PaletteResolver, ResolvedPaletteEntry } from './paletteResolver';
 
 function fnv1a(s: string): string {
   let h = 2166136261;
@@ -18,21 +13,20 @@ function fnv1a(s: string): string {
   return (h >>> 0).toString(36);
 }
 
-function sourceKey(pins: readonly ColorPin[], w: number, h: number): string {
-  return `${w}x${h}:${pins.map((p) => p.id).join('\x1f')}`;
-}
-
 function hexToLab(hex: string): IndexedPaletteLab {
   const [l, a, b] = chroma(hex).lab();
   return { l, a, b };
 }
 
+/**
+ * Per-pin pigment-matched resolver. `tryResolvePinSync` returns a cached mix if the bridge has one
+ * for this hex + settings; else null. `resolvePinAsync` dispatches one worker round-trip per pin
+ * via {@link PigmentMixWorkerBridge.mixOne}.
+ */
 export class PigmentMatchedPaletteResolver implements PaletteResolver {
   readonly id = 'pigment-matched';
   readonly version: string;
-  private readonly pigments: Pigment[];
-  private readonly minPaintPercent: number;
-  private readonly deltaThreshold: number;
+  private readonly settings: PigmentMixSettings;
   private readonly bridge: PigmentMixWorkerBridge;
 
   constructor(opts: {
@@ -41,46 +35,50 @@ export class PigmentMatchedPaletteResolver implements PaletteResolver {
     deltaThreshold: number;
     bridge: PigmentMixWorkerBridge;
   }) {
-    this.pigments = opts.pigments;
-    this.minPaintPercent = opts.minPaintPercent;
-    this.deltaThreshold = opts.deltaThreshold;
-    this.bridge = opts.bridge;
     const names = [...opts.pigments.map((p) => p.name)].sort().join(',');
     this.version = fnv1a(`${names}|${opts.minPaintPercent}|${opts.deltaThreshold}`);
+    this.settings = {
+      pigments: opts.pigments,
+      minPaintPercent: opts.minPaintPercent,
+      deltaThreshold: opts.deltaThreshold,
+      settingsVersion: this.version,
+    };
+    this.bridge = opts.bridge;
   }
 
-  async resolve(ctx: PaletteResolverContext, signal: AbortSignal): Promise<ResolvedPalette> {
+  tryResolvePinSync(pin: ColorPin, filteredImage: RawImage | null): ResolvedPaletteEntry | null {
+    const hex = samplePinColorFromFilteredImage(filteredImage, pin);
+    if (!hex) return null;
+    const cached = this.bridge.tryGetCached(hex, this.version);
+    if (!cached) return null;
+    return this.entryFrom(pin, hex, cached.lab, cached.recipe);
+  }
+
+  async resolvePinAsync(
+    pin: ColorPin,
+    filteredImage: RawImage | null,
+    signal: AbortSignal,
+  ): Promise<ResolvedPaletteEntry> {
     if (signal.aborted) throw new DOMException('aborted', 'AbortError');
-    const { filteredImage, pins } = ctx;
-    const w = filteredImage?.width ?? 0;
-    const h = filteredImage?.height ?? 0;
-    const sid = fnv1a(sourceKey(pins, w, h));
-    const sourceId = `${this.version}:${sid}`;
-    if (!filteredImage?.width || !pins.length) return { entries: [], sourceId };
-    const hexes: string[] = [];
-    const targets: IndexedPaletteLab[] = [];
-    for (const pin of pins) {
-      if (signal.aborted) throw new DOMException('aborted', 'AbortError');
-      const hex = samplePinColorFromFilteredImage(filteredImage, pin);
-      if (!hex) return { entries: [], sourceId };
-      hexes.push(hex);
-      targets.push(hexToLab(hex));
-    }
-    const { labs, recipes } = await this.bridge.mix({
-      hexes,
-      pigments: this.pigments,
-      minPaintPercent: this.minPaintPercent,
-      deltaThreshold: this.deltaThreshold,
-      signal,
-    });
+    const hex = samplePinColorFromFilteredImage(filteredImage, pin);
+    if (!hex) throw new Error('PigmentMatchedPaletteResolver: no filtered image');
+    const { lab, recipe } = await this.bridge.mixOne(hex, this.settings, signal);
     if (signal.aborted) throw new DOMException('aborted', 'AbortError');
-    const entries: ResolvedPaletteEntry[] = pins.map((pin, i) => ({
+    return this.entryFrom(pin, hex, lab, recipe);
+  }
+
+  private entryFrom(
+    pin: ColorPin,
+    hex: string,
+    lab: IndexedPaletteLab,
+    recipe: ResolvedPaletteEntry['recipe'] & NonNullable<ResolvedPaletteEntry['recipe']>,
+  ): ResolvedPaletteEntry {
+    return {
       pinId: pin.id,
-      lab: labs[i]!,
-      displayHex: mixedResultHex(recipes[i]!),
-      target: targets[i]!,
-      recipe: recipes[i]!,
-    }));
-    return { entries, sourceId };
+      lab,
+      displayHex: mixedResultHex(recipe),
+      target: hexToLab(hex),
+      recipe,
+    };
   }
 }

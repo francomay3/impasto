@@ -42,16 +42,16 @@ export type HotkeyRegistryKey = keyof typeof HOTKEYS;
 export type ShortcutContext = 'Global' | 'Palette' | 'Filters';
 
 /** How a modifier must relate to the event for {@link matchesHotkey}. */
-export type HotkeyModifierRequirement = 'required' | 'forbidden';
+type HotkeyModifierRequirement = 'required' | 'forbidden';
 
-export interface HotkeyModifierSpec {
+interface HotkeyModifierSpec {
   /** Cmd on macOS or Ctrl elsewhere — {@link KeyboardEvent.metaKey} || {@link KeyboardEvent.ctrlKey}. */
   mod?: HotkeyModifierRequirement;
   shift?: HotkeyModifierRequirement;
   alt?: HotkeyModifierRequirement;
 }
 
-export interface ShortcutMeta {
+interface ShortcutMeta {
   action: string;
   context: ShortcutContext;
   /** Key this is an alternate binding for — it will be merged into that entry rather than shown separately. */

@@ -4,24 +4,16 @@ function mixEntryEqual(a: { name: string; rgb: string; parts: number }, b: typeo
   return a.name === b.name && a.rgb === b.rgb && a.parts === b.parts;
 }
 
-function targetEqual(
-  a: ResolvedPaletteEntry['target'],
-  b: ResolvedPaletteEntry['target'],
-): boolean {
+function targetEqual(a: ResolvedPaletteEntry['target'], b: ResolvedPaletteEntry['target']): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
   return a.l === b.l && a.a === b.a && a.b === b.b;
 }
 
-function recipeEqual(
-  a: ResolvedPaletteEntry['recipe'],
-  b: ResolvedPaletteEntry['recipe'],
-): boolean {
+function recipeEqual(a: ResolvedPaletteEntry['recipe'], b: ResolvedPaletteEntry['recipe']): boolean {
   if (a === b) return true;
   if (!a || !b || a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    if (!mixEntryEqual(a[i]!, b[i]!)) return false;
-  }
+  for (let i = 0; i < a.length; i += 1) if (!mixEntryEqual(a[i]!, b[i]!)) return false;
   return true;
 }
 
@@ -37,27 +29,19 @@ function entryEqual(a: ResolvedPaletteEntry, b: ResolvedPaletteEntry): boolean {
   );
 }
 
-function entriesSnapshotEqual(
-  a: readonly ResolvedPaletteEntry[],
-  b: readonly ResolvedPaletteEntry[],
-): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    if (!entryEqual(a[i]!, b[i]!)) return false;
-  }
-  return true;
-}
-
 /**
- * Runtime snapshot of the last palette resolver output (pin id → row). Not persisted; mirrors
- * {@link ColorPinGroupState}’s subscribe + stable `getAll` reference between identical notifies.
+ * Keyed store of per-pin resolver output (pin id → entry). Write one entry at a time via
+ * {@link setEntry}, remove via {@link removeEntry} or {@link retainPinIds}. {@link getAll}
+ * returns an insertion-ordered snapshot that is rebuilt lazily and stable between notifies.
  */
 export class ResolvedPaletteState {
   private readonly listeners = new Set<() => void>();
   private readonly byId = new Map<string, ResolvedPaletteEntry>();
-  private snapshot: readonly ResolvedPaletteEntry[] = Object.freeze([]);
+  private snapshot: readonly ResolvedPaletteEntry[] | null = Object.freeze([]);
 
   getAll(): readonly ResolvedPaletteEntry[] {
+    if (this.snapshot) return this.snapshot;
+    this.snapshot = Object.freeze(Array.from(this.byId.values()));
     return this.snapshot;
   }
 
@@ -72,31 +56,46 @@ export class ResolvedPaletteState {
     };
   }
 
-  setEntries(entries: readonly ResolvedPaletteEntry[]): void {
-    const frozen = Object.freeze(entries.map((e) => Object.freeze({ ...e })));
-    if (entriesSnapshotEqual(frozen, this.snapshot)) {
-      return;
+  /** Insert-or-update one pin's entry. No-op (no notify) if the stored entry is structurally equal. */
+  setEntry(entry: ResolvedPaletteEntry): void {
+    const prev = this.byId.get(entry.pinId);
+    const frozen = Object.freeze({ ...entry });
+    if (prev && entryEqual(prev, frozen)) return;
+    this.byId.set(entry.pinId, frozen);
+    this.snapshot = null;
+    this.notify();
+  }
+
+  /** Drops one entry. No-op if the key isn't present. */
+  removeEntry(pinId: string): void {
+    if (!this.byId.delete(pinId)) return;
+    this.snapshot = null;
+    this.notify();
+  }
+
+  /** Removes every entry whose pinId is not in `activePinIds`. Single notify if anything dropped. */
+  retainPinIds(activePinIds: Iterable<string>): void {
+    const keep = new Set(activePinIds);
+    let removed = false;
+    for (const id of Array.from(this.byId.keys())) {
+      if (!keep.has(id)) {
+        this.byId.delete(id);
+        removed = true;
+      }
     }
-    this.byId.clear();
-    for (const e of frozen) {
-      this.byId.set(e.pinId, e);
-    }
-    this.snapshot = frozen;
+    if (!removed) return;
+    this.snapshot = null;
     this.notify();
   }
 
   clear(): void {
-    if (this.snapshot.length === 0) {
-      return;
-    }
+    if (this.byId.size === 0) return;
     this.byId.clear();
     this.snapshot = Object.freeze([]);
     this.notify();
   }
 
   private notify(): void {
-    for (const listener of this.listeners) {
-      listener();
-    }
+    for (const listener of this.listeners) listener();
   }
 }
