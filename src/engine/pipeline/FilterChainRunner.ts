@@ -12,8 +12,6 @@ import type { FilterInstance, RawImage } from '../../types';
 import { createFilterWorker } from './filterWorkerBridge';
 import type { FilterChainImageDep, FilterChainRunnerState } from './filterChainRunnerTypes';
 import { FilterRunnerQueue } from './filterRunnerQueue';
-import { throttle, type ThrottledFn } from '../infra/throttle';
-import { INPUT_THROTTLE_MS } from '../infra/engineConstants';
 
 export type { FilterChainImageDep, FilterChainRunnerState } from './filterChainRunnerTypes';
 
@@ -36,7 +34,6 @@ export class FilterChainRunner {
 
   private worker: Worker | null = null;
   private readonly queue: FilterRunnerQueue;
-  private readonly _throttledSchedulePass: ThrottledFn<[]>;
 
   constructor(
     imageDep: FilterChainImageDep,
@@ -54,7 +51,6 @@ export class FilterChainRunner {
       onResult: (out) => this.queue.handleWorkerResult(out),
       onError: (e) => this.queue.handleWorkerError(e),
     });
-    this._throttledSchedulePass = throttle(() => this.queue.scheduleFilterPass(), INPUT_THROTTLE_MS);
   }
 
   /** Filter-worker slice; combined into {@link ViewportPipelineState} by {@link ViewportPipeline}. */
@@ -69,8 +65,11 @@ export class FilterChainRunner {
   setFilters(next: FilterInstance[]): void {
     this._filters = cloneFilterList(next);
     this.emitFiltersChange();
-    // Throttled: _filters is always current so the next worker run picks up the latest chain.
-    this._throttledSchedulePass();
+    // Schedule directly: the queue's pendingRun + workerBusy coalescing caps worker load to
+    // one round-trip at a time, so we don't need a time-based throttle. A throttle here was
+    // the historical root cause of "second filter doesn't apply" bugs: if the trailing call
+    // was missed or stale-detection discarded a result, no retry was guaranteed.
+    this.queue.scheduleFilterPass();
   }
 
   /** Subscribe to changes from {@link FilterChainRunner.setFilters} (canonical chain for UI + worker). */
@@ -82,7 +81,6 @@ export class FilterChainRunner {
   }
 
   dispose(): void {
-    this._throttledSchedulePass.cancel();
     this.filterListeners.clear();
     this.worker?.terminate();
     this.worker = null;

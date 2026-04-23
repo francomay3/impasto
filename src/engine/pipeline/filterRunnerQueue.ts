@@ -84,9 +84,18 @@ export class FilterRunnerQueue {
   handleWorkerResult(out: FilterWorkerOutput): void {
     const { steps, dirtyIndex } = out;
     const source = this.imageDep.get();
-    const currentFilters = this.getFilters();
-    if (!this.passCache.inflightMatches(currentFilters) || !source) {
+    // Both `beginInflightChain` and `setPrevToCloned` snapshot the enabled-only projection,
+    // so staleness and cache-length accounting here must also use the enabled projection —
+    // otherwise a disabled filter in the raw `_filters` list would mismatch the inflight
+    // snapshot and (incorrectly) trigger the stale branch on every completion.
+    const enabledFilters = this.getFilters().filter((f) => f.enabled !== false);
+    if (!this.passCache.inflightMatches(enabledFilters) || !source) {
+      // Stale result (chain changed mid-flight) or source gone. Discard and, if the chain
+      // did move forward, force a re-dispatch so the latest chain always reaches the worker.
       this.workerBusy = false;
+      if (source && !this.passCache.inflightMatches(enabledFilters)) {
+        this.pendingRun = true;
+      }
       this.pumpFilterQueue();
       return;
     }
@@ -98,7 +107,7 @@ export class FilterRunnerQueue {
       return;
     }
 
-    this.passCache.update(dirtyIndex, steps, currentFilters.length);
+    this.passCache.update(dirtyIndex, steps, enabledFilters.length);
 
     const last = steps[steps.length - 1];
     const rgba = new Uint8ClampedArray(last);

@@ -15,7 +15,7 @@
     "loc": "cloc --config cloc.conf .",
     "preview": "vite preview",
     "analyze": "ANALYZE=true vite build",
-    "build:wasm": "npm run build:wasm:img_ops && npm run build:wasm:img_index",
+    "build:wasm": "bun scripts/build-wasm.ts",
     "build:wasm:img_ops": "wasm-pack build crates/img_ops --target web --out-dir ../../src/wasm/img_ops",
     "build:wasm:img_index": "wasm-pack build crates/img_index --target web --out-dir ../../src/wasm/img_index",
     "test": "vitest run"

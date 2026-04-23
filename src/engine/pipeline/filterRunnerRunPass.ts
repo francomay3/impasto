@@ -69,12 +69,16 @@ function postWorkerFilterPass(
   host: RunFilterPassHost,
   worker: Worker,
   source: RawImage,
+  fullChain: FilterInstance[],
   filtersToApply: FilterInstance[],
   dirtyIndex: number,
   pixelsCopy: Uint8Array,
 ) {
   host.markWorkerBusy();
-  host.passCache.beginInflightChain(filtersToApply);
+  // Snapshot the FULL chain we expect to have achieved once the worker returns.
+  // Using the slice here would make inflightMatches() fail whenever dirtyIndex > 0,
+  // silently discarding every incremental filter update.
+  host.passCache.beginInflightChain(fullChain);
   host.patchState({ status: 'filtering', error: null });
   const input: FilterWorkerInput = {
     pixels: pixelsCopy,
@@ -123,5 +127,5 @@ export function runFilterPass(host: RunFilterPassHost): void {
   }
 
   const pixelsCopy = new Uint8Array(start);
-  postWorkerFilterPass(host, worker, source, filtersToApply, dirtyIndex, pixelsCopy);
+  postWorkerFilterPass(host, worker, source, enabledFilters, filtersToApply, dirtyIndex, pixelsCopy);
 }

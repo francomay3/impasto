@@ -1,86 +1,62 @@
 # Impasto
 
-A web-based tool for artists to extract color palettes from reference images and generate paint mixing recipes for real-world use.
+A web app for artists to pull color palettes from reference images and get mixing recipes you can use at the easel.
 
-Upload a reference photo, sample colors from it, and get precise acrylic/oil paint recipes that tell you which pigments to mix and in what ratios to match each extracted color.
+Upload a photo, place sample pins, and the mixer suggests which pigments to combine and in what proportions so each swatch is as close as possible in perceptual color space.
 
 ---
 
 ## What it does
 
-**Color extraction** — Import any image and interactively sample colors from it using an eyedropper tool or automated k-means quantization. Sampled colors appear as draggable pins on the canvas that you can reposition at any time.
+**Sampling** — Load a reference (common raster formats; HEIC is supported via conversion). Pick colors with the eyedropper or use k-means to suggest a set of swatches. Pins are tied to image coordinates; you can move or organize them in groups.
 
-**Paint mixing recipes** — For each extracted color, a mixing engine computes the optimal combination of up to four pigments from a library of 16 standard artist pigments (Titanium White, Cadmium Yellow, Ultramarine Blue, etc.) using CIEDE2000 color distance to minimize perceptual error. Results are shown as percentage ratios.
+**Paint mixing** — A dedicated mixer (`ColorMixer` and related optimizers) searches single-pigment and multi-pigment combinations from a **library of 16 named pigments** (Titanium White, Cadmium Red, Ultramarine Blue, etc.), constrained by your enabled palette and mix settings, and returns percentage-style recipes with a delta-E readout.
 
-**Non-destructive filter pipeline** — Apply brightness/contrast, hue/saturation, levels, and blur adjustments to the source image before sampling. Filters run in a Web Worker via Rust/WASM for performance.
+**Image pipeline** — Non-destructive filters (levels, contrast, color balance, blur, etc.) run in workers where appropriate; hot paths use **Rust compiled to WebAssembly** (`img_ops` for filter math, `img_index` for indexed / quantization-style steps). Prebuilt WASM is committed under `src/wasm/`; you only need a Rust toolchain to rebuild.
 
-**Palette management** — Organize colors into named groups, reorder them via drag-and-drop, hide/show pins on the canvas, and annotate groups.
+**Cloud projects** — Firebase (Auth, Firestore, Cloud Storage) stores project documents and the source image. Use `.env` with your own Firebase project for local dev.
 
-**PDF export** — Export the full palette as a PDF with color swatches, group structure, and mixing recipes.
-
-**Cloud sync** — Projects are persisted to Firebase (Firestore + Cloud Storage) and accessible across devices.
+**Export** — Build a **PDF** of the palette (swatches, structure, and recipe text) for studio reference.
 
 ---
 
 ## Tech stack
 
-| Layer                      | Technology                                              |
-| -------------------------- | ------------------------------------------------------- |
-| UI framework               | React 19 + TypeScript (strict)                          |
-| Build                      | Vite 8                                                  |
-| Routing                    | React Router 7                                          |
-| Components                 | Mantine 8                                               |
-| State management           | Zustand 5 (editor state) + React Query 5 (server state) |
-| Tool interactions          | XState 5 (state machine)                                |
-| Drag-and-drop              | dnd-kit                                                 |
-| Color math                 | Chroma.js                                               |
-| Performance-critical paths | Rust compiled to WASM via wasm-pack                     |
-| Backend                    | Firebase (Auth, Firestore, Cloud Storage)               |
-| PDF generation             | React PDF Renderer                                      |
-| Unit tests                 | Vitest                                                  |
+| Area          | Choice                                                                                                               |
+| ------------- | -------------------------------------------------------------------------------------------------------------------- |
+| UI            | React 19, TypeScript (strict), [Mantine](https://mantine.dev/) 8                                                     |
+| App shell     | [Vite](https://vite.dev/) 8, [React Router](https://reactrouter.com/) 7                                              |
+| Client data   | [Zustand](https://github.com/pmndrs/zustand) 5, [TanStack Query](https://tanstack.com/query) 5                       |
+| Interactions  | [`@dnd-kit`](https://dndkit.com/) (sortable UI), [`@use-gesture/react`](https://use-gesture.netlify.app/) (viewport) |
+| Color & math  | [chroma.js](https://gka.github.io/chroma.js/), [ml-kmeans](https://github.com/mljs/kmeans)                           |
+| Backend       | [Firebase](https://firebase.google.com/) JS SDK 12+                                                                  |
+| PDF           | [`@react-pdf/renderer`](https://react-pdf.org/)                                                                      |
+| Unit tests    | [Vitest](https://vitest.dev/) 4 (V8 coverage)                                                                        |
+| Run / scripts | [Bun](https://bun.sh/) — `bun.lock` in repo, scripts assume Bun                                                      |
+
+`@playwright/test` is listed in dev dependencies but there is no Playwright project or `package.json` scripts for E2E yet; day-to-day quality is **unit tests + `project-check`**.
 
 ---
 
-## Architecture
+## Repository layout (high level)
 
-The codebase follows a strict rule: **no business logic in React components or hooks**. All color math, viewport transforms, tool state machines, and filter algorithms live in plain `.ts` files that can be unit tested without React.
+There is a deliberate split: **testable engine and services** in plain TypeScript modules, and **UI** in React. See `CLAUDE.md` for project conventions (e.g. avoid business logic in components when it can live in `*.ts`).
 
 ```
 src/
-├── features/
-│   ├── canvas/
-│   │   └── engine/        ← CanvasEngine: viewport, pan/zoom, tool state (plain TS class)
-│   ├── editor/            ← Main editor layout and context wiring
-│   ├── palette/           ← Palette sidebar, color pins, groups
-│   ├── filters/           ← Filter panel and filter pipeline
-│   ├── auth/              ← Authentication UI
-│   └── dashboard/         ← Project listing
-├── services/
-│   ├── ColorMixer.ts      ← Paint mixing recipe engine
-│   ├── FirestoreService.ts
-│   └── PalettePdf.tsx
-├── utils/
-│   ├── imageProcessing.ts ← Filter application algorithms
-│   ├── pixelMath.ts       ← Pure pixel-level math (testable)
-│   └── kMeansWrapper.ts   ← K-means quantization
-├── workers/               ← Web Workers for off-thread image processing
-├── wasm/                  ← Compiled WASM modules (img_ops, img_index, img_blur)
-└── types/index.ts         ← Shared types
+├── engine/            # ImpastoEngine — document, viewport hub, color pins, pipeline, history
+├── features/          # Screens and UI (canvas, editor, dashboard, auth, projectv2, …)
+├── storage/           # DTOs, Firestore/Storage adapters, load/save glue
+├── services/          # ColorMixer, PDF export, Firebase helpers, …
+├── workers/           # Web Workers (filters, palette mix bridge, …)
+├── wasm/              # Checked-in wasm-pack output (img_ops, img_index)
+├── utils/             # Pure helpers (image, math, k-means bridge, …)
+└── types/             # Shared types
 ```
 
-### Key components
+**Canvas and tools** — The interactive canvas is driven by a `CanvasEngine` class under `src/features/canvas/engine/` (viewport, pan/zoom, tool controllers, `ToolStateManager`, and filter pipeline hooks). A separate **`ImpastoEngine`** in `src/engine/` is the long-lived app core for palette resolution, pin state, and persistence wiring. When reading code, follow imports: UI subscribes to engine APIs; heavy logic stays out of render paths where possible.
 
-**CanvasEngine** (`src/features/canvas/engine/CanvasEngine.ts`) — A plain TypeScript class that owns all canvas interaction state: viewport transforms, pan/zoom, tool mode, drag state, and pin hit testing. It uses an XState machine internally for tool transitions and publishes state changes via a subscribe pattern. React components read from it but never own its logic.
-
-**ColorMixer** (`src/services/ColorMixer.ts`) — Tries single-pigment, then 2-, 3-, and 4-pigment combinations against a pre-defined palette of 16 pigments. Scores each candidate using CIEDE2000 delta-E and returns the closest match as a recipe with percentage ratios.
-
-**Image pipeline** — Filters are applied in a Web Worker. Pixel-level operations (brightness, contrast, levels, hue rotation) run in TypeScript via `pixelMath.ts`. The k-means quantization step runs in WASM (`img_index` crate) for performance.
-
-**Viewport performance** — Pan/zoom transforms bypass React's render cycle during drag. The canvas element's transform is applied imperatively via a `subscribeToTransform` callback, preventing frame drops at high drag velocity.
-
-### State
-
-Five Zustand stores manage local UI state (selected color IDs, active tool, hidden pins, etc.). Server state (palette, filters, project metadata) is managed separately and persisted to Firestore on every change, debounced. Hex color values are never persisted — they are always derived at runtime from sampled RGB data.
+**ColorMixer** — Tries 1–4 pigment mixes from the enabled subset; uses CIEDE2000 and project-level `minPaintPercent` / `deltaThreshold` (see `src/services/ColorMixer.ts` and the optimizer under `src/services/`).
 
 ---
 
@@ -88,49 +64,54 @@ Five Zustand stores manage local UI state (selected color IDs, active tool, hidd
 
 ### Prerequisites
 
-- Node.js 20+
-- A Firebase project with Auth, Firestore, and Cloud Storage enabled
+- [Bun](https://bun.sh/) (used for install and scripts; Node is not required for the documented workflow)
+- A Firebase project with **Authentication**, **Cloud Firestore**, and **Cloud Storage** enabled (for full cloud features)
 
 ### Setup
 
 ```bash
 bun install
 cp .env.example .env
-# Fill in your Firebase credentials in .env
+# Set VITE_FIREBASE_* in .env to your Firebase web app config
 bun run dev
 ```
 
-### WASM modules
+### WASM (optional)
 
-Pre-compiled WASM modules are checked in under `src/wasm/`. To rebuild them from source (requires Rust + wasm-pack):
+Prebuilt artifacts live in `src/wasm/`. Rebuild with Rust and `wasm-pack` using the `package.json` script:
 
 ```bash
-bun build:wasm
+bun run build:wasm
 ```
+
+This runs `cargo build --workspace --target wasm32-unknown-unknown` (so every workspace member, including the shared `img_blur` library) and then `wasm-pack` for the two **cdylib** crates that generate JS glue into `src/wasm/img_ops` and `src/wasm/img_index`. `img_blur` is not a separate web bundle; it is linked into those crates. To rebuild a single cdylib, use `bun run build:wasm:img_ops` or `bun run build:wasm:img_index`.
 
 ---
 
 ## Scripts
 
-```bash
-bun dev              # Start dev server with HMR
-bun build            # Production build
-bun project-check        # TypeScript + ESLint + knip + file length checks
-bun lint             # ESLint only
-bun knip             # Detect unused exports and dead code
-bun test             # Unit tests (Vitest)
-bun test:headed      # E2E tests with browser visible
-bun test:report      # Open HTML test report
-```
+| Command                             | Purpose                                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `bun run dev`                       | Dev server (Vite HMR)                                                                                    |
+| `bun run build`                     | `tsc -b` then production Vite build                                                                      |
+| `bun run preview`                   | Serve the production build locally                                                                       |
+| `bun run analyze`                   | Production build with bundle analysis (`dist/bundle-analysis.html`)                                      |
+| `bun run test`                      | Unit tests (Vitest)                                                                                      |
+| `bun run tsc` / `bun run typecheck` | Typecheck only (`tsc -b --noEmit`)                                                                       |
+| `bun run lint`                      | ESLint                                                                                                   |
+| `bun run knip`                      | Unused exports / config drift                                                                            |
+| `bun run file-length-limit`         | Enforces a line budget on `src` (see script)                                                             |
+| `bun run project-check`             | **Full gate:** TypeScript, ESLint, Knip, file length, Vitest with coverage, and `cargo test --workspace` |
+| `bun run loc`                       | Line counts (`cloc`, config in `cloc.conf`)                                                              |
 
-> Use `bun project-check` (not bare `tsc`) — the project uses a split tsconfig setup where bare `tsc --noEmit` is a silent no-op.
+> Prefer `bun run project-check` before large merges. A bare `tsc` from the repo root may not run the same project references as `bun run tsc` depending on your shell; use the script.
 
 ---
 
-## Development guidelines
+## Development notes
 
-- **No logic in components** — if it can be a `.ts` file, it must be a `.ts` file.
-- **Test pure logic** — every function in `utils/` and `services/` should have unit test coverage.
-- **Files stay under 200 lines** — if a file is growing past that, split it.
-- **Mantine first** — use Mantine components before reaching for raw HTML elements.
-- See `CLAUDE.md` for the full rule set.
+- **Mantine first** for layout and form controls; avoid one-off CSS unless it pays for itself.
+- **Keep files small** — `file-length-limit` enforces a 200 _effective_ line cap on production sources (comments/blank lines discounted); split rather than grow God files.
+- **Rust tests** — The workspace is part of `project-check`; if you change `crates/`, run `cargo test` (or lean on `project-check`).
+
+For contributor-facing rules in more detail, see `CLAUDE.md`.

@@ -154,13 +154,9 @@ describe('FilterChainRunner', () => {
       }),
     );
 
-    // Stale result is discarded; the retry is deferred until the throttle window closes.
+    // Stale result is discarded AND the retry fires synchronously: scheduleFilterPass runs
+    // directly on setFilters, so pendingRun was already set; the stale handler pumps the queue.
     expect(onOut).not.toHaveBeenCalled();
-    expect(w.postMessage).toHaveBeenCalledTimes(1);
-
-    // Advance past the INPUT_THROTTLE_MS window so the trailing scheduleFilterPass fires.
-    vi.advanceTimersByTime(50);
-
     expect(w.postMessage).toHaveBeenCalledTimes(2);
 
     const secondCall = w.postMessage.mock.calls[1]![0] as {
@@ -214,9 +210,8 @@ describe('FilterChainRunner', () => {
     w.postMessage.mockClear();
     onOut.mockClear();
 
-    // Second setFilters with the exact same filter chain — throttled, so advance past the window.
+    // Second setFilters with the exact same filter chain — dispatched synchronously now.
     runner.setFilters([f]);
-    vi.advanceTimersByTime(50);
 
     // Cache hit: no re-post to worker, but output is re-emitted synchronously from the cache.
     expect(w.postMessage).not.toHaveBeenCalled();
@@ -241,6 +236,168 @@ describe('FilterChainRunner', () => {
     // The pixels sent must be the raw source data (line 69 fallback path).
     const call = w.postMessage.mock.calls[0]![0] as { pixels: Uint8Array };
     expect([...call.pixels]).toEqual([50, 60, 70, 255]);
+
+    runner.dispose();
+  });
+
+  it('incremental append: setFilters([F1]) then setFilters([F1, F2]) applies both filters and does not discard worker output as stale', () => {
+    const src = createRawImage(
+      new Uint8ClampedArray([10, 20, 30, 40, 50, 60, 70, 80]),
+      2,
+      1,
+    );
+    const onOut = vi.fn();
+    const runner = new FilterChainRunner(imageDepFromGetter(() => src), onOut);
+    runner.syncFromImageDep();
+    onOut.mockClear();
+
+    const f1: FilterInstance = { id: 'a', type: 'blur', params: { blur: 1 } };
+    const f2: FilterInstance = { id: 'b', type: 'blur', params: { blur: 2 } };
+    runner.setFilters([f1]);
+
+    const w = workerCtx.created[0]!;
+    expect(w.postMessage).toHaveBeenCalledTimes(1);
+
+    const outPixels1 = new Uint8Array([11, 12, 13, 14, 15, 16, 17, 18]);
+    w.onmessage!(
+      new MessageEvent('message', {
+        data: { steps: [outPixels1.buffer], dirtyIndex: 0 },
+      }),
+    );
+
+    expect(runner.getState()).toEqual({ status: 'ready', error: null });
+    onOut.mockClear();
+
+    vi.advanceTimersByTime(60);
+
+    runner.setFilters([f1, f2]);
+    expect(w.postMessage).toHaveBeenCalledTimes(2);
+
+    const secondCall = w.postMessage.mock.calls[1]![0] as {
+      dirtyIndex: number;
+      filters: FilterInstance[];
+    };
+    expect(secondCall.dirtyIndex).toBe(1);
+    expect(secondCall.filters).toHaveLength(1);
+    expect(secondCall.filters[0]).toEqual(f2);
+
+    const outPixels2 = new Uint8Array([91, 92, 93, 94, 95, 96, 97, 98]);
+    w.onmessage!(
+      new MessageEvent('message', {
+        data: { steps: [outPixels2.buffer], dirtyIndex: 1 },
+      }),
+    );
+
+    expect(onOut).toHaveBeenCalledTimes(1);
+    expect([...onOut.mock.calls[0]![0].data]).toEqual([...outPixels2]);
+    expect(runner.getState().status).toBe('ready');
+
+    runner.dispose();
+  });
+
+  it('disabling a filter in an applied chain emits output reflecting only enabled filters', () => {
+    const src = createRawImage(new Uint8ClampedArray([10, 20, 30, 40]), 1, 1);
+    const onOut = vi.fn();
+    const runner = new FilterChainRunner(imageDepFromGetter(() => src), onOut);
+    runner.syncFromImageDep();
+    onOut.mockClear();
+
+    const f1: FilterInstance = { id: 'a', type: 'blur', params: { blur: 1 } };
+    const f2: FilterInstance = { id: 'b', type: 'blur', params: { blur: 2 } };
+
+    // Apply [f1, f2] fully.
+    runner.setFilters([f1, f2]);
+    const w = workerCtx.created[0]!;
+    expect(w.postMessage).toHaveBeenCalledTimes(1);
+    w.onmessage!(
+      new MessageEvent('message', {
+        data: {
+          steps: [
+            new Uint8Array([1, 1, 1, 1]).buffer,
+            new Uint8Array([2, 2, 2, 2]).buffer,
+          ],
+          dirtyIndex: 0,
+        },
+      }),
+    );
+    expect(runner.getState().status).toBe('ready');
+    onOut.mockClear();
+    w.postMessage.mockClear();
+
+    // Disable f1. Only f2 should be applied now.
+    runner.setFilters([{ ...f1, enabled: false }, f2]);
+    expect(w.postMessage).toHaveBeenCalledTimes(1);
+    const call = w.postMessage.mock.calls[0]![0] as {
+      filters: FilterInstance[];
+      dirtyIndex: number;
+    };
+    expect(call.filters).toHaveLength(1);
+    expect(call.filters[0]).toEqual(f2);
+
+    const onlyF2 = new Uint8Array([7, 7, 7, 7]);
+    w.onmessage!(
+      new MessageEvent('message', {
+        data: { steps: [onlyF2.buffer], dirtyIndex: call.dirtyIndex },
+      }),
+    );
+
+    // Result must not be discarded as stale, and status must return to ready.
+    expect(onOut).toHaveBeenCalledTimes(1);
+    expect([...onOut.mock.calls[0]![0].data]).toEqual([...onlyF2]);
+    expect(runner.getState().status).toBe('ready');
+
+    runner.dispose();
+  });
+
+  it('rapid setFilters during worker-busy: pendingRun flushes to dispatch the latest chain', () => {
+    const src = createRawImage(new Uint8ClampedArray([10, 20, 30, 40]), 1, 1);
+    const onOut = vi.fn();
+    const runner = new FilterChainRunner(imageDepFromGetter(() => src), onOut);
+    runner.syncFromImageDep();
+    onOut.mockClear();
+
+    const f1: FilterInstance = { id: 'a', type: 'blur', params: { blur: 1 } };
+    const f2: FilterInstance = { id: 'b', type: 'blur', params: { blur: 2 } };
+    const f3: FilterInstance = { id: 'c', type: 'blur', params: { blur: 3 } };
+
+    runner.setFilters([f1]);
+    const w = workerCtx.created[0]!;
+    expect(w.postMessage).toHaveBeenCalledTimes(1);
+
+    // Worker still busy — subsequent setFilters must not spawn parallel worker runs.
+    runner.setFilters([f1, f2]);
+    runner.setFilters([f1, f2, f3]);
+    expect(w.postMessage).toHaveBeenCalledTimes(1);
+
+    // First worker result (for [f1]) returns as stale since chain is now [f1,f2,f3].
+    w.onmessage!(
+      new MessageEvent('message', {
+        data: { steps: [new Uint8Array([9, 9, 9, 9]).buffer], dirtyIndex: 0 },
+      }),
+    );
+
+    // Stale path re-dispatches synchronously with the latest chain.
+    expect(w.postMessage).toHaveBeenCalledTimes(2);
+    const retry = w.postMessage.mock.calls[1]![0] as { filters: FilterInstance[] };
+    expect(retry.filters).toHaveLength(3);
+
+    const finalPixels = new Uint8Array([7, 7, 7, 7]);
+    w.onmessage!(
+      new MessageEvent('message', {
+        data: {
+          steps: [
+            new Uint8Array([1, 1, 1, 1]).buffer,
+            new Uint8Array([2, 2, 2, 2]).buffer,
+            finalPixels.buffer,
+          ],
+          dirtyIndex: 0,
+        },
+      }),
+    );
+
+    expect(onOut).toHaveBeenCalledTimes(1);
+    expect([...onOut.mock.calls[0]![0].data]).toEqual([...finalPixels]);
+    expect(runner.getState().status).toBe('ready');
 
     runner.dispose();
   });
